@@ -110,10 +110,16 @@ They're modelled separately, three-state per §8g:
 | `reservable` | `None` *(default)* | Reservable |
 
 The last row is the point: when we don't know, the label **says nothing** about
-walk-up sites rather than implying there are none. Nothing populates
-`first_come_sites` yet — RIDB's campsites endpoint carries a per-site
-`CampsiteReservable` flag and would be the source, as a backfill job like
-`backfill-coordinates`. Until then it stays honestly unknown.
+walk-up sites rather than implying there are none.
+
+Nothing populates `first_come_sites` yet. `docs/first-come-research.md` has the
+findings: RIDB *can* tell us how many sites at a reservable campground aren't
+bookable online (BROKEN ARROW: 145 of 279), but the 206 first-come campgrounds
+have **no site inventory in RIDB at all** — so the number is unavailable
+exactly where it would be most useful. And `CampsiteReservable=False` is not a
+synonym for first-come: some of those sites are `MANAGEMENT`, i.e. camp-host
+pitches. The honest phrasing is "not bookable online", not "first-come and
+maybe free".
 
 ### The bug the live run found (2026-07-28)
 
@@ -157,7 +163,8 @@ Two fixes, both in `app/providers/reserveamerica.py`:
 | File | What's in it |
 |---|---|
 | `docs/scraping-policy.md` | **How we behave toward platforms — supersedes §6c** |
-| `docs/bc-coordinates.md` | Why BC parks have no coordinates, and how to fix it |
+| `docs/bc-coordinates.md` | Why BC parks had no coordinates, and how it was fixed |
+| `docs/first-come-research.md` | Can we count a campground's walk-up sites? Partly |
 | `docs/scanning-design.md` | Two-tier scanning, pacing rules, on-demand guards |
 | `docs/reserveamerica-handoff.md` | RA endpoints (working), and the GoingToCamp blocker |
 | `docs/reserveamerica-clients.md` | Which agencies run on ReserveAmerica |
