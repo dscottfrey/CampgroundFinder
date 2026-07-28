@@ -52,6 +52,20 @@ CREATE TABLE IF NOT EXISTS notifications (
   id INTEGER PRIMARY KEY, watch_id INTEGER, campsite_key TEXT, sent_at TEXT
 );
 
+-- What the scanner is doing right now, so the interface can explain a wait in
+-- plain language instead of showing a bare spinner (docs/scanning-design.md).
+-- Exactly one row: the scanner is a single sequential worker by design.
+CREATE TABLE IF NOT EXISTS scan_status (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  state TEXT,                    -- idle | scanning | waiting | blocked
+  provider TEXT,
+  target TEXT,                   -- what's being checked right now
+  done INTEGER, total INTEGER,
+  message TEXT,                  -- ready to display, no jargon
+  detail TEXT,                   -- why we're waiting or backing off
+  started TEXT, updated TEXT
+);
+
 CREATE INDEX IF NOT EXISTS idx_avail_provider_date
   ON availability (provider, available_date);
 CREATE INDEX IF NOT EXISTS idx_avail_facility

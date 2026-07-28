@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from datetime import date, datetime, timedelta
 from typing import Any, Iterable, Optional
 
+from .pacing import PACING_NOTE
 from .providers.base import (
     STATUS_AVAILABLE,
     STATUS_FULL,
@@ -562,3 +563,98 @@ def pending_notifications(
         s for s in matches
         if not already_notified(conn, watch.id, s.key, cooldown_hours, now)
     ]
+
+
+# --------------------------------------------------------------------------
+# scanner status (docs/scanning-design.md — "Telling the user what's happening")
+# --------------------------------------------------------------------------
+
+SCAN_IDLE = "idle"
+SCAN_SCANNING = "scanning"
+SCAN_WAITING = "waiting"       # deliberately spaced out, not stuck
+SCAN_BLOCKED = "blocked"       # a host told us to stop; we are honouring it
+
+
+@dataclass
+class ScanStatus:
+    """One honest sentence about what the scanner is doing, plus the numbers.
+
+    `message` is written for a person, not a log: "Checking 8 campgrounds — 3
+    done". `detail` carries the reason for a wait, which is the part that turns
+    unexplained slowness into explained slowness.
+    """
+
+    state: str = SCAN_IDLE
+    provider: Optional[str] = None
+    target: Optional[str] = None
+    done: int = 0
+    total: int = 0
+    message: str = ""
+    detail: Optional[str] = None
+    started: Optional[str] = None
+    updated: Optional[str] = None
+
+    @property
+    def note(self) -> str:
+        """The standing explanation for the pace. Never varies, never hidden."""
+        return PACING_NOTE
+
+    @property
+    def busy(self) -> bool:
+        return self.state in (SCAN_SCANNING, SCAN_WAITING)
+
+    def as_dict(self) -> dict:
+        return {
+            "state": self.state,
+            "provider": self.provider,
+            "target": self.target,
+            "done": self.done,
+            "total": self.total,
+            "message": self.message,
+            "detail": self.detail,
+            "note": self.note,
+            "started": self.started,
+            "updated": self.updated,
+        }
+
+
+def set_scan_status(
+    conn: sqlite3.Connection,
+    status: ScanStatus,
+    now: Optional[datetime] = None,
+) -> ScanStatus:
+    """Write the single status row. Cheap enough to call before every request."""
+    status.updated = iso(now)
+    conn.execute(
+        """INSERT INTO scan_status (
+             id, state, provider, target, done, total, message, detail, started, updated)
+           VALUES (1,?,?,?,?,?,?,?,?,?)
+           ON CONFLICT(id) DO UPDATE SET
+             state=excluded.state, provider=excluded.provider, target=excluded.target,
+             done=excluded.done, total=excluded.total, message=excluded.message,
+             detail=excluded.detail, started=excluded.started, updated=excluded.updated""",
+        (
+            status.state, status.provider, status.target, status.done, status.total,
+            status.message, status.detail, status.started, status.updated,
+        ),
+    )
+    conn.commit()
+    return status
+
+
+def get_scan_status(conn: sqlite3.Connection) -> ScanStatus:
+    """The scanner's current state. Never absent — an unwritten row reads idle."""
+    row = conn.execute("SELECT * FROM scan_status WHERE id = 1").fetchone()
+    if not row:
+        return ScanStatus()
+    return ScanStatus(
+        state=row["state"] or SCAN_IDLE,
+        provider=row["provider"],
+        target=row["target"],
+        done=row["done"] or 0,
+        total=row["total"] or 0,
+        message=row["message"] or "",
+        detail=row["detail"],
+        started=row["started"],
+        updated=row["updated"],
+    )

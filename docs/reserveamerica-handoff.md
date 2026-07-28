@@ -1,5 +1,25 @@
 # ReserveAmerica scraper — build handoff
 
+> **STATUS 2026-07-28: Oregon catalog is done and committed.** All 65 parks are
+> in `data/seed/pnw_campgrounds.json` with coordinates, enumerated live, keyed
+> `ReserveAmerica:OR`. Definition of done items 1–5 below are all met.
+>
+> **Two things the live run exposed, both now fixed:**
+>
+> 1. **This host truncates about half its chunked responses.** A cut-off page is
+>    HTTP 200 with zero park rows, which the pager read as "end of directory" —
+>    it stopped at 25 of 65 parks, A through C, dropping Reehers. Every page is
+>    now completeness-checked, retried once, then refused with
+>    `IncompleteDirectory` rather than returned short.
+> 2. **The standard library cannot read this host reliably.** `http.client`
+>    truncated the same page every time (74 KB); `requests`/urllib3 got it whole
+>    (176 KB). `_fetch_url` now prefers httpx, then requests, then urllib.
+>
+> Also fixed: the seed said `provider: "ReserveAmerica"` while the provider
+> emits `ReserveAmerica:OR`, so availability never joined to the catalog pin and
+> `catalog.build_provider_name` silently disabled the §8k never-shrink check for
+> this provider.
+>
 > **STATUS 2026-07-27: built and working for Oregon.** Directory, per-park site
 > inventory, and per-site availability all verified live. See
 > `app/providers/reserveamerica.py`. What remains is scheduling policy (below)
@@ -128,13 +148,13 @@ Read only the availability parts — ignore booking, login, and payment code.
 
 ## State of the rest of the catalog
 
-Already done — 546 campgrounds in the seed, live from RIDB on 2026-07-27:
+Already done — 610 campgrounds in the seed:
 
 | Source | Status |
 |---|---|
-| recreation.gov (federal) | **done** — 355 OR, 191 WA, coords, reservable flags |
-| ReserveAmerica | this document |
-| GoingToCamp (WA parks, BC parks) | **blocked** — camply cannot enumerate without a rec-area ID; `washington.goingtocamp.com` also does not answer from the dev sandbox though it loads fine in a browser |
+| recreation.gov (federal) | **done** — 545 rows, coords, reservable flags (RIDB, 2026-07-27) |
+| ReserveAmerica | **done for Oregon** — 65 parks with coords, 2026-07-28 |
+| GoingToCamp (WA parks, BC parks) | **blocked** — camply cannot enumerate without a rec-area ID. The host now *answers* (HTTP 403 to a bare request, verified 2026-07-28); it used to time out, so the blocker is a bot-check, not the network |
 | UseDirect (OregonMetro, ReserveCalifornia) | **blocked** — same: needs a search string or rec-area ID, cannot enumerate blind |
 | PerfectMind (San Juan County) | not built (step 7) |
 | Parks Canada, Campspot | not built (step 8) |
@@ -188,9 +208,12 @@ some internal map — most likely its rec-area/map cache was never populated for
 *(An earlier draft of this document guessed `-2147483647` was `INT_MIN+1` used
 as a "nothing selected" sentinel. That guess was wrong.)*
 
-Also unresolved: `washington.goingtocamp.com` does not answer from the dev
-sandbox (connection times out) even though it loads normally in a browser, and
-`camping.bcparks.ca` returns 403 to a bare request.
+**Updated 2026-07-28:** `washington.goingtocamp.com` no longer times out — it
+connects and returns **HTTP 403** to a bare stdlib request, exactly as
+`camping.bcparks.ca` does. Both hosts are on the sandbox allowlist. So this is a
+bot-check to satisfy (headers, cookies, or the XHR the booking page fires),
+not a network hole. Only one request was made to each; a 403 is the signal our
+own code must never retry into.
 
 ## The endpoint shape — from CampSage's page source
 

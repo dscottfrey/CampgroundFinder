@@ -202,11 +202,20 @@ def refresh_catalog(
 
 
 def build_provider_name(spec: str) -> str:
-    """The provider `name` a spec resolves to, without instantiating it."""
-    family = spec.split(":", 1)[0]
+    """The provider `name` a spec resolves to, without instantiating it.
+
+    The instance suffix has to survive: `ReserveAmerica:OR` names itself
+    `ReserveAmerica:OR`, not `ReserveAmerica`. Dropping it made
+    `scoped_providers` below never match a ReserveAmerica catalog row, which
+    quietly disabled the "present in catalog, absent from live" check — the
+    §8k safety net — for the one provider that exists because of it.
+    """
+    family, _, instance = spec.partition(":")
     if family in ("Mock", "MockProvider"):
         return "Mock"
-    return family[len("Search"):] if family.startswith("Search") else family
+    if family.startswith("Search"):
+        family = family[len("Search"):]
+    return f"{family}:{instance}" if instance else family
 
 
 def catalog_refresh(

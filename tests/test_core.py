@@ -574,7 +574,10 @@ class TestReehersAcceptance(DBTestCase):
         self.assertEqual(results[0].id, "412704")
 
     def test_reehers_is_on_the_map_even_when_full(self):
-        store.set_campground_status(self.conn, "ReserveAmerica", "412704",
+        # Keyed "ReserveAmerica:OR" — the name the provider actually emits.
+        # It was "ReserveAmerica" here while the seed agreed with it, and the
+        # two of them agreed on a value nothing else in the app used.
+        store.set_campground_status(self.conn, "ReserveAmerica:OR", "412704",
                                     STATUS_FULL, "no open sites", now=NOW)
         pins = store.map_view(self.conn)
         reehers = [p for p in pins if p["id"] == "412704"]
@@ -582,10 +585,21 @@ class TestReehersAcceptance(DBTestCase):
         self.assertEqual(reehers[0]["status"], STATUS_FULL)
         self.assertEqual(reehers[0]["open_sites"], 0)
 
-    def test_reehers_without_coordinates_is_still_listed(self):
+    def test_reehers_now_has_real_coordinates(self):
+        # It had none while the seed entry was hand-written. The live directory
+        # carries them, and a guessed coordinate would still be unacceptable.
         pin = [p for p in store.map_view(self.conn) if p["id"] == "412704"][0]
-        # No authoritative lat/lon was available for the seed — the pin must
-        # still exist, flagged unlocated rather than dropped (§13).
+        self.assertTrue(pin["located"])
+        self.assertAlmostEqual(pin["latitude"], 45.7066667, places=4)
+        self.assertAlmostEqual(pin["longitude"], -123.3380556, places=4)
+
+    def test_an_unlocated_campground_is_still_listed(self):
+        # The §13 invariant Reehers used to demonstrate: no coordinates is a
+        # legitimate state that shows as "location unknown", never a deletion.
+        store.upsert_campgrounds(self.conn, [Campground(
+            provider="ReserveAmerica:OR", id="no-coords",
+            name="Somewhere Unmapped", state="OR")], now=NOW)
+        pin = [p for p in store.map_view(self.conn) if p["id"] == "no-coords"][0]
         self.assertFalse(pin["located"])
         self.assertIsNone(pin["latitude"])
 
@@ -726,9 +740,6 @@ class TestUtil(unittest.TestCase):
     def test_haversine_returns_none_when_unlocated(self):
         self.assertIsNone(haversine_miles(45.0, -122.0, None, None))
 
-
-if __name__ == "__main__":
-    unittest.main()
 
 
 # --------------------------------------------- ReserveAmerica (step 8) ----
@@ -983,3 +994,612 @@ class TestScopeLimits(unittest.TestCase):
                             "scan_regions": ["OR"]})
         self.assertEqual(cfg.scan_regions, ["OR"])
         self.assertIn("BC", cfg.default_states)
+
+
+# ------------------------------------------------- pacing (scanning-design) ----
+
+from app import pacing, scanner  # noqa: E402
+from app.pacing import Blocked, RateLimiter  # noqa: E402
+from app.providers.base import Provider  # noqa: E402
+
+
+def setUpModule():
+    """No test may ever actually wait.
+
+    Providers now go through the process-wide limiter, so without this the
+    suite would sit out a real 2- or 6-second gap between fixture replays.
+    Tests that care about pacing build their own limiter.
+    """
+    pacing.set_shared_limiter(RateLimiter(delays={}, default_delay=0, min_gap=0))
+
+
+def tearDownModule():
+    pacing.set_shared_limiter(None)
+
+
+class FakeClock:
+    """A clock that only moves when a sleep asks it to."""
+
+    def __init__(self):
+        self.t = 1000.0
+        self.slept: list[float] = []
+
+    def __call__(self) -> float:
+        return self.t
+
+    def sleep(self, seconds: float) -> None:
+        self.slept.append(seconds)
+        self.t += seconds
+
+    def advance(self, seconds: float) -> None:
+        self.t += seconds
+
+
+def fake_limiter(**kw):
+    clock = FakeClock()
+    limiter = RateLimiter(sleep=clock.sleep, clock=clock, **kw)
+    return limiter, clock
+
+
+class TestRateLimiterSpacing(unittest.TestCase):
+    """The numbers in docs/scanning-design.md, enforced rather than documented."""
+
+    def test_reserveamerica_gets_six_seconds_and_ridb_two(self):
+        limiter, _ = fake_limiter()
+        self.assertEqual(limiter.delay_for("oregonstateparks.reserveamerica.com"), 6.0)
+        self.assertEqual(limiter.delay_for("ridb.recreation.gov"), 2.0)
+
+    def test_unknown_host_gets_the_slow_default_not_the_fast_one(self):
+        # Being wrong politely costs minutes; being wrong the other way costs
+        # the household's IP address.
+        limiter, _ = fake_limiter()
+        self.assertEqual(limiter.delay_for("some-new-portal.example.gov"), 6.0)
+        self.assertGreaterEqual(limiter.delay_for("unknown"), limiter.delay_for("ridb.recreation.gov"))
+
+    def test_gap_is_measured_between_consecutive_hits_on_one_host(self):
+        limiter, clock = fake_limiter()
+        host = "oregonstateparks.reserveamerica.com"
+        with limiter.slot(host):
+            pass
+        self.assertEqual(clock.slept, [])          # first request never waits
+        with limiter.slot(host):
+            pass
+        self.assertEqual(clock.slept, [6.0])
+
+    def test_a_slow_response_lengthens_the_gap_it_never_shortens_it(self):
+        # Timestamps are taken when the response lands, so a 5s request is
+        # followed by a full 6s of quiet, not 1s.
+        limiter, clock = fake_limiter()
+        host = "oregonstateparks.reserveamerica.com"
+        with limiter.slot(host):
+            clock.advance(5.0)
+        with limiter.slot(host):
+            pass
+        self.assertEqual(clock.slept, [6.0])
+
+    def test_interleaving_hosts_costs_only_the_global_floor(self):
+        # This is why round-robin is worth doing: the second host's request
+        # fills the first host's gap instead of queueing behind it.
+        limiter, clock = fake_limiter()
+        with limiter.slot("oregonstateparks.reserveamerica.com"):
+            pass
+        with limiter.slot("ridb.recreation.gov"):
+            pass
+        self.assertEqual(clock.slept, [pacing.GLOBAL_MIN_GAP])
+
+    def test_a_burst_across_hosts_still_hits_the_floor(self):
+        limiter, clock = fake_limiter(min_gap=1.0)
+        for host in ("a.example.com", "b.example.com", "c.example.com"):
+            with limiter.slot(host):
+                pass
+        self.assertEqual(clock.slept, [1.0, 1.0])
+
+    def test_wait_time_is_reportable_before_the_request_is_made(self):
+        # The progress widget needs a real number, not a spinner.
+        limiter, _ = fake_limiter()
+        host = "oregonstateparks.reserveamerica.com"
+        self.assertEqual(limiter.wait_time(host), 0.0)
+        with limiter.slot(host):
+            pass
+        self.assertEqual(limiter.wait_time(host), 6.0)
+
+    def test_only_one_request_can_hold_the_slot_at_a_time(self):
+        import threading
+
+        limiter, _ = fake_limiter(min_gap=0)
+        inside = threading.Event()
+        release = threading.Event()
+        overlapped = []
+
+        def hold():
+            with limiter.slot("a.example.com"):
+                inside.set()
+                release.wait(2)
+
+        t = threading.Thread(target=hold)
+        t.start()
+        self.assertTrue(inside.wait(2))
+        second = threading.Thread(
+            target=lambda: overlapped.append("in") if limiter._turn.acquire(blocking=False)
+            else overlapped.append("blocked")
+        )
+        second.start()
+        second.join(2)
+        release.set()
+        t.join(2)
+        self.assertEqual(overlapped, ["blocked"])
+
+
+class TestRateLimiterBlocks(unittest.TestCase):
+    """403/429 stops us dead. We never retry into a block (§13)."""
+
+    def test_blocked_host_raises_instead_of_being_requested(self):
+        limiter, _ = fake_limiter()
+        limiter.block("oregonstateparks.reserveamerica.com", "429 — backing off")
+        with self.assertRaises(Blocked):
+            with limiter.slot("oregonstateparks.reserveamerica.com"):
+                self.fail("a blocked host must never be requested")
+
+    def test_a_block_is_shared_so_on_demand_cannot_walk_into_it(self):
+        # One limiter for the whole process is the point: the sweep discovering
+        # a block must stop the map's on-demand refresh too.
+        limiter, _ = fake_limiter()
+        limiter.block("camping.example.com", "403")
+        self.assertTrue(limiter.is_blocked("camping.example.com"))
+        self.assertIn("403", limiter.blocked_reason("camping.example.com"))
+
+    def test_a_block_does_not_leak_to_other_hosts(self):
+        limiter, _ = fake_limiter()
+        limiter.block("oregonstateparks.reserveamerica.com", "429")
+        self.assertFalse(limiter.is_blocked("ridb.recreation.gov"))
+
+    def test_block_expires_after_the_cooldown(self):
+        limiter, clock = fake_limiter(cooldown=60.0)
+        limiter.block("a.example.com", "429")
+        clock.advance(59)
+        self.assertTrue(limiter.is_blocked("a.example.com"))
+        clock.advance(2)
+        self.assertFalse(limiter.is_blocked("a.example.com"))
+
+    def test_reserveamerica_block_is_the_shared_block_type(self):
+        from app.providers.reserveamerica import BlockedByProvider
+
+        self.assertTrue(issubclass(BlockedByProvider, Blocked))
+
+
+class TestProvidersShareOneLimiter(unittest.TestCase):
+    def test_reserveamerica_and_camply_use_the_same_instance(self):
+        from app.providers.reserveamerica import ReserveAmericaProvider
+
+        shared = pacing.shared_limiter()
+        ra = ReserveAmericaProvider("OR", "oregonstateparks.reserveamerica.com")
+        camply = CamplyProvider("RecreationDotGov", state="OR")
+        self.assertIs(ra.limiter, shared)
+        self.assertIs(camply.limiter, shared)
+
+    def test_an_unmapped_camply_provider_is_paced_conservatively(self):
+        # We don't know GoingToCamp's host from this class, so it must not
+        # borrow RIDB's fast budget.
+        camply = CamplyProvider("GoingToCamp", state="WA")
+        self.assertIsNone(camply.host)
+        limiter, _ = fake_limiter()
+        self.assertEqual(limiter.delay_for(camply._pacing_key), pacing.DEFAULT_DELAY)
+
+
+# --------------------------------------------- round-robin + progress ----
+
+class RecordingProvider(Provider):
+    """Records the order units are asked for, and can refuse on cue."""
+
+    def __init__(self, name, order, state=None, block_on=None, fail_on=None):
+        self.name = name
+        self.order = order
+        self.state = state
+        self.block_on = set(block_on or [])
+        self.fail_on = set(fail_on or [])
+
+    def search(self, req):
+        target = req.campground_ids[0] if req.campground_ids else "*"
+        self.order.append(f"{self.name}:{target}")
+        if target in self.block_on:
+            raise Blocked(f"{self.name} returned 429 — backing off")
+        if target in self.fail_on:
+            raise RuntimeError("upstream 503")
+        return []
+
+
+class RoundRobinTestCase(DBTestCase):
+    def setUp(self):
+        super().setUp()
+        self.order: list[str] = []
+        self.config = parse_config({
+            "round_pause_seconds": 5,
+            "sources": [
+                {"label": "A", "provider": "Mock", "state": "OR",
+                 "campground_ids": ["a1", "a2", "a3"]},
+                {"label": "B", "provider": "Mock", "state": "WA",
+                 "campground_ids": ["b1", "b2"]},
+            ],
+        })
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="src-OR", id=i, name=f"Park {i}", state="OR")
+            for i in ("a1", "a2", "a3")
+        ] + [
+            Campground(provider="src-WA", id=i, name=f"Park {i}", state="WA")
+            for i in ("b1", "b2")
+        ], now=NOW)
+
+    def factory(self, **kw):
+        def build(spec, state=None, **_):
+            return RecordingProvider(f"src-{state}", self.order, state=state, **kw)
+        return build
+
+
+class TestRoundRobin(RoundRobinTestCase):
+    """Interleave sources; never drain one host before starting the next."""
+
+    def test_units_alternate_between_sources(self):
+        limiter, _ = fake_limiter(min_gap=0)
+        scanner.scan_once(self.conn, self.config, notifier=Notifier([]),
+                          start=START, window_days=3, now=NOW,
+                          provider_factory=self.factory(), limiter=limiter)
+        self.assertEqual(
+            self.order,
+            ["src-OR:a1", "src-WA:b1", "src-OR:a2", "src-WA:b2", "src-OR:a3"],
+        )
+
+    def test_a_named_campground_becomes_its_own_unit(self):
+        # Small units are what make interleaving possible at all.
+        provider = RecordingProvider("src-OR", self.order, state="OR")
+        units = scanner.plan_source(
+            self.conn, self.config.sources[0], provider, START, START + timedelta(days=3)
+        )
+        self.assertEqual([u.scope for u in units], [["a1"], ["a2"], ["a3"]])
+        # And each is labelled from the catalog, so progress reads as a place.
+        self.assertEqual([u.label for u in units], ["Park a1", "Park a2", "Park a3"])
+
+    def test_a_source_naming_no_campgrounds_is_one_unit(self):
+        # Nothing to split on — asking the provider for less is not an option.
+        config = parse_config({"sources": [
+            {"label": "Mock OR", "provider": "Mock", "state": "OR"}]})
+        provider = RecordingProvider("src-OR", self.order, state="OR")
+        units = scanner.plan_source(
+            self.conn, config.sources[0], provider, START, START + timedelta(days=3)
+        )
+        self.assertEqual(len(units), 1)
+        self.assertEqual(units[0].scope, [])
+
+    def test_pause_between_rounds_but_not_after_the_last(self):
+        limiter, clock = fake_limiter(min_gap=0)
+        scanner.scan_once(self.conn, self.config, notifier=Notifier([]),
+                          start=START, window_days=3, now=NOW,
+                          provider_factory=self.factory(), limiter=limiter)
+        # 3 rounds of work → 2 pauses, and no trailing pause on an empty queue.
+        self.assertEqual(clock.slept, [5.0, 5.0])
+
+
+class TestBlockedProviderIsSkipped(RoundRobinTestCase):
+    """Stop dead on 403/429 — and say so, rather than showing empty parks."""
+
+    def run_scan(self):
+        limiter, _ = fake_limiter(min_gap=0)
+        return scanner.scan_once(
+            self.conn, self.config, notifier=Notifier([]),
+            start=START, window_days=3, now=NOW,
+            provider_factory=self.factory(block_on=["a2"]), limiter=limiter,
+        )
+
+    def test_the_blocked_source_is_abandoned_for_the_cycle(self):
+        self.run_scan()
+        # a3 is never requested — we do not retry into a block.
+        self.assertNotIn("src-OR:a3", self.order)
+        # ...and the other source keeps going. One host's refusal is not global.
+        self.assertIn("src-WA:b2", self.order)
+
+    def test_unchecked_parks_go_stale_not_full(self):
+        # "We didn't look" must never render as "there's nothing there".
+        self.run_scan()
+        for cg_id in ("a2", "a3"):
+            cg = store.get_campground(self.conn, "src-OR", cg_id)
+            self.assertEqual(cg.status, STATUS_STALE)
+
+    def test_the_report_counts_what_was_skipped(self):
+        report = self.run_scan()
+        self.assertEqual(report.skipped_units, 2)          # a2 and a3
+        self.assertIn("A", report.blocked)
+        self.assertIn("429", report.blocked["A"])
+
+    def test_one_park_failing_does_not_stale_the_whole_state(self):
+        # An ordinary error is not a block: the cycle carries on down the queue.
+        limiter, _ = fake_limiter(min_gap=0)
+        scanner.scan_once(self.conn, self.config, notifier=Notifier([]),
+                          start=START, window_days=3, now=NOW,
+                          provider_factory=self.factory(fail_on=["a1"]),
+                          limiter=limiter)
+        self.assertEqual(
+            store.get_campground(self.conn, "src-OR", "a1").status, STATUS_STALE
+        )
+        self.assertIn("src-OR:a3", self.order)
+        self.assertNotEqual(
+            store.get_campground(self.conn, "src-OR", "a3").status, STATUS_STALE
+        )
+
+
+class TestScanStatusIsRecorded(DBTestCase):
+    """Slowness is fine; unexplained slowness is not."""
+
+    def setUp(self):
+        super().setUp()
+        self.config = parse_config({
+            "round_pause_seconds": 0,
+            "sources": [{"label": "Mock OR", "provider": "Mock", "state": "OR"}],
+        })
+        catalog.seed_catalog(self.conn, seed=MockProvider().list_campgrounds(), now=NOW)
+
+    def test_status_starts_idle_and_is_never_missing(self):
+        status = store.get_scan_status(self.conn)
+        self.assertEqual(status.state, store.SCAN_IDLE)
+        self.assertFalse(status.busy)
+
+    def test_the_scanner_says_what_it_is_checking_while_it_checks(self):
+        seen = []
+        conn = self.conn
+
+        class Peeking(MockProvider):
+            def search(self, req):
+                seen.append(store.get_scan_status(conn))
+                return super().search(req)
+
+        limiter, _ = fake_limiter(min_gap=0)
+        scanner.scan_once(self.conn, self.config, notifier=Notifier([]),
+                          start=START, window_days=3, now=NOW,
+                          provider_factory=lambda spec, state=None, **kw: Peeking(state=state),
+                          limiter=limiter)
+        self.assertEqual(seen[0].state, store.SCAN_SCANNING)
+        self.assertEqual(seen[0].target, "Mock OR")
+        self.assertEqual(seen[0].total, 1)
+
+    def test_it_returns_to_idle_with_an_honest_count(self):
+        limiter, _ = fake_limiter(min_gap=0)
+        scanner.scan_once(self.conn, self.config, notifier=Notifier([]),
+                          start=START, window_days=3, now=NOW, limiter=limiter)
+        status = store.get_scan_status(self.conn)
+        self.assertEqual(status.state, store.SCAN_IDLE)
+        self.assertEqual(status.message, "Checked 1 campground")
+
+    def test_a_wait_is_explained_in_plain_language(self):
+        # "Waiting 6s before the next request to …" beats a bare spinner.
+        conn = self.conn
+        limiter, _ = fake_limiter()
+        seen = []
+
+        class Paced(MockProvider):
+            def search(self, req):
+                with limiter.slot("oregonstateparks.reserveamerica.com"):
+                    seen.append(store.get_scan_status(conn))
+                return []
+
+        config = parse_config({
+            "round_pause_seconds": 0,
+            "sources": [{"label": "Park one", "provider": "Mock", "state": "OR",
+                         "campground_ids": ["p1", "p2"]}],
+        })
+        scanner.scan_once(conn, config, notifier=Notifier([]),
+                          start=START, window_days=3, now=NOW,
+                          provider_factory=lambda spec, state=None, **kw: Paced(state=state),
+                          limiter=limiter)
+        waiting = [s for s in seen if s.state == store.SCAN_WAITING]
+        self.assertTrue(waiting)
+        self.assertIn("reserveamerica.com", waiting[0].detail)
+        self.assertIn("6s", waiting[0].detail)
+
+    def test_the_reason_for_the_pace_travels_with_the_status(self):
+        # Constant copy, and it must never be hidden — the honesty rule.
+        status = store.get_scan_status(self.conn)
+        self.assertIn("block us", status.note)
+        self.assertIn("note", status.as_dict())
+
+    def test_a_block_is_reported_to_the_user_not_swallowed(self):
+        class Refusing(MockProvider):
+            def search(self, req):
+                raise Blocked("Mock returned 429 — backing off")
+
+        limiter, _ = fake_limiter(min_gap=0)
+        scanner.scan_once(self.conn, self.config, notifier=Notifier([]),
+                          start=START, window_days=3, now=NOW,
+                          provider_factory=lambda spec, state=None, **kw: Refusing(state=state),
+                          limiter=limiter)
+        status = store.get_scan_status(self.conn)
+        self.assertEqual(status.state, store.SCAN_IDLE)
+        self.assertIn("skipped", status.detail)
+
+
+# ------------------------------- truncated responses (found live 2026-07-28) ----
+
+class TestReserveAmericaTruncatedPages(unittest.TestCase):
+    """A short page must never be read as a short directory.
+
+    Found by running the real enumeration: this host ends roughly half its
+    chunked responses without the terminating chunk. A page cut off mid-`<head>`
+    is HTTP 200, looks like HTML, and parses to zero park rows — identical to
+    the end of the directory. Enumeration stopped at 25 of 65 Oregon parks,
+    alphabetically A through C, which drops Reehers and everything after it.
+    """
+
+    def setUp(self):
+        from app.providers.reserveamerica import ReserveAmericaProvider
+        self.cls = ReserveAmericaProvider
+        self.full = (FIXTURES / "ra_directory_or.html").read_text()
+        # Cut where the live failures cut: before the listing ever renders.
+        cut = self.full.find("<table")
+        self.truncated = self.full[:cut] if cut > 0 else self.full[:200]
+
+    def provider(self, pages):
+        """`pages` are page bodies served in order; then the full page repeats."""
+        served = list(pages)
+        calls = []
+
+        def fetcher(path, params):
+            calls.append((path, params.get("startIdx")))
+            if path != "campgroundDirectoryList.do":
+                raise AssertionError(f"unexpected path {path}")
+            return served.pop(0) if served else self.full
+
+        p = self.cls("OR", "oregonstateparks.reserveamerica.com",
+                     delay=0, fetcher=fetcher)
+        return p, calls
+
+    def test_a_truncated_page_is_not_mistaken_for_a_complete_one(self):
+        from app.providers.reserveamerica import page_is_complete
+        self.assertTrue(page_is_complete(self.full))
+        self.assertFalse(page_is_complete(self.truncated))
+
+    def test_a_truncated_page_is_retried_once_before_giving_up(self):
+        # Not a block signal — nobody asked us to stop — so one paced retry.
+        p, calls = self.provider([self.truncated, self.full])
+        parks = p.list_campgrounds()
+        self.assertGreater(len(parks), 0)
+        self.assertEqual(calls[0], calls[1])          # the same page, asked twice
+
+    def test_two_truncated_pages_raise_rather_than_return_a_short_list(self):
+        from app.providers.reserveamerica import IncompleteDirectory
+        p, _ = self.provider([self.truncated, self.truncated])
+        with self.assertRaises(IncompleteDirectory):
+            p.list_campgrounds()
+
+    def test_the_exact_live_failure_no_longer_silently_truncates(self):
+        # Page 1 fine, page 2 truncated both times. The old code returned page
+        # 1's parks and called that the whole directory; now it refuses.
+        from app.providers.reserveamerica import IncompleteDirectory
+        p, _ = self.provider([self.full, self.truncated, self.truncated])
+        with self.assertRaises(IncompleteDirectory):
+            p.list_campgrounds()
+
+    def test_a_refused_directory_leaves_the_existing_catalog_alone(self):
+        # §8k: refusing an update is right, because a partial directory looks
+        # like an answer. What we already knew must survive it.
+        from app.providers.reserveamerica import IncompleteDirectory
+        conn = make_db()
+        self.addCleanup(conn.close)
+        catalog.seed_catalog(conn, seed=[
+            Campground(provider="ReserveAmerica:OR", id="412704",
+                       name="Reehers Camp Horse Camp", state="OR")], now=NOW)
+        p, _ = self.provider([self.truncated, self.truncated])
+        with self.assertRaises(IncompleteDirectory):
+            p.list_campgrounds()
+        self.assertIsNotNone(
+            store.get_campground(conn, "ReserveAmerica:OR", "412704"))
+
+
+class TestReserveAmericaTransport(unittest.TestCase):
+    def test_a_plain_get_does_not_hard_depend_on_httpx(self):
+        # httpx is in requirements.txt but is not installable everywhere, and
+        # this is one GET with no session state.
+        import app.providers.reserveamerica as ra
+        self.assertTrue(callable(ra._fetch_url))
+
+
+# ------------------------------- seed / provider key agreement (2026-07-28) ----
+
+class TestSeedKeysMatchProviders(unittest.TestCase):
+    """The seed's provider keys must be the ones providers actually emit.
+
+    The seed carried `provider: "ReserveAmerica"` while the provider names
+    itself `ReserveAmerica:OR`. Both the availability join and the §8k
+    missing-from-live check are keyed on that string, so Reehers sat in the
+    catalog permanently unknown, unlocated, and unable to receive the
+    availability found for the very same park.
+    """
+
+    def setUp(self):
+        self.seed = catalog.load_seed()
+
+    def test_every_seed_provider_is_one_a_provider_would_emit(self):
+        emitted = set()
+        for spec in ("RecreationDotGov", "ReserveAmerica:OR", "Mock"):
+            emitted.add(build_provider(spec, state="OR").name)
+        used = {c.provider for c in self.seed}
+        self.assertTrue(used, "seed is empty")
+        self.assertEqual(used - emitted, set(),
+                         f"seed uses provider keys nothing emits: {used - emitted}")
+
+    def test_build_provider_name_keeps_the_instance_suffix(self):
+        # Dropping it disabled the never-shrink check for ReserveAmerica.
+        self.assertEqual(catalog.build_provider_name("ReserveAmerica:OR"),
+                         "ReserveAmerica:OR")
+        self.assertEqual(catalog.build_provider_name("ReserveAmerica:OR"),
+                         build_provider("ReserveAmerica:OR").name)
+        self.assertEqual(catalog.build_provider_name("RecreationDotGov"),
+                         "RecreationDotGov")
+        self.assertEqual(catalog.build_provider_name("Mock"), "Mock")
+
+    def test_reehers_is_seeded_under_the_live_key_with_coordinates(self):
+        reehers = [c for c in self.seed if "Reehers" in c.name]
+        self.assertEqual(len(reehers), 1, "Reehers must appear exactly once")
+        cg = reehers[0]
+        self.assertEqual(cg.provider, "ReserveAmerica:OR")
+        self.assertEqual(cg.id, "412704")
+        self.assertTrue(cg.has_location, "coordinates were enumerated live")
+
+    def test_availability_reaches_the_seeded_pin(self):
+        # The join that was silently broken: same park, two different keys.
+        conn = make_db()
+        self.addCleanup(conn.close)
+        catalog.seed_catalog(conn)
+        store.upsert_availability(conn, [a_site(
+            provider="ReserveAmerica:OR", campsite_id="s1",
+            facility_id="412704", state="OR")], now=NOW)
+        pin = [p for p in store.map_view(conn) if p["id"] == "412704"][0]
+        self.assertEqual(pin["open_sites"], 1)
+        self.assertTrue(pin["located"])
+
+    def test_the_whole_oregon_directory_is_seeded_not_a_shortlist(self):
+        # 65 parks enumerated live 2026-07-28; a shortlist is the Reehers bug.
+        ra = [c for c in self.seed if c.provider == "ReserveAmerica:OR"]
+        self.assertGreaterEqual(len(ra), 65)
+        self.assertTrue(all(c.has_location for c in ra),
+                        "the directory carries coordinates for every park")
+
+
+class TestScopeComesFromTheCatalog(DBTestCase):
+    """A provider that won't crawl blind gets its scope from the catalog."""
+
+    def setUp(self):
+        super().setUp()
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="ReserveAmerica:OR", id=str(i),
+                       name=f"Park {i}", state="OR")
+            for i in range(1, 4)
+        ], now=NOW)
+        self.source = parse_config({"sources": [
+            {"label": "Oregon State Parks", "provider": "ReserveAmerica:OR",
+             "state": "OR", "campground_ids": []}]}).sources[0]
+
+    def test_empty_config_scope_expands_to_every_catalogued_park(self):
+        provider = build_provider("ReserveAmerica:OR", state="OR")
+        units = scanner.plan_source(
+            self.conn, self.source, provider, START, START + timedelta(days=3))
+        self.assertEqual([u.scope for u in units], [["1"], ["2"], ["3"]])
+        self.assertEqual([u.label for u in units], ["Park 1", "Park 2", "Park 3"])
+
+    def test_an_empty_catalog_yields_no_units_rather_than_a_blind_crawl(self):
+        conn = make_db()
+        self.addCleanup(conn.close)
+        provider = build_provider("ReserveAmerica:OR", state="OR")
+        units = scanner.plan_source(
+            conn, self.source, provider, START, START + timedelta(days=3))
+        self.assertEqual(units, [])
+
+    def test_providers_that_can_enumerate_are_left_alone(self):
+        provider = MockProvider(state="OR")
+        self.assertFalse(getattr(provider, "requires_scope", False))
+        source = parse_config({"sources": [
+            {"label": "Mock OR", "provider": "Mock", "state": "OR"}]}).sources[0]
+        units = scanner.plan_source(
+            self.conn, source, provider, START, START + timedelta(days=3))
+        self.assertEqual(len(units), 1)
+        self.assertEqual(units[0].scope, [])
+
+
+if __name__ == "__main__":
+    unittest.main()

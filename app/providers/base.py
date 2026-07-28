@@ -90,6 +90,16 @@ class Campground:
 
 class Provider(ABC):
     name: str
+    #: The host this provider talks to, if it is known — the key the shared
+    #: rate limiter spaces requests by (docs/scanning-design.md). `None` is
+    #: honest for providers that reach several hosts or none at all; the
+    #: limiter then paces them by provider name at the conservative default.
+    host: Optional[str] = None
+    #: True when `search()` refuses to run without `campground_ids`. Such a
+    #: provider gets its scope filled in from the catalog — the known universe
+    #: (§8k) — rather than from a hand-written list in config, which is how a
+    #: shortlist creeps back in.
+    requires_scope: bool = False
 
     @abstractmethod
     def search(self, req: SearchRequest) -> list[Campsite]:

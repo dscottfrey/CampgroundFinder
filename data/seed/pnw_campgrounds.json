@@ -1,7 +1,7 @@
 {
   "_meta": {
-    "note": "OR+WA federal campgrounds enumerated live from the RIDB facilities directory (activity=CAMPING) on 2026-07-27, paged at 50/request with a 2s pause. ReserveAmerica/PerfectMind/Campspot/ParksCanada entries are NOT here yet - those providers are not built. Regenerate with scripts/manage.py catalog-refresh --write-seed",
-    "count": 546
+    "note": "recreation.gov via RIDB 2026-07-27; ReserveAmerica Oregon directory enumerated live 2026-07-28 (65 parks, all with coordinates)",
+    "count": 610
   },
   "campgrounds": [
     {
@@ -5455,13 +5455,653 @@
       "reservation_type": "first_come"
     },
     {
-      "provider": "ReserveAmerica",
+      "provider": "ReserveAmerica:OR",
+      "id": "402126",
+      "name": "Beverly Beach State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.7297222,
+      "longitude": -124.0563889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402130",
+      "name": "Devils Lake State Recreation Area",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.9708333,
+      "longitude": -124.0111111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402146",
+      "name": "Cape Lookout State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.3527778,
+      "longitude": -123.9711111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402155",
+      "name": "Beachside State Recreation Site",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.3791667,
+      "longitude": -124.0888889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402165",
+      "name": "South Beach State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.6041667,
+      "longitude": -124.0625,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402178",
+      "name": "Fort Stevens State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 46.2005556,
+      "longitude": -123.9697222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402191",
+      "name": "Nehalem Bay State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.6986111,
+      "longitude": -123.9347222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402235",
+      "name": "Silver Falls State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.8666667,
+      "longitude": -122.65,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402241",
+      "name": "Detroit Lake State Recreation Area",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.7272222,
+      "longitude": -122.1780556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402247",
+      "name": "Benson State Recreation Area",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.5788806,
+      "longitude": -122.1275,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402251",
+      "name": "Dabney State Recreation Area",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.5176583,
+      "longitude": -122.3522222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402257",
+      "name": "Guy  W. Talbot State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.537325,
+      "longitude": -122.2272111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402267",
+      "name": "Memaloose State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.6958333,
+      "longitude": -121.3316667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402270",
+      "name": "Rooster Rock State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.5442444,
+      "longitude": -122.2360944,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402284",
+      "name": "Milo McIver State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.3061111,
+      "longitude": -122.3722222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402294",
+      "name": "L.L. Stub Stewart Memorial State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.7383333,
+      "longitude": -123.1997222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402334",
+      "name": "Jessie M. Honeyman Memorial State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 43.9288889,
+      "longitude": -124.105,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402343",
+      "name": "Umpqua Lighthouse State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 43.6616667,
+      "longitude": -124.1972222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402346",
+      "name": "William M. Tugman State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 43.5997222,
+      "longitude": -124.1777778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402348",
+      "name": "Carl G. Washburne Memorial State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.0930556,
+      "longitude": -124.0655556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402363",
+      "name": "Valley of the Rogue State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 42.4111111,
+      "longitude": -123.1486111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402382",
+      "name": "Sunset Bay State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 43.3336111,
+      "longitude": -124.3705556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402385",
+      "name": "Cape Blanco State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 42.8358333,
+      "longitude": -124.5608333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402388",
+      "name": "Humbug Mountain State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 42.6890361,
+      "longitude": -124.4312389,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402398",
+      "name": "Bullards Beach State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 43.1563889,
+      "longitude": -124.4088889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402446",
+      "name": "Cove Palisades State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.5436111,
+      "longitude": -121.2577778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402461",
+      "name": "Prineville Reservoir State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.1330556,
+      "longitude": -120.5611111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402465",
+      "name": "Deschutes River State Recreation Area",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.6344444,
+      "longitude": -120.9080556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402478",
+      "name": "Goose Lake State Recreation Area",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 41.9930639,
+      "longitude": -120.2960806,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402479",
+      "name": "LaPine State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 43.7763889,
+      "longitude": -121.5277778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402486",
+      "name": "Tumalo State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.1272222,
+      "longitude": -121.3308333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402488",
+      "name": "Collier Memorial State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 42.6462222,
+      "longitude": -121.8795722,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402497",
+      "name": "Catherine Creek State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.152675,
+      "longitude": -117.7434389,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "402499",
+      "name": "Emigrant Springs State Heritage Area",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.5413889,
+      "longitude": -118.4613889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405202",
+      "name": "Maud Williamson State Recreation Site",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.0952667,
+      "longitude": -123.0671528,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405203",
+      "name": "Sarah Helmick State Recreation Site",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.7809972,
+      "longitude": -123.2357222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405209",
+      "name": "Willamette Mission State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.0797278,
+      "longitude": -123.0306639,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405213",
+      "name": "Champoeg State Heritage Area",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.2536111,
+      "longitude": -122.9002778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405214",
+      "name": "Molalla River State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.2948639,
+      "longitude": -122.6960583,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405225",
+      "name": "Elijah Bristow State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 43.9363722,
+      "longitude": -122.8450306,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405228",
+      "name": "Fall Creek State Recreation Area",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 43.9714417,
+      "longitude": -122.6658972,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405229",
+      "name": "Jasper State Recreation Site",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 43.9898083,
+      "longitude": -122.9052639,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405231",
+      "name": "Lowell State Recreation Site",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 43.9230278,
+      "longitude": -122.796625,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405326",
+      "name": "Alfred A. Loeb State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 42.1130556,
+      "longitude": -124.1886111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405331",
+      "name": "Harris Beach State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 42.0672222,
+      "longitude": -124.3058333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405401",
+      "name": "Hat Rock State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.9061278,
+      "longitude": -119.1592972,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405408",
+      "name": "Wallowa Lake State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.2688889,
+      "longitude": -117.2105556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405413",
+      "name": "Farewell Bend State Recreation Area",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.3075,
+      "longitude": -117.2230556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405415",
+      "name": "Lake Owyhee State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 43.628,
+      "longitude": -117.2323611,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405422",
+      "name": "Clyde Holliday State Recreation Site",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.2458333,
+      "longitude": -119.0513889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "405428",
+      "name": "Unity Lake State Recreation Site",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.2941667,
+      "longitude": -118.11,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "409102",
+      "name": "Cottonwood Canyon State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.4783333,
+      "longitude": -120.4722222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "409402",
+      "name": "Ainsworth State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.5984389,
+      "longitude": -122.048975,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "409502",
+      "name": "Viento State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.6959167,
+      "longitude": -121.6705278,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "410302",
+      "name": "TouVelle State Recreation Site",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 42.4420694,
+      "longitude": -122.8903194,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "410852",
+      "name": "Smith Rock State Park",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.3691667,
+      "longitude": -121.1383333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "411502",
+      "name": "Northrup Creek Horse Camp",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 46.0193139,
+      "longitude": -123.4532667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "411602",
+      "name": "Arizona Beach State Rec Area",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 42.6890361,
+      "longitude": -124.4312389,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "411802",
+      "name": "Santiam Horse Camp",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.7299806,
+      "longitude": -122.4024972,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "412052",
+      "name": "Browns Camp OHV Campground",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.6107944,
+      "longitude": -123.3489639,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "412104",
+      "name": "Jones Creek Campground",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.5894,
+      "longitude": -123.5588,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "412154",
+      "name": "Nehalem Falls Campground",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.7202,
+      "longitude": -123.7718,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "412354",
+      "name": "Illinois River Forks SP",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 44.1337056,
+      "longitude": -120.6940667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
       "id": "412704",
       "name": "Reehers Camp Horse Camp",
-      "rec_area": "Tillamook State Forest",
+      "rec_area": null,
       "state": "OR",
-      "latitude": null,
-      "longitude": null,
+      "latitude": 45.7066667,
+      "longitude": -123.3380556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "ReserveAmerica:OR",
+      "id": "412705",
+      "name": "Stagecoach Horse Camp",
+      "rec_area": null,
+      "state": "OR",
+      "latitude": 45.6955083,
+      "longitude": -123.3871472,
       "reservation_type": "reservable"
     }
   ]

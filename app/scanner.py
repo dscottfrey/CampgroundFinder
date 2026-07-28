@@ -2,6 +2,17 @@
 
 Runs over CATALOGUED campgrounds, not over a search-hit list, so the map keeps
 showing full / unknown / stale pins instead of quietly losing them (§8k).
+
+**Pacing (docs/scanning-design.md).** A cycle is broken into units — one
+campground each where the source names campgrounds — and the units are taken
+**round-robin across sources**, one at a time, with a pause between rounds.
+Interleaving is the point: it maximises the gap between consecutive hits on any
+single host, which is what a rate limiter on the other end actually measures.
+The gaps themselves are enforced by the process-wide `pacing.RateLimiter`, which
+the on-demand path shares, so user-driven load queues instead of bursting.
+
+Everything the cycle does is written to `scan_status` as it happens, in plain
+language, so the interface can explain a wait instead of showing a spinner.
 """
 
 from __future__ import annotations
@@ -15,9 +26,10 @@ from typing import Iterable, Optional
 from . import store
 from .config import Config, Source
 from .notifier import Notifier
+from .pacing import Blocked, RateLimiter, shared_limiter
 from .providers import build_provider
 from .providers.base import STATUS_STALE, Campsite, Provider, SearchRequest
-from .util import utcnow
+from .util import iso, utcnow
 
 log = logging.getLogger(__name__)
 
@@ -31,6 +43,12 @@ class ScanReport:
     alerts_sent: int = 0
     provider_errors: dict[str, str] = field(default_factory=dict)
     statuses: dict[str, str] = field(default_factory=dict)
+    #: Units actually checked, and units abandoned because their host blocked
+    #: us. Skipped is not zero-by-default noise — it is the honest count of
+    #: what the map does *not* know this cycle.
+    scanned_units: int = 0
+    skipped_units: int = 0
+    blocked: dict[str, str] = field(default_factory=dict)
 
     def summary(self) -> str:
         parts = [
@@ -40,9 +58,297 @@ class ScanReport:
             f"pruned={self.pruned}",
             f"alerts={self.alerts_sent}",
         ]
+        if self.skipped_units:
+            parts.append(f"skipped={self.skipped_units}")
         if self.provider_errors:
             parts.append(f"errors={len(self.provider_errors)}")
         return " ".join(parts)
+
+
+@dataclass
+class ScanUnit:
+    """One campground's worth of work — the granularity of the round-robin.
+
+    Small units are what make interleaving possible. A source that names no
+    campgrounds is one unit covering the whole source, because that is all the
+    provider will let us ask for.
+    """
+
+    source: Source
+    provider: Provider
+    request: SearchRequest
+    label: str
+    scope: list[str] = field(default_factory=list)   # campground ids this unit covers
+
+
+# --------------------------------------------------------------------------
+# planning
+# --------------------------------------------------------------------------
+
+def plan_source(
+    conn: sqlite3.Connection,
+    source: Source,
+    provider: Provider,
+    start: date,
+    end: date,
+    nights: int = 1,
+) -> list[ScanUnit]:
+    """Split one source into units — one per named campground where possible."""
+
+    def request(campground_ids: list[str]) -> SearchRequest:
+        return SearchRequest(
+            provider=provider.name,
+            start_date=start,
+            end_date=end,
+            nights=nights,
+            rec_area_ids=source.rec_area_ids,
+            campground_ids=campground_ids,
+        )
+
+    campground_ids = list(source.campground_ids)
+    if not campground_ids and getattr(provider, "requires_scope", False):
+        # The provider won't crawl blind, so take the scope from the catalog —
+        # the known universe (§8k). Config naming individual parks would be a
+        # shortlist, which is exactly how Reehers went missing in the first
+        # place; the catalog is the one list that is meant to be complete.
+        campground_ids = [
+            cg.id for cg in store.list_campgrounds(
+                conn, provider=provider.name,
+                states=[source.state] if source.state else None,
+            )
+        ]
+        if not campground_ids:
+            log.warning(
+                "%s needs a scope and the catalog has no %s campgrounds yet — "
+                "run catalog-refresh first", source.label, provider.name,
+            )
+            return []
+
+    if not campground_ids:
+        # Nothing to split on. One unit for the source as a whole.
+        return [
+            ScanUnit(source=source, provider=provider, request=request([]),
+                     label=source.label, scope=[])
+        ]
+
+    units = []
+    for cg_id in campground_ids:
+        catalogued = store.get_campground(conn, provider.name, cg_id)
+        units.append(
+            ScanUnit(
+                source=source,
+                provider=provider,
+                request=request([cg_id]),
+                # Name it from the catalog so the progress line reads
+                # "Reehers Camp Horse Camp", not "412704".
+                label=catalogued.name if catalogued else cg_id,
+                scope=[cg_id],
+            )
+        )
+    return units
+
+
+def plan_scan(
+    conn: sqlite3.Connection,
+    config: Config,
+    start: date,
+    end: date,
+    nights: int = 1,
+    provider_factory=build_provider,
+    report: Optional[ScanReport] = None,
+) -> list[list[ScanUnit]]:
+    """One queue per source. The scanner takes one unit from each in turn."""
+    report = report or ScanReport()
+    queues: list[list[ScanUnit]] = []
+    for source in config.sources:
+        try:
+            provider = provider_factory(source.provider, state=source.state)
+        except Exception as exc:  # noqa: BLE001
+            # A misconfigured source must not take the whole cycle down with
+            # it — the other sources still have honest work to do.
+            log.warning("cannot build provider for %s: %s", source.label, exc)
+            report.provider_errors[source.label] = str(exc)
+            continue
+        units = plan_source(conn, source, provider, start, end, nights=nights)
+        if units:
+            queues.append(units)
+            report.scanned_sources += 1
+    return queues
+
+
+# --------------------------------------------------------------------------
+# progress
+# --------------------------------------------------------------------------
+
+class _Progress:
+    """Writes `scan_status` as the cycle runs (docs/scanning-design.md).
+
+    Deliberately plain-spoken: "Checking 8 campgrounds — 3 done" beats a
+    spinner, and a stated reason beats an unexplained pause.
+    """
+
+    def __init__(self, conn, total: int, now: Optional[datetime] = None):
+        self.conn = conn
+        self.total = total
+        self.done = 0
+        self.now = now
+        self.started = iso(now)
+        self.provider: Optional[str] = None
+        self.target: Optional[str] = None
+
+    def _write(self, state: str, message: str, detail: Optional[str] = None) -> None:
+        store.set_scan_status(
+            self.conn,
+            store.ScanStatus(
+                state=state,
+                provider=self.provider,
+                target=self.target,
+                done=self.done,
+                total=self.total,
+                message=message,
+                detail=detail,
+                started=self.started,
+            ),
+            now=self.now,
+        )
+
+    def _counts(self) -> str:
+        noun = "campground" if self.total == 1 else "campgrounds"
+        return f"Checking {self.total} {noun} — {self.done} done"
+
+    def starting(self, unit: ScanUnit) -> None:
+        self.provider = unit.provider.name
+        self.target = unit.label
+        self._write(store.SCAN_SCANNING, self._counts(), f"Checking {unit.label}")
+
+    def waiting(self, host: str, seconds: float, label: Optional[str]) -> None:
+        """Fired by the rate limiter before it sleeps — the honest reason."""
+        self._write(
+            store.SCAN_WAITING,
+            self._counts(),
+            f"Waiting {seconds:.0f}s before the next request to {host}",
+        )
+
+    def finished(self, unit: ScanUnit) -> None:
+        self.done += 1
+        self._write(store.SCAN_SCANNING, self._counts(), f"Checked {unit.label}")
+
+    def blocked(self, unit: ScanUnit, reason: str, remaining: int) -> None:
+        self.provider = unit.provider.name
+        left = f"{remaining} left unchecked" if remaining else "nothing left to check"
+        self._write(
+            store.SCAN_BLOCKED,
+            self._counts(),
+            f"{unit.provider.name} asked us to stop, so we did — {left}. {reason}",
+        )
+
+    def idle(self, report: ScanReport) -> None:
+        self.provider = None
+        self.target = None
+        noun = "campground" if self.done == 1 else "campgrounds"
+        message = f"Checked {self.done} {noun}"
+        detail = None
+        if report.skipped_units:
+            detail = (
+                f"{report.skipped_units} skipped because a website asked us to "
+                f"slow down — they will show as last checked earlier"
+            )
+        self._write(store.SCAN_IDLE, message, detail)
+
+
+# --------------------------------------------------------------------------
+# running
+# --------------------------------------------------------------------------
+
+def run_unit(
+    conn: sqlite3.Connection,
+    unit: ScanUnit,
+    report: Optional[ScanReport] = None,
+    now: Optional[datetime] = None,
+) -> list[Campsite]:
+    """Search one unit and persist what it returns. Returns the NEW sites.
+
+    Fetches at the broadest level the source supports and filters locally
+    (§8k) — provider-side facets are not trusted to be complete.
+    """
+    report = report or ScanReport()
+    sites = unit.provider.search(unit.request)
+    for site in sites:
+        if site.state is None:
+            site.state = unit.source.state
+    new = store.upsert_availability(conn, sites, now=now)
+    report.found += len(sites)
+    report.newly_available += len(new)
+    report.scanned_units += 1
+    _stamp_catalog_statuses(
+        conn, unit.provider.name, unit.source, unit.scope, report, now=now
+    )
+    return new
+
+
+def run_plan(
+    conn: sqlite3.Connection,
+    queues: list[list[ScanUnit]],
+    report: Optional[ScanReport] = None,
+    round_pause: float = 0.0,
+    limiter: Optional[RateLimiter] = None,
+    now: Optional[datetime] = None,
+) -> list[Campsite]:
+    """Work the queues round-robin: one unit per source, then round again.
+
+    Finishing one provider before starting the next would stack every request
+    to a single host back to back. Interleaving spreads them out for free.
+    """
+    report = report or ScanReport()
+    limiter = limiter or shared_limiter()
+    queues = [list(q) for q in queues]
+    total = sum(len(q) for q in queues)
+    progress = _Progress(conn, total=total, now=now)
+    fresh: list[Campsite] = []
+
+    previous_on_wait = limiter.on_wait
+    limiter.on_wait = progress.waiting
+    try:
+        while any(queues):
+            worked = False
+            for queue in queues:
+                if not queue:
+                    continue
+                unit = queue.pop(0)
+                worked = True
+                progress.starting(unit)
+                try:
+                    fresh.extend(run_unit(conn, unit, report, now=now))
+                except Blocked as exc:
+                    # Stop dead. Everything still queued for this source is
+                    # abandoned for the cycle and marked stale, because "we
+                    # didn't look" must never read as "there's nothing there".
+                    reason = str(exc)
+                    log.warning("blocked on %s: %s", unit.provider.name, reason)
+                    report.blocked[unit.source.label] = reason
+                    report.provider_errors[unit.source.label] = reason
+                    abandoned = [unit] + queue
+                    report.skipped_units += len(abandoned)
+                    for pending in abandoned:
+                        _mark_stale(conn, pending, "blocked by provider", now=now)
+                    progress.blocked(unit, reason, remaining=len(queue))
+                    queue.clear()
+                    continue
+                except Exception as exc:  # noqa: BLE001 - a dead source degrades, never empties
+                    log.warning("scan failed for %s: %s", unit.label, exc)
+                    report.provider_errors[unit.source.label] = str(exc)
+                    _mark_stale(conn, unit, "live check failed", now=now)
+                progress.finished(unit)
+            # A pause between rounds, on top of the per-host spacing. Cheap
+            # politeness on a run nobody is waiting for.
+            if worked and any(queues):
+                limiter.pause(round_pause)
+    finally:
+        limiter.on_wait = previous_on_wait
+        # Written even if the cycle is interrupted: "Checked 3 campgrounds" is
+        # still true, and a status left reading "scanning" forever is not.
+        progress.idle(report)
+    return fresh
 
 
 def scan_source(
@@ -55,49 +361,42 @@ def scan_source(
     report: Optional[ScanReport] = None,
     now: Optional[datetime] = None,
 ) -> list[Campsite]:
-    """Search one source and persist what it returns.
+    """Scan a single source end to end. Paced, but with nothing to interleave.
 
-    Fetches at the broadest level the source supports and filters locally
-    (§8k) — provider-side facets are not trusted to be complete.
+    Kept for callers that want one source on its own; `scan_once` goes through
+    `plan_scan`/`run_plan` so it can round-robin.
     """
     report = report or ScanReport()
-    provider: Provider = provider_factory(source.provider, state=source.state)
-    req = SearchRequest(
-        provider=provider.name,
-        start_date=start,
-        end_date=end,
-        nights=nights,
-        rec_area_ids=source.rec_area_ids,
-        campground_ids=source.campground_ids,
-    )
     try:
-        sites = provider.search(req)
-    except Exception as exc:  # noqa: BLE001 - a dead source degrades, never empties
-        log.warning("scan failed for %s: %s", source.label, exc)
+        provider = provider_factory(source.provider, state=source.state)
+    except Exception as exc:  # noqa: BLE001
         report.provider_errors[source.label] = str(exc)
-        _mark_source_stale(conn, source, provider.name, now=now)
         return []
-
-    for site in sites:
-        if site.state is None:
-            site.state = source.state
-    new = store.upsert_availability(conn, sites, now=now)
-    report.found += len(sites)
-    report.newly_available += len(new)
-    _stamp_catalog_statuses(conn, provider.name, source, sites, report, now=now)
-    return new
+    units = plan_source(conn, source, provider, start, end, nights=nights)
+    return run_plan(conn, [units], report=report, now=now)
 
 
-def _mark_source_stale(
+def _mark_stale(
     conn: sqlite3.Connection,
-    source: Source,
-    provider_name: str,
+    unit: ScanUnit,
+    reason: str,
     now: Optional[datetime] = None,
 ) -> None:
-    """A failed live check downgrades pins to stale — it never deletes them."""
+    """A failed or skipped check downgrades pins to stale — it never deletes.
+
+    Scoped to what the unit actually covers: one park's failure does not make
+    the rest of the state look unchecked.
+    """
+    provider_name = unit.provider.name
+    if unit.scope:
+        for cg_id in unit.scope:
+            store.set_campground_status(
+                conn, provider_name, cg_id, STATUS_STALE, reason, now=now
+            )
+        return
     for cg in store.list_campgrounds(conn, provider=provider_name):
         store.set_campground_status(
-            conn, cg.provider, cg.id, STATUS_STALE, "live check failed", now=now
+            conn, cg.provider, cg.id, STATUS_STALE, reason, now=now
         )
 
 
@@ -105,16 +404,16 @@ def _stamp_catalog_statuses(
     conn: sqlite3.Connection,
     provider_name: str,
     source: Source,
-    sites: Iterable[Campsite],
+    scope: Iterable[str],
     report: ScanReport,
     now: Optional[datetime] = None,
 ) -> None:
-    # Scope the stamp to what this source actually covers, so a second source
-    # on the same provider isn't prematurely marked full before its own scan.
+    # Scope the stamp to what this unit actually covers, so a park the cycle
+    # hasn't reached yet isn't prematurely marked full.
     catalogued = store.list_campgrounds(
         conn, provider=provider_name, states=[source.state] if source.state else None
     )
-    scoped = source.campground_ids
+    scoped = set(scope) or set(source.campground_ids)
     for cg in catalogued:
         if scoped and cg.id not in scoped:
             continue
@@ -175,9 +474,10 @@ def scan_once(
     window_days: Optional[int] = None,
     nights: int = 1,
     provider_factory=build_provider,
+    limiter: Optional[RateLimiter] = None,
     now: Optional[datetime] = None,
 ) -> ScanReport:
-    """One full cycle: scan sources → stamp catalog → alert → prune."""
+    """One full cycle: plan → round-robin scan → stamp catalog → alert → prune."""
     now = now or utcnow()
     start = start or now.date()
     # `is None`, not `or` — a 0-day window (just tonight) is a real request.
@@ -190,15 +490,14 @@ def scan_once(
     store.seed_watches(conn, config.watches, now=now)
 
     report = ScanReport()
-    fresh: list[Campsite] = []
-    for source in config.sources:
-        report.scanned_sources += 1
-        fresh.extend(
-            scan_source(
-                conn, source, start, end, nights=nights,
-                provider_factory=provider_factory, report=report, now=now,
-            )
-        )
+    queues = plan_scan(
+        conn, config, start, end, nights=nights,
+        provider_factory=provider_factory, report=report,
+    )
+    fresh = run_plan(
+        conn, queues, report=report,
+        round_pause=config.round_pause_seconds, limiter=limiter, now=now,
+    )
 
     run_watches(conn, fresh, notifier, config=config, report=report, now=now)
 

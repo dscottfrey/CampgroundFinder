@@ -25,16 +25,33 @@ before enabling a non-federal source.
 from __future__ import annotations
 
 import logging
-import time
 from typing import Optional
 
+from ..pacing import RateLimiter, shared_limiter
 from .base import Campground, Campsite, Provider, SearchRequest
 
 log = logging.getLogger(__name__)
 
-#: Seconds between paged directory requests. Deliberately unhurried — the
-#: catalog scrape is the heavy one, it runs at most a few times a year, and it
-#: must never cost us the home IP (§13).
+#: Hosts this adapter talks to, for the shared limiter. camply owns the socket,
+#: so we can only pace it from the outside — by holding the process's request
+#: slot around each call it makes.
+RIDB_HOST = "ridb.recreation.gov"
+
+#: Only filled in where the host is actually known. An unlisted provider is
+#: paced by its own name at the limiter's conservative default rather than
+#: being guessed into somebody else's budget.
+PROVIDER_HOSTS = {
+    "RecreationDotGov": RIDB_HOST,
+    "RecreationDotGovDailyTicket": RIDB_HOST,
+    "RecreationDotGovDailyTimedEntry": RIDB_HOST,
+    "RecreationDotGovTicket": RIDB_HOST,
+    "RecreationDotGovTimedEntry": RIDB_HOST,
+}
+
+#: Seconds between paged directory requests, documented here but enforced by
+#: `pacing.HOST_DELAYS`. Deliberately unhurried — the catalog scrape is the
+#: heavy one, it runs at most a few times a year, and it must never cost us the
+#: home IP (§13).
 DIRECTORY_PAGE_DELAY = 2.0
 DIRECTORY_PAGE_SIZE = 50
 
@@ -58,7 +75,12 @@ def _load_camply():
 class CamplyProvider(Provider):
     """Wraps one camply search class (e.g. provider name "RecreationDotGov")."""
 
-    def __init__(self, provider_name: str, state: Optional[str] = None):
+    def __init__(
+        self,
+        provider_name: str,
+        state: Optional[str] = None,
+        limiter: Optional[RateLimiter] = None,
+    ):
         # Accept both the verified key ("RecreationDotGov") and the plan's
         # search-class spelling ("SearchRecreationDotGov").
         self.provider_name = self._normalize(provider_name)
@@ -66,6 +88,12 @@ class CamplyProvider(Provider):
         # camply's payload doesn't reliably carry a state, so the source config
         # is the source of truth for the region selector (§6 build note).
         self.state = state
+        self.limiter = limiter or shared_limiter()
+        self.host = PROVIDER_HOSTS.get(self.provider_name)
+        #: What the limiter spaces by. Falls back to the provider name so an
+        #: unmapped provider still gets its own bucket — at the default 6s,
+        #: not at RIDB's 2s, because we don't know whose door we're knocking on.
+        self._pacing_key = self.host or self.provider_name
 
     @staticmethod
     def _normalize(provider_name: str) -> str:
@@ -98,9 +126,17 @@ class CamplyProvider(Provider):
             offline_search=False,
         )
         # One-shot search. continuous=False returns a plain list.
-        found = finder.get_matching_campsites(
-            log=False, verbose=False, continuous=False, notification_provider="silent",
-        )
+        #
+        # camply owns the HTTP here and fires several requests inside this one
+        # call, so we cannot space them individually. Holding the process's
+        # request slot for the whole call is what we *can* do: it guarantees no
+        # other provider adds traffic while camply is talking, and it books the
+        # per-host gap afterwards. camply's own internal pacing is unverified.
+        with self.limiter.slot(self._pacing_key, label=self.name):
+            found = finder.get_matching_campsites(
+                log=False, verbose=False, continuous=False,
+                notification_provider="silent",
+            )
         return [self._normalize_site(c) for c in found]
 
     def _normalize_site(self, c) -> Campsite:
@@ -178,21 +214,23 @@ class CamplyProvider(Provider):
         """Page the RIDB `facilities` directory for one state, gently.
 
         Enumerates the WHOLE directory for the state — never a shortlist (§8k).
-        Sleeps between pages; this runs a few times a year, not continuously.
+        Paced by the shared limiter; this runs a few times a year, not
+        continuously.
         """
         out: list[Campground] = []
         offset = 0
         total = None
         while True:
-            payload = client.get_ridb_data(
-                "facilities",
-                {
-                    "state": state,
-                    "activity": "CAMPING",
-                    "limit": DIRECTORY_PAGE_SIZE,
-                    "offset": offset,
-                },
-            )
+            with self.limiter.slot(self._pacing_key, label=f"{self.name} directory {state}"):
+                payload = client.get_ridb_data(
+                    "facilities",
+                    {
+                        "state": state,
+                        "activity": "CAMPING",
+                        "limit": DIRECTORY_PAGE_SIZE,
+                        "offset": offset,
+                    },
+                )
             if not isinstance(payload, dict):
                 break
             records = payload.get("RECDATA") or []
@@ -210,7 +248,8 @@ class CamplyProvider(Provider):
             offset += DIRECTORY_PAGE_SIZE
             if not records or (total is not None and offset >= total):
                 break
-            time.sleep(DIRECTORY_PAGE_DELAY)
+            # No sleep here — the limiter above already spaced this loop, and
+            # sleeping twice would silently double the documented interval.
         return out
 
     @staticmethod

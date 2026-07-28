@@ -7,32 +7,47 @@ catalog** (not just search hits), and alerts you when a spot you want opens up.
 Design and rationale live in [`campgroundfinder-build-plan.md`](campgroundfinder-build-plan.md).
 Section references below (§5, §8k, …) point into it.
 
-## Status — last updated 2026-07-27
+## Status — last updated 2026-07-28
 
 | Step | Scope | State |
 |---|---|---|
 | 1 | Scaffold, providers, `store.py`, core tests | **done** |
 | 2 | camply adapter | **done, verified live** against recreation.gov |
-| 3 | `catalog.py`, `scanner.py`, `notifier.py`, `config.py`, `manage.py` | **done**; 546 real campgrounds seeded |
+| 3 | `catalog.py`, `scanner.py`, `notifier.py`, `config.py`, `manage.py` | **done**; 610 real campgrounds seeded |
 | 4 | Enrichers (AQI, wildfire, water, weather) + three-state filters | not started |
 | 5 | FastAPI + Leaflet UI | **partial** — a stdlib server and list view exist; no map |
 | 6 | Docker + Tailscale + multi-user | not started |
 | 7 | PerfectMind provider | not started |
 | 8 | ReserveAmerica | **Oregon done**; GoingToCamp blocked, others not started |
+| — | Pacing: shared rate limiter, round-robin, scanner status | **done** (`docs/scanning-design.md` steps 1–2) |
 
-**77 tests, standard library only, no network required.**
+**121 tests, standard library only, no network required.**
 
 ### What actually works
 
-- **546 real campgrounds** — 355 Oregon, 191 Washington — enumerated live from
-  recreation.gov's RIDB directory with coordinates and reservable flags.
+- **610 real campgrounds** — 545 from recreation.gov's RIDB directory, plus all
+  **65 Oregon state parks** enumerated live from ReserveAmerica on 2026-07-28,
+  every one with coordinates. Reehers Camp Horse Camp is in there at
+  45.7067, -123.3381.
 - **recreation.gov availability**, through camply. Verified: Trillium
   (campground 232831) returns real openings with booking links.
-- **ReserveAmerica for Oregon** — all 65 state parks with coordinates, plus
-  per-park availability. Reehers Camp Horse Camp included, parkId 412704,
-  20 horse sites and 14 tent sites.
+- **ReserveAmerica for Oregon** — all 65 state parks in the committed seed
+  with coordinates, plus per-park availability. Reehers Camp Horse Camp,
+  parkId 412704, 20 horse sites and 14 tent sites. A source with an empty
+  `campground_ids` now scans every park in the catalog, one per request —
+  about 6m30s for a full Oregon pass.
 - **A web page** — `manage.py demo`, then http://127.0.0.1:8080. List view
   only; the map is not built.
+- **Pacing that can't be bypassed.** Every upstream request in the process goes
+  through one rate limiter (`app/pacing.py`): one request at a time, 6s apart
+  for ReserveAmerica and 2s for recreation.gov, spaced from when the last
+  response landed. A 403 or 429 latches that host off for an hour instead of
+  retrying. Sources are scanned **round-robin**, one campground at a time, so
+  consecutive hits on any single host are as far apart as possible.
+- **The scanner says what it's doing.** A `scan_status` row carries
+  "Checking 8 campgrounds — 3 done" plus the reason for any wait, and rides
+  along in `/api/state`. Parks a block prevented us from checking are marked
+  **stale**, never "full" — "we didn't look" must not read as "nothing there".
 
 ### Where we left off — read this first
 
@@ -42,10 +57,41 @@ fails with `KeyError: -2147483647`, which is a *real park id* (Alta Lake State
 Park), not a bug sentinel. A direct-to-endpoint fallback is documented, taken
 from CampSage's page source. See `docs/reserveamerica-handoff.md`.
 
-**Next build step, per `docs/scanning-design.md`:** pacing and round-robin in
-`scanner.py`, which currently has **no throttling at all**. That matters before
-any wider scanning happens, because this runs on a home connection that must
-not get blocked.
+**Next build step, per `docs/scanning-design.md`:** step 3 — the background
+sweep with adaptive cadence, then step 4 (on-demand refresh, all four guards)
+and step 5 (zoom-based queue priority). Steps 1 and 2 — the shared rate limiter
+and the scanner status row — are done, so the pacing groundwork wider scanning
+needed is in place.
+
+One caveat carried forward: camply owns its own HTTP, so its several internal
+requests per search can't be spaced individually. The adapter holds the shared
+request slot around the whole call, but camply's internal pacing is unverified —
+worth checking before recreation.gov carries on-demand traffic.
+
+### The bug the live run found (2026-07-28)
+
+Worth reading before trusting any pager in this codebase.
+
+ReserveAmerica sends `Transfer-Encoding: chunked` and **ends about half its
+responses without the terminating chunk**. A truncated page is HTTP 200, looks
+like HTML, and parses to zero park rows — which was indistinguishable from the
+end of the directory, because the loop's terminator was "this page had no new
+parks". Enumeration stopped at **25 of 65 parks**, alphabetically A through C.
+Reehers starts with R. The acceptance case of this entire project would have
+silently vanished again, from a brand-new cause.
+
+Two fixes, both in `app/providers/reserveamerica.py`:
+
+1. Every page is checked for completeness — the listing table's close, which is
+   present in complete pages and absent from every truncated one we've seen.
+   Checked on *all* pages, not just empty ones: a page cut off mid-listing
+   yields some rows, advances the offset, and leaves a hole in the middle.
+   A truncated page is retried once (it is not a block signal), then
+   `IncompleteDirectory` is raised rather than a short list returned.
+2. The transport prefers `requests` over the standard library. Measured on the
+   same page: `requests` 176 KB complete, `urllib` 74 KB truncated every time.
+   `http.client`'s chunked decoder is the stricter one, and this server needs
+   the tolerant one.
 
 ### Two cautions worth remembering
 
@@ -87,7 +133,7 @@ Steps 1–3 run on the **standard library alone** — the tests need no
 dependencies at all:
 
 ```bash
-python3 -m unittest discover -s tests -t . -v     # 77 tests, no network
+python3 -m unittest discover -s tests -t . -v     # 121 tests, no network
 ```
 
 To see the whole pipeline with no deps and no network, point a config at the
@@ -109,8 +155,9 @@ manage.py list-watches [--all]
 
 ```
 app/
-  providers/  base.py  mock.py  camply_provider.py  __init__.py   # §5, §6
+  providers/  base.py  mock.py  camply_provider.py  reserveamerica.py  __init__.py
   db.py  store.py  catalog.py  scanner.py  notifier.py  config.py  util.py
+  pacing.py                 # the one rate limiter every request goes through
 scripts/manage.py
 tests/test_core.py
 data/seed/pnw_campgrounds.json
@@ -150,10 +197,11 @@ these directly.
 ## Being a polite client
 
 recreation.gov and ReserveAmerica rate-limit and block aggressive callers (§13).
-Keep `scan_interval_minutes` at 30 (never below ~10), use a descriptive
-User-Agent, stagger providers, and back off on 429/403. Only the scheduled
-scanner talks upstream — the UI reads SQLite, so extra viewers cost zero
-upstream calls.
+Keep `scan_interval_minutes` at 30 (never below ~10) and use a descriptive
+User-Agent. Staggering and backoff are no longer left to good intentions:
+`app/pacing.py` enforces them for the whole process, and the on-demand path
+will share the same budget, so extra viewers queue rather than burst. Only the
+scanner talks upstream — the UI reads SQLite.
 
 ## Note on `samples/`
 

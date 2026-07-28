@@ -5,6 +5,13 @@
 
 home_base: { label: "Home", latitude: 45.52, longitude: -122.68 }
 scan_interval_minutes: 30        # be polite; don't go below ~10 (§13)
+
+# How long to pause after each round-robin pass over the sources, on top of the
+# per-host spacing (6s ReserveAmerica, 2s recreation.gov) that the shared rate
+# limiter always applies. Nobody is waiting on the background sweep, so this is
+# free politeness. See docs/scanning-design.md.
+round_pause_seconds: 5
+
 default_window_days: 60
 default_states: [OR, WA]
 
@@ -48,7 +55,10 @@ sources:
   #   provider: "PerfectMind:SanJuanCoWA"
   #   state: WA
   #   perfectmind: { host: sanjuancountywa.perfectmind.com, widget_id: d69eb041-59af-41a7-9182-35e8487e05c1 }
-  # - { label: "Oregon State Parks", provider: "ReserveAmerica:OR", state: OR, contract_code: OR, campground_ids: [] }  # §4d, step 8
+  # Oregon state parks. All 65 are in the seed with coordinates (enumerated
+  # live 2026-07-28), and an empty campground_ids means "every park in the
+  # catalog" — the scanner fills the scope in, one park per request.
+  - { label: "Oregon State Parks", provider: "ReserveAmerica:OR", state: OR, campground_ids: [] }
   # - { label: "BC Provincial Parks", provider: GoingToCamp, state: BC, rec_area_ids: [] }
   # - { label: "Parks Canada",        provider: "ParksCanada",  state: CA-NAT, rec_area_ids: [] }
 

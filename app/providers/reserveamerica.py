@@ -36,18 +36,19 @@ from __future__ import annotations
 import html
 import logging
 import re
-import time
 from datetime import date, timedelta
 from typing import Iterable, Optional
 from urllib.parse import urlencode
 
+from ..pacing import Blocked, RateLimiter, shared_limiter
 from .base import STATUS_UNKNOWN, Campground, Campsite, Provider, SearchRequest
 
 log = logging.getLogger(__name__)
 
 #: RA guards its traffic harder than any other source we use, and this runs
 #: from a home connection that must not get blocked (§13). Slower than the 2s
-#: we use for RIDB, on purpose.
+#: we use for RIDB, on purpose. The authoritative copy of this number lives in
+#: `pacing.HOST_DELAYS`, keyed by host — this is the documentation of it.
 REQUEST_DELAY = 6.0
 PAGE_SIZE = 25
 
@@ -85,50 +86,130 @@ def _clean(value: Optional[str]) -> Optional[str]:
     return html.unescape(value).strip() if value else None
 
 
+def page_is_complete(page: str) -> bool:
+    """Did the listing finish rendering, or did the connection die partway?
+
+    Verified live 2026-07-28: this host regularly ends a chunked response
+    without its terminating chunk. Roughly half the directory requests came
+    back cut off mid-`<head>` — HTTP 200, plausible HTML, and zero park rows,
+    which is indistinguishable from the end of the directory.
+
+    The signal is the **closing of the listing table**, not the closing of the
+    document, because that is what survives being saved as a trimmed excerpt
+    and is still absent from every truncated response we have seen. Measured
+    against three real pages: the complete live page has it, the truncated live
+    page does not, and the captured test fixture does.
+    """
+    tail = page.rstrip()
+    return tail.endswith("</html>") or "</table>" in page
+
+
+def _fetch_url(url: str) -> tuple[int, str]:
+    """GET a URL: httpx, else requests, else the standard library.
+
+    This is one plain GET with no session state, so it does not need a
+    particular client — but it does need a **tolerant** one. Measured against
+    this host on 2026-07-28, fetching the same directory page:
+
+    | client                | result                                  |
+    |-----------------------|-----------------------------------------|
+    | `requests` (urllib3)  | 176 KB, complete                        |
+    | `urllib` (http.client)| 74 KB, cut off mid-`<head>`, every time  |
+
+    The server sends `Transfer-Encoding: chunked` and ends the body without its
+    terminating chunk. urllib3 hands back what arrived; `http.client` raises
+    `IncompleteRead`, and the partial body it carries really is short. So the
+    stdlib path is a last resort that is known to fail on ReserveAmerica —
+    kept only so the module imports and runs somewhere with neither library.
+    Truncation is returned, never hidden: `page_is_complete` upstairs decides
+    whether to retry or refuse.
+    """
+    headers = {"User-Agent": USER_AGENT}
+
+    try:
+        import httpx
+    except ImportError:
+        pass
+    else:
+        response = httpx.get(url, headers=headers, follow_redirects=True, timeout=40.0)
+        return response.status_code, response.text
+
+    try:
+        import requests
+    except ImportError:
+        pass
+    else:
+        response = requests.get(url, headers=headers, timeout=40)
+        return response.status_code, response.text
+
+    import urllib.error
+    import urllib.request
+    from http.client import IncompleteRead
+
+    request = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(request, timeout=40) as response:
+            try:
+                raw = response.read()
+            except IncompleteRead as exc:
+                raw = exc.partial
+            return response.status, raw.decode("utf-8", "replace")
+    except urllib.error.HTTPError as exc:
+        return exc.code, exc.read().decode("utf-8", "replace")
+
+
 class ReserveAmericaProvider(Provider):
+    #: `search()` refuses an unscoped crawl, so the scanner fills the scope in
+    #: from the catalog — every park we know about, not a hand-picked few.
+    requires_scope = True
+
     def __init__(
         self,
         contract_code: str,
         host: str,
         state: Optional[str] = None,
-        delay: float = REQUEST_DELAY,
+        delay: Optional[float] = None,
         fetcher=None,
+        limiter: Optional[RateLimiter] = None,
     ):
         self.contract_code = contract_code
         self.host = host
         self.state = state or contract_code
-        self.delay = delay
         self.name = f"ReserveAmerica:{contract_code}"
         # Injectable so tests replay saved fixtures instead of hitting the site.
         self._fetch = fetcher or self._http_get
-        self._last_request = 0.0
+        # Pacing belongs to the process, not to this object — tier 1 and tier 2
+        # must share one budget (docs/scanning-design.md). `delay` overrides it
+        # with a private limiter, which is for tests replaying fixtures; real
+        # runs leave it None and go through the shared one.
+        if limiter is None:
+            limiter = (
+                shared_limiter()
+                if delay is None
+                else RateLimiter(delays={host: delay}, min_gap=delay, default_delay=delay)
+            )
+        self.limiter = limiter
+
+    @property
+    def delay(self) -> float:
+        return self.limiter.delay_for(self.host)
 
     # -- transport ---------------------------------------------------------
 
-    def _throttle(self) -> None:
-        elapsed = time.monotonic() - self._last_request
-        if self._last_request and elapsed < self.delay:
-            time.sleep(self.delay - elapsed)
-        self._last_request = time.monotonic()
-
     def _http_get(self, path: str, params: dict) -> str:
-        import httpx
-
-        self._throttle()
         url = f"https://{self.host}/{path}?{urlencode(params)}"
-        response = httpx.get(
-            url,
-            headers={"User-Agent": USER_AGENT},
-            follow_redirects=True,
-            timeout=40.0,
-        )
-        if response.status_code in (403, 429):
-            # Back off hard and stop; never retry into a block (§13).
-            raise BlockedByProvider(
-                f"{self.name} returned {response.status_code} — backing off"
-            )
-        response.raise_for_status()
-        return response.text
+        with self.limiter.slot(self.host, label=self.name):
+            status, text = _fetch_url(url)
+        if status in (403, 429):
+            # Back off hard and stop; never retry into a block (§13). Latching
+            # it on the shared limiter stops every *other* caller too — an
+            # on-demand refresh must not walk into a block the sweep just found.
+            reason = f"{self.name} returned {status} — backing off"
+            self.limiter.block(self.host, reason)
+            raise BlockedByProvider(reason)
+        if status >= 400:
+            raise RuntimeError(f"{self.name}: HTTP {status} for {path}")
+        return text
 
     # -- catalog -----------------------------------------------------------
 
@@ -137,14 +218,21 @@ class ReserveAmericaProvider(Provider):
         state: Optional[str] = None,
         rec_area_ids: Optional[list[str]] = None,
     ) -> list[Campground]:
-        """Walk the full park directory. Never a search, never a shortlist."""
+        """Walk the full park directory. Never a search, never a shortlist.
+
+        The terminator is "a **complete** page yielded no new parks". The
+        completeness half is not pedantry: verified live 2026-07-28, this host
+        truncates roughly half its responses, and a page cut off mid-`<head>`
+        parses to zero rows exactly like the end of the directory does. Without
+        the check, enumeration stopped silently at 25 of 65 Oregon parks —
+        alphabetically A through C, which drops Reehers and every park after
+        it. That is the Reehers disappearance all over again, from a new cause,
+        so a short directory now raises instead of being returned (§8k).
+        """
         parks: dict[str, Campground] = {}
         offset = 0
         while offset < 1000:                       # sanity bound
-            page = self._fetch(
-                "campgroundDirectoryList.do",
-                {"contractCode": self.contract_code, "startIdx": offset},
-            )
+            page = self._fetch_directory_page(offset)
             new = 0
             for park_id, name, lon, lat in _DIRECTORY_ROW.findall(page):
                 if park_id in parks:
@@ -161,12 +249,42 @@ class ReserveAmericaProvider(Provider):
                 )
                 new += 1
             # The directory wraps around to page 1 once you run past the end,
-            # so "no new parks" is the real terminator, not "no rows".
+            # so "no new parks" is the terminator — and it is only trustworthy
+            # because the page it came from was checked for completeness first.
             if new == 0:
                 break
             offset += PAGE_SIZE
         log.info("%s: %d parks in directory", self.name, len(parks))
         return list(parks.values())
+
+    def _fetch_directory_page(self, offset: int) -> str:
+        """One directory page, retried once if it arrives truncated.
+
+        Checked on **every** page, not only on empty ones: a response cut off
+        mid-listing yields some rows, which would advance the offset and skip
+        the parks it never delivered — a silent hole in the middle of the
+        catalog rather than a short tail.
+
+        A truncated 200 is not a block signal — nobody asked us to stop — so
+        one paced retry is fair. The rate limiter spaces it like any other
+        request; never more than one retry, and never on a 403/429.
+        """
+        params = {"contractCode": self.contract_code, "startIdx": offset}
+        page = self._fetch("campgroundDirectoryList.do", params)
+        if page_is_complete(page):
+            return page
+        log.warning(
+            "%s: truncated directory page at startIdx=%s — retrying once",
+            self.name, offset,
+        )
+        page = self._fetch("campgroundDirectoryList.do", params)
+        if page_is_complete(page):
+            return page
+        raise IncompleteDirectory(
+            f"{self.name}: the directory page at startIdx={offset} arrived "
+            f"truncated twice. Refusing to report a short directory as if it "
+            f"were the whole thing (§8k)."
+        )
 
     # -- per-park site inventory ------------------------------------------
 
@@ -325,5 +443,19 @@ class ReserveAmericaProvider(Provider):
             )
 
 
-class BlockedByProvider(RuntimeError):
-    """Raised on 403/429 so the caller stops rather than hammering."""
+class IncompleteDirectory(RuntimeError):
+    """The directory walk could not be completed, so no list is returned.
+
+    Raised instead of returning a short catalog. `catalog.refresh_catalog()`
+    treats an enumeration error as "keep what we have" (§8k), which is the
+    right outcome: a partial directory is worse than no update, because it
+    looks like an answer.
+    """
+
+
+class BlockedByProvider(Blocked):
+    """Raised on 403/429 so the caller stops rather than hammering.
+
+    A `pacing.Blocked` subclass so the scanner catches one exception type for
+    "this host has told us to stop", however it was discovered.
+    """

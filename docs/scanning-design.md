@@ -1,7 +1,12 @@
 # Scanning design — two tiers, one rate limiter
 
 Decided with Scott 2026-07-27. This governs everything that talks upstream.
-Nothing here is built yet; `scanner.py` currently has no pacing at all.
+
+> **STATUS 2026-07-28: steps 1 and 2 are built.** The shared rate limiter is
+> `app/pacing.py`; round-robin and progress recording are in `app/scanner.py`;
+> the status row is `scan_status` in `app/db.py` and rides along in
+> `/api/state`. Steps 3–5 (adaptive cadence, on-demand refresh, zoom priority)
+> are still design only.
 
 The hard constraint it exists to serve: **the app runs on Scott's home
 internet, and that connection must never get blocked.** Slow is acceptable.
@@ -115,10 +120,44 @@ display.
 
 ## Build order
 
-1. Pacing and round-robin in `scanner.py`, with the shared rate limiter.
-2. Scanner status recorded to the database for the progress widget.
+1. ~~Pacing and round-robin in `scanner.py`, with the shared rate limiter.~~
+   **Done 2026-07-28.**
+2. ~~Scanner status recorded to the database for the progress widget.~~
+   **Done 2026-07-28.**
 3. Background sweep with adaptive cadence.
 4. On-demand refresh with all four guards.
 5. Zoom-based queue priority.
 
 Steps 1 and 2 are prerequisites for everything else and need no UI.
+
+## How steps 1–2 landed
+
+- **`app/pacing.py`** owns every gap. Spacing is keyed by **host**, not by
+  provider, because that is what a rate limiter on the other end measures — two
+  providers on one host share its budget for free. An unlisted host gets the
+  **slow** default (6s), not the fast one.
+- The gap is measured **from when the last response landed** to the start of
+  the next request, so a slow response lengthens the gap and never shortens it.
+- A single process-wide lock is held across each upstream call. That is the
+  "one request at a time" rule made structural rather than conventional.
+- **403/429 latches the host off for an hour** on the *shared* limiter, so an
+  on-demand refresh cannot walk into a block the sweep just discovered. The
+  design says "skip that provider for the cycle"; an hour is the same rule with
+  a wider margin.
+- **A unit of work is one campground**, where the source names campgrounds.
+  That is the granularity the round-robin interleaves at. A source that names
+  none stays one unit — asking a provider for less isn't always possible.
+- When a block cuts a source short, **every unchecked park in its queue is
+  marked `stale`**. "We didn't look" must never render as "there's nothing
+  there" — the Reehers failure, inverted.
+- Progress is a single `scan_status` row: state, provider, target, done/total,
+  a display-ready `message`, and a `detail` giving the reason for a wait
+  ("Waiting 6s before the next request to oregonstateparks.reserveamerica.com").
+  `PACING_NOTE` — *"Going slowly on purpose so the camping websites don't block
+  us."* — lives in `pacing.py` next to the numbers it explains.
+
+**One thing to know before building step 4.** camply owns its own HTTP, so its
+several internal requests per search cannot be spaced individually. The adapter
+holds the process's request slot around the whole call, which stops *our* other
+providers piling on, but camply's internal pacing is unverified. Worth checking
+before recreation.gov carries on-demand traffic.

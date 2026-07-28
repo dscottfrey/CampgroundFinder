@@ -28,6 +28,10 @@ class Source:
 class Config:
     home_base: dict = field(default_factory=dict)
     scan_interval_minutes: int = 30
+    #: Extra pause between round-robin rounds, on top of the per-host spacing
+    #: the rate limiter enforces (docs/scanning-design.md). Nobody is waiting
+    #: on the background sweep, so this costs nothing that matters.
+    round_pause_seconds: float = 5.0
     default_window_days: int = 60
     default_states: list[str] = field(default_factory=lambda: ["OR", "WA"])
     notify: dict = field(default_factory=dict)
@@ -95,6 +99,7 @@ def parse_config(data: dict) -> Config:
     return Config(
         home_base=data.get("home_base") or {},
         scan_interval_minutes=int(data.get("scan_interval_minutes", 30)),
+        round_pause_seconds=float(data.get("round_pause_seconds", 5.0)),
         default_window_days=int(data.get("default_window_days", 60)),
         default_states=_as_str_list(data.get("default_states")) or ["OR", "WA"],
         nights_options=[int(n) for n in (data.get("nights_options") or [2, 3, 4])],

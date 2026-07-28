@@ -41,6 +41,10 @@ def build_state(conn, states=None) -> dict:
         "total": len(pins),
         "states": all_states,
         "last_checked": row["t"] if row else None,
+        # What the scanner is doing right now, in plain language. Shipped with
+        # every payload so a slow moment always has an explanation attached
+        # rather than needing a second request to find one.
+        "scan": store.get_scan_status(conn).as_dict(),
         "generated": iso(),
     }
 
