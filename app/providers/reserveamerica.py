@@ -109,6 +109,47 @@ def _clean(value: Optional[str]) -> Optional[str]:
     return html.unescape(value).strip() if value else None
 
 
+#: "20 Back-In" -> (20, "Back-In"); "Back-In" -> (None, "Back-In"); "" -> (None, None)
+_DRIVEWAY = re.compile(r"^\s*(?:(\d+)\s*)?(.*?)\s*$")
+
+
+def parse_driveway(value: Optional[str]) -> tuple[Optional[int], Optional[str]]:
+    """Split the Equip length/Driveway cell into (feet, manoeuvre)."""
+    if not value or not value.strip():
+        return None, None
+    m = _DRIVEWAY.match(value)
+    feet = int(m.group(1)) if m.group(1) else None
+    manoeuvre = m.group(2) or None
+    return feet, manoeuvre
+
+
+def fits_equipment(driveway: Optional[str], length_needed: int):
+    """Three-state: can a rig of `length_needed` feet use this site?
+
+    **The listed length is a MINIMUM, not a measurement.** A Beverly Beach
+    manager told Scott directly that when the park went onto ReserveAmerica
+    they had no staffing to measure the sites, so most were entered at a
+    default. Ground truth: A01 is listed `20 Back-In` and is really **53 feet**,
+    while A15 — genuinely small — was entered accurately at 15. On that page 21
+    of 24 sites read exactly "20 Back-In".
+
+    So:
+
+    * blank        -> **False**. No driveway at all means no vehicle reaches
+      it; these are the WALK TO sites. The one case we can honestly exclude.
+    * listed >= needed -> **True**. The floor already clears the requirement.
+    * listed <  needed -> **None (unknown)**. The site may well be far longer,
+      as A01 is. Never rendered as "no" — that would hide a site that fits,
+      which is the failure this project exists to prevent (§8g).
+    """
+    feet, _manoeuvre = parse_driveway(driveway)
+    if driveway is not None and not (driveway or "").strip():
+        return False
+    if feet is None:
+        return None
+    return True if feet >= length_needed else None
+
+
 def page_is_complete(page: str) -> bool:
     """Did the listing finish rendering, or did the connection die partway?
 

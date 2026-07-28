@@ -2644,6 +2644,55 @@ class TestSiteListPaging(unittest.TestCase):
         self.assertEqual(len(p.list_sites("412704")), 5)
         self.assertEqual([c[0] for c in calls], ["campgroundDetails.do"])
 
+# ------------- the driveway length is a floor, not a measurement (2026-07-28) ----
+
+class TestDrivewayIsAMinimum(unittest.TestCase):
+    """A Beverly Beach manager told Scott the sites were never measured.
+
+    When the park went onto ReserveAmerica they had no staffing to measure, so
+    most sites were entered at a default. Ground truth: A01 is listed
+    `20 Back-In` and is really 53 feet; A15, genuinely small, was entered
+    accurately at 15. On that page 21 of 24 sites read exactly "20 Back-In".
+
+    So the number is a FLOOR. A rig longer than the listing may still fit, and
+    saying "no" would hide a site that works.
+    """
+
+    def setUp(self):
+        from app.providers.reserveamerica import fits_equipment, parse_driveway
+        self.fits, self.parse = fits_equipment, parse_driveway
+
+    def test_the_cell_splits_into_feet_and_manoeuvre(self):
+        self.assertEqual(self.parse("20 Back-In"), (20, "Back-In"))
+        self.assertEqual(self.parse("Pull-Through"), (None, "Pull-Through"))
+        self.assertEqual(self.parse(""), (None, None))
+
+    def test_a_listing_at_or_above_the_need_fits(self):
+        self.assertIs(self.fits("30 Back-In", 25), True)
+        self.assertIs(self.fits("15 Back-In", 15), True)
+
+    def test_a_listing_below_the_need_is_unknown_not_no(self):
+        # A01 lists 20 and is really 53. Answering "no" would hide it.
+        self.assertIsNone(self.fits("20 Back-In", 25))
+        self.assertIsNone(self.fits("20 Back-In", 50))
+
+    def test_a_driveway_with_no_number_is_unknown(self):
+        self.assertIsNone(self.fits("Back-In", 25))
+
+    def test_an_empty_driveway_is_the_one_confident_no(self):
+        # WALK TO sites. No driveway at all means no vehicle reaches it.
+        self.assertIs(self.fits("", 25), False)
+        self.assertIs(self.fits("", 1), False)
+
+    def test_the_real_beverly_beach_page_behaves_as_described(self):
+        from app.providers.reserveamerica import ReserveAmericaProvider
+        sites = {s["name"]: s for s in ReserveAmericaProvider.parse_sites(
+            (FIXTURES / "ra_beverly_loop_a.html").read_text())}
+        self.assertEqual(sites["A01"]["equipment_length"], "20 Back-In")
+        self.assertEqual(sites["A15"]["equipment_length"], "15 Back-In")
+        # A01 is really 53ft, so a 40ft rig must not be told "no".
+        self.assertIsNone(self.fits(sites["A01"]["equipment_length"], 40))
+
 
 
 if __name__ == "__main__":

@@ -75,16 +75,34 @@ have literally slept in — the Reehers failure with a different cause. Until we
 read the description, "can my van fit?" is *unknown*, and §8g says unknown is
 shown, not filtered away.
 
-## The driveway length is unreliable as a number
+## The driveway length is a FLOOR, not a measurement
 
-Same site: the table says `20 Back-In` for C27 and C28; both are **at least 40
-feet**. Plain data-entry error at the source, and nothing we can fix.
+A Beverly Beach manager told Scott directly: when the park went onto
+ReserveAmerica they had to answer every question in the setup form, and had no
+staffing budget to actually measure the sites. So most were entered at a
+default.
 
-So the numeric length must never be a hard bound — a van owner filtering on
-"needs 30 ft" would lose a site that fits comfortably. What still appears
-sound is **present vs empty**, which is a different claim: every `WALK TO` site
-at Stub Stewart has the field blank, and every drive-in site has something in
-it. Use the presence, distrust the value.
+The data bears that out exactly. On loop A, **21 of 24 sites read exactly
+"20 Back-In"**, and:
+
+| site | listed | actually |
+|---|---|---|
+| A01 | `20 Back-In` | **53 ft** |
+| A15 | `15 Back-In` | 15 ft |
+
+The genuinely short site was entered accurately; everything else got the
+default. So the number is a **minimum** — the real site is that long *or
+longer*, never shorter.
+
+`fits_equipment(driveway, length_needed)` encodes it as three states:
+
+| listing | verdict |
+|---|---|
+| blank | **False** — no driveway at all, no vehicle reaches it (the `WALK TO` sites). The one case we can honestly exclude. |
+| listed ≥ needed | **True** — the floor already clears it |
+| listed < needed | **unknown** — may be far longer, as A01 is. Never "no". |
+
+A 40-foot rig asking about A01 must not be told "no". It fits.
 
 ## ReserveAmerica's site type icon is NOT access mode
 

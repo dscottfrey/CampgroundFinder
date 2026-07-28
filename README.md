@@ -108,9 +108,13 @@ failure with a new cause each time.
    TENT SITE he has camped in a van. Only an explicit "RV prohibited" in the
    site description says otherwise, and we don't read descriptions — so
    "does my van fit?" is *unknown*, and unknown is shown, not filtered away.
-2. **The driveway length is unreliable as a number.** C27/C28 read
-   "20 Back-In" and are really 40+ feet. Presence vs absence is still usable —
-   every WALK TO site has it blank — but the value must never be a bound.
+2. **The driveway length is a floor, not a measurement.** A park manager told
+   Scott they had no staffing to measure when going onto ReserveAmerica, so
+   most sites carry a default — 21 of 24 on one loop read exactly "20 Back-In".
+   A01 lists 20 ft and is really 53; A15, genuinely short, was entered
+   accurately at 15. So listed ≤ actual: a longer rig may still fit, and
+   `fits_equipment()` answers *unknown* rather than *no*. Blank is the one
+   confident no — that's a walk-to site.
 3. **The site-type icon is simply wrong.** All 21 Brooke Creek WALK TO sites
    carry an `rv` icon and cannot take an RV.
 
