@@ -99,6 +99,12 @@ def cmd_catalog_refresh(args) -> int:
     conn = db.open_db(args.db)
     added, updated = catalog.seed_catalog(conn, path=args.seed)
     print(f"seed: added={added} updated={updated}")
+    # The per-site inventory cost hundreds of paced requests to measure and
+    # changes on the order of years, so it is committed and loaded, never
+    # re-fetched on a fresh checkout.
+    sites = catalog.seed_campsites(conn)
+    if sites:
+        print(f"seed: {sites} campsite rows")
 
     if not config.sources:
         print("no sources configured — seed-only catalog "

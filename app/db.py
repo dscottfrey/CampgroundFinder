@@ -55,7 +55,8 @@ CREATE TABLE IF NOT EXISTS campsites (
   reservable INTEGER,
   -- 'not bookable online', NOT 'first-come' — see docs/first-come-research.md
   max_vehicle_length INTEGER,     -- NULL when unstated; 0 upstream means n/a
-  site_access TEXT,               -- 'Drive-In' | 'Hike-In' | …  the access axis
+  site_access TEXT,               -- raw, as the source spelled it
+  access_class TEXT,              -- normalized: 'hike_in' | 'drive_in' | NULL
   driveway_entry TEXT,            -- 'Back-In' | 'Pull-Through'
   max_people INTEGER,
   accessible INTEGER,
@@ -121,7 +122,7 @@ CREATE INDEX IF NOT EXISTS idx_avail_last_seen
 CREATE INDEX IF NOT EXISTS idx_campgrounds_state ON campgrounds (state);
 CREATE INDEX IF NOT EXISTS idx_campsites_campground
   ON campsites (provider, campground_id);
-CREATE INDEX IF NOT EXISTS idx_campsites_access ON campsites (site_access);
+CREATE INDEX IF NOT EXISTS idx_campsites_access ON campsites (access_class);
 CREATE INDEX IF NOT EXISTS idx_notifications_lookup
   ON notifications (watch_id, campsite_key, sent_at);
 """
@@ -153,6 +154,7 @@ MIGRATIONS = [
     ("campgrounds", "sites_not_bookable", "INTEGER"),
     ("campgrounds", "site_types", "TEXT"),
     ("campgrounds", "length_data_quality", "TEXT"),
+    ("campsites", "access_class", "TEXT"),
     ("campgrounds", "inventory_source", "TEXT"),
     ("campgrounds", "inventory_updated", "TEXT"),
 ]

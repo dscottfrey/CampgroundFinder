@@ -40,6 +40,11 @@ Section references below (§5, §8k, …) point into it.
   true; verified against the live page 2026-07-28. A source with an empty
   `campground_ids` now scans every park in the catalog, one per request —
   about 6m30s for a full Oregon pass.
+- **6,822 campsites**, measured once and committed. For 339 campgrounds we now
+  hold every site: its own coordinates (6,240 of them), max vehicle length,
+  loop, and access class — **165 hike-in sites** identified explicitly. The
+  driveway data is graded per campground: **115 measured, 74 default, 150 too
+  small to judge**.
 - **A web page** — `manage.py demo`, then http://127.0.0.1:8080. List view
   only; the map is not built.
 - **Pacing that can't be bypassed.** Every upstream request in the process goes

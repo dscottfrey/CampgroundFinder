@@ -100,6 +100,30 @@ class SiteCounts:
         return self.not_bookable > 0
 
 
+#: The source spells the access mode several ways — "Drive-In" 2711 times,
+#: "Drive In" 36, "Hike-In" 152, "Hike In" 2, "Walk-In" 11. A filter matching
+#: exact strings would silently miss real hike-in sites, which is the same
+#: shortfall shape as every other bug found today. Normalize on the way in and
+#: keep the raw value beside it.
+#:
+#: Walk-in and hike-in collapse to one class deliberately: both mean "park
+#: elsewhere and carry your gear", the axis Scott defined (docs/terminology.md).
+ACCESS_HIKE_IN = "hike_in"
+ACCESS_DRIVE_IN = "drive_in"
+
+
+def normalize_access(value: Optional[str]) -> Optional[str]:
+    """Canonical access class, or None when the source didn't say."""
+    text = (value or "").strip().lower().replace("-", " ")
+    if not text or text in ("n/a", "na"):
+        return None
+    if "hike" in text or "walk" in text:
+        return ACCESS_HIKE_IN
+    if "drive" in text:
+        return ACCESS_DRIVE_IN
+    return None
+
+
 def parse_ridb_site(record: dict) -> dict:
     """One RIDB campsite record, normalized.
 
@@ -139,6 +163,7 @@ def parse_ridb_site(record: dict) -> dict:
         "reservable": bool(record.get("CampsiteReservable")),
         "max_vehicle_length": number("Max Vehicle Length"),
         "site_access": attributes.get("Site Access"),
+        "access_class": normalize_access(attributes.get("Site Access")),
         "driveway_entry": attributes.get("Driveway Entry"),
         "max_people": number("Max Num of People"),
         "accessible": bool(record.get("CampsiteAccessible")),

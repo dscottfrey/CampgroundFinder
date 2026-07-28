@@ -392,15 +392,17 @@ def upsert_campsites(
             """INSERT INTO campsites (
                  provider, campground_id, site_id, name, loop, site_type,
                  type_of_use, reservable, max_vehicle_length, site_access,
-                 driveway_entry, max_people, accessible, latitude, longitude,
-                 permitted_equipment, attributes, source, updated)
-               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                 access_class, driveway_entry, max_people, accessible,
+                 latitude, longitude, permitted_equipment, attributes,
+                 source, updated)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
                ON CONFLICT(provider, campground_id, site_id) DO UPDATE SET
                  name=excluded.name, loop=excluded.loop,
                  site_type=excluded.site_type, type_of_use=excluded.type_of_use,
                  reservable=excluded.reservable,
                  max_vehicle_length=excluded.max_vehicle_length,
                  site_access=excluded.site_access,
+                 access_class=excluded.access_class,
                  driveway_entry=excluded.driveway_entry,
                  max_people=excluded.max_people, accessible=excluded.accessible,
                  latitude=excluded.latitude, longitude=excluded.longitude,
@@ -412,7 +414,8 @@ def upsert_campsites(
                 site.get("loop"), site.get("site_type"), site.get("type_of_use"),
                 None if site.get("reservable") is None else int(site["reservable"]),
                 site.get("max_vehicle_length"), site.get("site_access"),
-                site.get("driveway_entry"), site.get("max_people"),
+                site.get("access_class"), site.get("driveway_entry"),
+                site.get("max_people"),
                 None if site.get("accessible") is None else int(site["accessible"]),
                 site.get("latitude"), site.get("longitude"),
                 dumps(site.get("permitted_equipment")) if site.get("permitted_equipment") else None,

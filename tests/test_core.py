@@ -2951,6 +2951,73 @@ class TestPerSiteInventory(DBTestCase):
             self.conn, states=["OR"], fetcher=self.fetcher(), now=NOW)
         self.assertEqual(report.recorded, 2, "the counts-only campground is redone")
 
+# ------------- normalized access, and per-site data that survives (2026-07-28) ----
+
+class TestAccessNormalization(unittest.TestCase):
+    """The source spells the access mode several ways.
+
+    Across 6,822 real site rows: "Drive-In" 2711, "Drive In" 36, "Hike-In" 152,
+    "Hike In" 2, "Walk-In" 11, "N/A" 7. A filter matching exact strings would
+    silently miss 49 genuine sites — the same shortfall shape as every other
+    bug found today.
+    """
+
+    def test_every_observed_spelling_maps_to_a_class(self):
+        from app.inventory import normalize_access
+        self.assertEqual(normalize_access("Drive-In"), "drive_in")
+        self.assertEqual(normalize_access("Drive In"), "drive_in")
+        self.assertEqual(normalize_access("Hike-In"), "hike_in")
+        self.assertEqual(normalize_access("Hike In"), "hike_in")
+
+    def test_walk_in_and_hike_in_are_one_class(self):
+        # Both mean "park elsewhere and carry your gear" — Scott's access axis.
+        from app.inventory import normalize_access
+        self.assertEqual(normalize_access("Walk-In"), normalize_access("Hike-In"))
+
+    def test_unstated_stays_unstated(self):
+        from app.inventory import normalize_access
+        for value in (None, "", "   ", "N/A"):
+            self.assertIsNone(normalize_access(value))
+
+
+class TestCampsiteSeedSurvivesRebuild(DBTestCase):
+    """Measured once, committed — never re-fetched on a fresh checkout.
+
+    The per-site inventory cost 339 campgrounds' worth of paced requests. If it
+    lived only in somebody's local database, every clone would pay for it again.
+    """
+
+    def test_the_committed_seed_holds_the_site_rows(self):
+        rows = catalog.load_campsite_seed()
+        self.assertGreater(len(rows), 6000)
+
+    def test_a_fresh_database_loads_them(self):
+        catalog.seed_campsites(self.conn, now=NOW)
+        n = self.conn.execute("SELECT COUNT(*) FROM campsites").fetchone()[0]
+        self.assertGreater(n, 6000)
+
+    def test_the_access_class_survives_the_round_trip(self):
+        catalog.seed_campsites(self.conn, now=NOW)
+        n = self.conn.execute(
+            "SELECT COUNT(*) FROM campsites WHERE access_class='hike_in'"
+        ).fetchone()[0]
+        self.assertGreater(n, 100)
+
+    def test_seeding_is_idempotent(self):
+        catalog.seed_campsites(self.conn, now=NOW)
+        first = self.conn.execute("SELECT COUNT(*) FROM campsites").fetchone()[0]
+        catalog.seed_campsites(self.conn, now=NOW)
+        self.assertEqual(
+            self.conn.execute("SELECT COUNT(*) FROM campsites").fetchone()[0], first)
+
+    def test_lengths_and_coordinates_survive(self):
+        catalog.seed_campsites(self.conn, now=NOW)
+        row = self.conn.execute(
+            "SELECT * FROM campsites WHERE max_vehicle_length IS NOT NULL "
+            "AND latitude IS NOT NULL LIMIT 1").fetchone()
+        self.assertIsNotNone(row)
+        self.assertGreater(row["max_vehicle_length"], 0)
+
 
 
 if __name__ == "__main__":
