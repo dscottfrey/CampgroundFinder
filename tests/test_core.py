@@ -308,10 +308,17 @@ class TestEndToEndMockScan(DBTestCase):
                            start=START, window_days=3, now=NOW,
                            provider_factory=lambda spec, state=None, **kw: Boom(state=state))
         self.assertIn("Mock OR", report.provider_errors)
-        # The map must still have every pin, marked stale — never emptied.
+        # The map must still have every pin — never emptied.
         pins = store.map_view(self.conn)
         self.assertEqual(len(pins), 3)
-        self.assertTrue(all(p["status"] == STATUS_STALE for p in pins))
+        # The Oregon campgrounds this source covers go stale...
+        by_id = {p["id"]: p for p in pins}
+        self.assertEqual(by_id["mock-cg-1"]["status"], STATUS_STALE)
+        self.assertEqual(by_id["mock-cg-3"]["status"], STATUS_STALE)
+        # ...but a source declared `state: OR` has nothing to say about a
+        # Washington campground, so it is left alone rather than tarred with
+        # the same failure.
+        self.assertNotEqual(by_id["mock-cg-2"]["status"], STATUS_STALE)
 
 
 # ---------------------------------------------------------------- step 2 ----
@@ -3017,6 +3024,80 @@ class TestCampsiteSeedSurvivesRebuild(DBTestCase):
             "AND latitude IS NOT NULL LIMIT 1").fetchone()
         self.assertIsNotNone(row)
         self.assertGreater(row["max_vehicle_length"], 0)
+
+# ------------- a failure must not tar what the same cycle just read ----
+
+class TestFailureDoesNotOverreach(DBTestCase):
+    """Found by the first full end-to-end scan, 2026-07-28.
+
+    One source failed — Gifford Pinchot's rec-area id is wrong — and that
+    marked all 545 recreation.gov campgrounds `stale`, including Clackamas
+    Lake, which had just returned 556 open site-nights from a different source.
+    The map would have said "we couldn't check this" about a campground checked
+    successfully seconds earlier.
+
+    Same overreach as the success path had, left behind in the failure path.
+    """
+
+    def setUp(self):
+        super().setUp()
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="Mock", id="good", name="Checked Fine", state="OR"),
+            Campground(provider="Mock", id="elsewhere", name="Never Touched",
+                       state="OR"),
+        ], now=NOW)
+
+    def test_a_campground_read_this_cycle_is_never_marked_stale(self):
+        """Belt and braces: fresh availability outranks any staleness sweep."""
+        store.upsert_availability(self.conn, [a_site(
+            provider="Mock", campsite_id="s1", facility_id="good", state="OR")],
+            now=NOW)
+
+        class Boom(MockProvider):
+            def search(self, req):
+                raise RuntimeError("upstream 503")
+
+        config = parse_config({"round_pause_seconds": 0, "sources": [
+            {"label": "Broken", "provider": "Mock", "state": "OR"}]})
+        scan_once(self.conn, config, notifier=Notifier([]), start=START,
+                  window_days=3, now=NOW,
+                  provider_factory=lambda spec, state=None, **kw: Boom(state=state))
+        cg = store.get_campground(self.conn, "Mock", "good")
+        self.assertNotEqual(cg.status, STATUS_STALE,
+                            "556 open site-nights must not read as unchecked")
+
+    def test_a_rec_area_source_failing_marks_nothing_stale(self):
+        # We cannot tell which campgrounds a rec-area source covers, so we
+        # cannot attribute its failure to any of them.
+        class Boom(MockProvider):
+            def search(self, req):
+                raise RuntimeError("No campgrounds found to search")
+
+        config = parse_config({"round_pause_seconds": 0, "sources": [
+            {"label": "Gifford Pinchot NF", "provider": "Mock", "state": "OR",
+             "rec_area_ids": ["1131"]}]})
+        report = scan_once(
+            self.conn, config, notifier=Notifier([]), start=START, window_days=3,
+            now=NOW, provider_factory=lambda spec, state=None, **kw: Boom(state=state))
+        self.assertIn("Gifford Pinchot NF", report.provider_errors)
+        for cg_id in ("good", "elsewhere"):
+            self.assertNotEqual(
+                store.get_campground(self.conn, "Mock", cg_id).status, STATUS_STALE)
+
+    def test_the_failure_is_still_reported_loudly(self):
+        # Not marking things stale must not mean swallowing the error.
+        class Boom(MockProvider):
+            def search(self, req):
+                raise RuntimeError("No campgrounds found to search")
+
+        config = parse_config({"round_pause_seconds": 0, "sources": [
+            {"label": "Broken", "provider": "Mock", "state": "OR",
+             "rec_area_ids": ["1131"]}]})
+        report = scan_once(
+            self.conn, config, notifier=Notifier([]), start=START, window_days=3,
+            now=NOW, provider_factory=lambda spec, state=None, **kw: Boom(state=state))
+        self.assertIn("Broken", report.provider_errors)
+        self.assertIn("No campgrounds found", report.provider_errors["Broken"])
 
 
 

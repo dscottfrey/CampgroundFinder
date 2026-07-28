@@ -86,6 +86,23 @@ requests per search can't be spaced individually. The adapter holds the shared
 request slot around the whole call, but camply's internal pacing is unverified —
 worth checking before recreation.gov carries on-demand traffic.
 
+### The first full scan, 2026-07-28
+
+147 units across five sources, ~14 minutes interleaved at 6s:
+
+| source | site-nights | campgrounds |
+|---|---|---|
+| GoingToCamp:WA | 28,386 | 68 |
+| RecreationDotGov | 4,333 | 37 |
+| ReserveAmerica:OR | 2,288 | 57 |
+
+It also found a bug nothing else would have. One source failed — Gifford
+Pinchot's rec-area id is wrong, another build-plan number — and that marked
+**all 545** recreation.gov campgrounds `stale`, including Clackamas Lake, which
+had just returned 556 openings from a different source. Fixed: a failure is
+scoped exactly like a success, and a campground the same cycle read
+successfully can never be downgraded.
+
 ### Two honesty bugs found by asking "what's actually in the catalog?"
 
 Both were the map asserting something it did not know — the Reehers failure

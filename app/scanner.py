@@ -385,20 +385,63 @@ def _mark_stale(
 ) -> None:
     """A failed or skipped check downgrades pins to stale — it never deletes.
 
-    Scoped to what the unit actually covers: one park's failure does not make
-    the rest of the state look unchecked.
+    Scoped exactly like the success path, and for the same reason. A unit that
+    fails can only speak for what it was going to check:
+
+      * named campgrounds     -> mark those;
+      * rec-area-scoped       -> mark NOTHING. We cannot tell which campgrounds
+        the source covers, so we cannot attribute the failure to any of them;
+      * whole provider+state  -> mark those.
+
+    Found by the first end-to-end scan: one source failing ("Gifford Pinchot
+    NF: No campgrounds found to search") marked all 545 recreation.gov
+    campgrounds stale, including Clackamas Lake — which had just returned 556
+    open site-nights. The map would have said "we couldn't check this" about a
+    campground we had successfully checked seconds earlier.
     """
     provider_name = unit.provider.name
     if unit.scope:
-        for cg_id in unit.scope:
-            store.set_campground_status(
-                conn, provider_name, cg_id, STATUS_STALE, reason, now=now
-            )
-        return
-    for cg in store.list_campgrounds(conn, provider=provider_name):
-        store.set_campground_status(
-            conn, cg.provider, cg.id, STATUS_STALE, reason, now=now
+        targets = unit.scope
+    elif unit.source.rec_area_ids:
+        log.debug(
+            "%s: %s failed, but its coverage is unknown — not marking anything "
+            "stale", provider_name, unit.source.label,
         )
+        return
+    else:
+        targets = [
+            cg.id for cg in store.list_campgrounds(
+                conn, provider=provider_name,
+                states=[unit.source.state] if unit.source.state else None,
+            )
+        ]
+
+    for cg_id in targets:
+        # Never downgrade something this very cycle read successfully. Belt and
+        # braces: even if the scoping above is wrong one day, a campground with
+        # fresh availability must not be reported as unchecked.
+        if _has_fresh_availability(conn, provider_name, cg_id, now):
+            continue
+        store.set_campground_status(
+            conn, provider_name, cg_id, STATUS_STALE, reason, now=now
+        )
+
+
+def _has_fresh_availability(
+    conn: sqlite3.Connection,
+    provider: str,
+    cg_id: str,
+    now: Optional[datetime],
+) -> bool:
+    """Did this cycle just read openings for this campground?"""
+    if now is None:
+        return False
+    row = conn.execute(
+        "SELECT 1 FROM availability WHERE provider=? AND facility_id=? "
+        "AND last_seen=? LIMIT 1",
+        (provider, cg_id, iso(now)),
+    ).fetchone()
+    return row is not None
 
 
 def _stamp_catalog_statuses(

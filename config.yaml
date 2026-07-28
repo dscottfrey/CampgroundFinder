@@ -1,0 +1,86 @@
+# Copy to config.yaml and edit. Ships with OR + WA sources only (§8c).
+# Rec-area IDs below are ILLUSTRATIVE — look yours up before enabling:
+#   camply recreation-areas --search "Mount Hood" --provider RecreationDotGov
+#   camply campgrounds --rec-area 1106 --provider RecreationDotGov
+
+home_base: { label: "Home", latitude: 45.52, longitude: -122.68 }
+scan_interval_minutes: 30        # be polite; don't go below ~10 (§13)
+
+# How long to pause after each round-robin pass over the sources, on top of the
+# per-host spacing (6s ReserveAmerica, 2s recreation.gov) that the shared rate
+# limiter always applies. Nobody is waiting on the background sweep, so this is
+# free politeness. See docs/scanning-design.md.
+round_pause_seconds: 5
+
+default_window_days: 60
+default_states: [OR, WA]
+
+# Trip lengths worth tracking. This is a RELEVANCE filter, not a rate limit:
+# the ReserveAmerica park matrix returns every site x 14 days in one request
+# regardless, so nights are filtered in our own code after the fetch. What it
+# buys is less noise, fewer pointless alerts, and a smaller database.
+# (CampSage ships 2-3; Scott chose 2-4 on 2026-07-27.)
+nights_options: [2, 3, 4]
+
+# Regions we actually scan. THIS one is a real load reduction — fewer parks
+# means fewer upstream requests. The catalog still holds every campground it
+# knows about; only availability scanning is narrowed (§8k).
+scan_regions: [OR, WA]
+# Widen westward when wanted: [OR, WA, CA, ID, MT, NV, UT, AZ, CO, AK, BC]
+
+notify:
+  default_targets:
+    - ntfy://ntfy.sh/change-me-campgroundfinder   # keep the topic secret — it is the auth
+
+access:
+  mode: tailscale
+  admins: ["you@example.com"]
+  auto_provision_friends: true
+
+sources:
+  # `provider` is the camply PROVIDER name (e.g. RecreationDotGov), which is how
+  # camply's CAMPSITE_SEARCH_PROVIDER registry is actually keyed. The build plan's
+  # §6/§12 say "SearchRecreationDotGov"; that is wrong against camply 0.34.2.
+  # Both spellings are accepted and normalized, so either works here.
+  - { label: "Mt Hood NF",         provider: RecreationDotGov, state: OR, rec_area_ids: ["1106"] }
+  - { label: "Deschutes NF",       provider: RecreationDotGov, state: OR, rec_area_ids: ["1113"] }
+  - { label: "Gifford Pinchot NF", provider: RecreationDotGov, state: WA, rec_area_ids: ["1131"] }
+
+  # State parks. An empty `campground_ids` means "every park in the catalog" —
+  # the scanner fills the scope in and scans one park per request, so these
+  # need `catalog-refresh` (or the committed seed) to have run first.
+  - { label: "Oregon State Parks",     provider: "ReserveAmerica:OR", state: OR, campground_ids: [] }
+  - { label: "Washington State Parks", provider: "GoingToCamp:WA",    state: WA, campground_ids: [] }
+
+  # BC Parks works the same way (114 parks in the seed), but the platform
+  # publishes no coordinates for them — they show as "location unknown" rather
+  # than appearing on the map. Enable if you want them searchable.
+  # - { label: "BC Provincial Parks", provider: "GoingToCamp:BC", state: BC, campground_ids: [] }
+
+  # Offline demo source — no network, no deps. Handy for `scan-once` smoke tests.
+  # - { label: "Mock (offline demo)", provider: Mock, state: OR }
+
+  # --- Not implemented yet; enable as the later build steps land ---
+  # - label: "San Juan County (PerfectMind)"     # §7, step 7
+  #   provider: "PerfectMind:SanJuanCoWA"
+  #   state: WA
+  #   perfectmind: { host: sanjuancountywa.perfectmind.com, widget_id: d69eb041-59af-41a7-9182-35e8487e05c1 }
+  # - { label: "Parks Canada",        provider: "ParksCanada",  state: CA-NAT, rec_area_ids: [] }
+
+watches:
+  - name: "Labor Day dream spot"
+    mode: targeted
+    provider: RecreationDotGov
+    campground_ids: ["232876"]
+    start_date: 2026-09-04
+    end_date: 2026-09-07
+    nights: 2
+    notify_targets: ["tgram://<bot_token>/<chat_id>"]
+  - name: "Any good OR/WA weekend within 120mi"
+    mode: autonomous
+    states: [OR, WA]
+    weekends_only: true
+    nights: 2
+    filters: { max_miles: 120, min_rating: 4.0, campsite_type_any: ["STANDARD NONELECTRIC", "TENT ONLY"] }
+    batch: true
+    notify_targets: ["ntfy://ntfy.sh/change-me-campgroundfinder"]
