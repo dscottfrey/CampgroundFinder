@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import catalog, coordinates, db, store  # noqa: E402
+from app import catalog, coordinates, db, inventory, store  # noqa: E402
 from app.config import load_config  # noqa: E402
 from app.notifier import Notifier  # noqa: E402
 from app.providers import known_providers  # noqa: E402
@@ -51,6 +51,36 @@ def cmd_backfill_coordinates(args) -> int:
     print("\ncoordinate provenance across the whole catalog:")
     for source, count in sorted(store.coordinate_provenance(conn).items()):
         print(f"  {count:>4}  {source}")
+    if args.write_seed:
+        path = catalog.write_seed(store.list_campgrounds(conn))
+        print(f"\nwrote {path}")
+    return 0
+
+
+def cmd_backfill_site_inventory(args) -> int:
+    """Count each campground's bookable vs not-bookable sites — once.
+
+    Site inventory changes on the order of years, so this is measured once and
+    committed to the seed, never re-queried on a schedule. Re-running only
+    fills blanks.
+    """
+    conn = db.open_db(args.db)
+    report = inventory.backfill_site_inventory(
+        conn, provider=args.provider, states=args.state, limit=args.limit)
+    print(report.summary())
+    if report.no_inventory:
+        print(f"\n{len(report.no_inventory)} facilities have no site list in the "
+              f"provider's data — left unknown, not recorded as zero:")
+        for name in report.no_inventory[:10]:
+            print(f"  {name}")
+        if len(report.no_inventory) > 10:
+            print(f"  ... and {len(report.no_inventory) - 10} more")
+    mixed = [c for c in store.list_campgrounds(conn, provider=args.provider)
+             if c.first_come_sites]
+    if mixed:
+        print(f"\n{len(mixed)} campgrounds have sites that aren't bookable online:")
+        for c in sorted(mixed, key=lambda c: -(c.sites_not_bookable or 0))[:10]:
+            print(f"  {c.sites_not_bookable:>4} of {c.sites_total:>4}  {c.name}")
     if args.write_seed:
         path = catalog.write_seed(store.list_campgrounds(conn))
         print(f"\nwrote {path}")
@@ -210,6 +240,14 @@ def main(argv=None) -> int:
     p.add_argument("--provider", default="GoingToCamp:BC")
     p.add_argument("--write-seed", action="store_true")
     p.set_defaults(func=cmd_backfill_coordinates)
+
+    p = sub.add_parser("backfill-site-inventory",
+                       help="count bookable vs not-bookable sites, once")
+    p.add_argument("--provider", default="RecreationDotGov")
+    p.add_argument("--state", action="append")
+    p.add_argument("--limit", type=int, default=None)
+    p.add_argument("--write-seed", action="store_true")
+    p.set_defaults(func=cmd_backfill_site_inventory)
 
     p = sub.add_parser("scan-once")
     p.add_argument("--nights", type=int, default=1)

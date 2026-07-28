@@ -71,14 +71,30 @@ _CALENDAR_CELL = re.compile(
 #: An available cell in the park-level matrix. Only available cells are links,
 #: and each link carries its own arvdate — which is the only place the year
 #: appears (the visible label is just "Aug 10").
+#:
+#: The `[^']*` after the date is load-bearing. RA appended `&lengthOfStay=1`
+#: to these links between 2026-07-27 and 2026-07-28; the previous pattern
+#: required the date to be followed immediately by the closing quote, so it
+#: matched 150 cells in the captured fixture and **zero** live, while the page
+#: plainly held 138 available cells. Every Oregon park silently read "full".
+#: Anchor on what is stable, and never trust a zero from this parser without
+#: checking the raw page for `td status a`.
 _MATRIX_CELL = re.compile(
     r"class='td status a'><a href='[^']*siteId=(\d+)[^']*"
-    r"arvdate=(\d{1,2}/\d{1,2}/\d{4})'[^>]*aria-label='A for ([^']+?) on "
+    r"arvdate=(\d{1,2}/\d{1,2}/\d{4})[^']*'[^>]*aria-label='A for ([^']+?) on "
 )
 _SITE_ROW = re.compile(r"<div class='br'>(.*?)(?=<div class='br'>|<div class='tfoot'|\Z)", re.S)
 _SITE_ID = re.compile(r"changeSelectedSiteOL\((\d+)\)")
+#: The row's type icon. **Do not treat this as access mode or equipment.**
+#: Ground-truthed by Scott 2026-07-28: the sites in "Brooke Creek Hike-In Camp"
+#: at L.L. Stub Stewart are named HIKE 01..HIKE 21, sit in a loop with
+#: "Hike-In" in its name, cannot take an RV — and carry the `rv` icon. The site
+#: name and loop name were right where the icon was wrong (docs/terminology.md).
 _SITE_TYPE_ICON = re.compile(r"images/type_(\w+)\.gif")
 _SITE_NAME = re.compile(r"campsiteDetails\.do[^>]*>([^<]{1,40})<")
+#: An uppercase cell in the row. Despite the name this is often the **loop or
+#: area name** ("DAIRY CREEK EAST", "BROOKE CREEK HIKE-IN CAMP") rather than a
+#: site type ("TENT SITE"). Useful, but not a type — don't filter on it.
 _SITE_TYPE_LABEL = re.compile(r"<div class='td'>\s*([A-Z][A-Z /-]{3,30})\s*</div>")
 
 
@@ -370,6 +386,20 @@ class ReserveAmericaProvider(Provider):
         for site_id, arv, name in _MATRIX_CELL.findall(collapsed):
             month, day, year = (int(x) for x in arv.split("/"))
             out.setdefault((site_id, name.strip()), set()).add(date(year, month, day))
+
+        # A zero that the page contradicts is a PARSER failure, not a full
+        # campground — and "full" is the answer that quietly sends someone
+        # elsewhere. RA changed this markup once already (adding
+        # `&lengthOfStay=1`), turning every Oregon park into a silent "full"
+        # while the page still advertised 138 open cells. Never report that
+        # again without noticing.
+        available_cells = collapsed.count("class='td status a'")
+        if available_cells and not out:
+            raise MatrixParseError(
+                f"the page shows {available_cells} available cells but none "
+                f"parsed — the markup has changed. Refusing to report this "
+                f"park as full."
+            )
         return out
 
     def park_availability(self, park_id: str, arrival: date):
@@ -439,6 +469,14 @@ class ReserveAmericaProvider(Provider):
                     f"&siteId={site_id}&arvdate={day.strftime('%m/%d/%Y')}"
                 ),
             )
+
+
+class MatrixParseError(RuntimeError):
+    """The availability grid is present but unreadable.
+
+    Raised instead of returning an empty result, because an empty result means
+    "this park is full" to every caller downstream.
+    """
 
 
 class IncompleteDirectory(RuntimeError):

@@ -77,13 +77,18 @@ class Campground:
     #: What the campground AS A WHOLE is: 'reservable' (it takes bookings) or
     #: 'first_come' (it takes none at all). This is a different claim from the
     #: one below, and conflating them is how you tell someone a bookable
-    #: campground has no walk-up sites when you never checked.
+    #: campground has no first-come sites when you never checked.
     reservation_type: str = "reservable"
     #: Whether a *reservable* campground ALSO holds first-come sites.
     #: Three-state (§8g): True = known to, False = known not to,
     #: **None = we don't know**, which is the honest default almost everywhere.
     #: Never inferred from `reservation_type` — the two are independent.
     first_come_sites: Optional[bool] = None
+    #: Site counts from the provider's inventory, when it publishes one.
+    #: `sites_not_bookable` means exactly "not bookable online" — not
+    #: "first-come", which RIDB never states (docs/first-come-research.md).
+    sites_total: Optional[int] = None
+    sites_not_bookable: Optional[int] = None
     status: str = STATUS_UNKNOWN
     status_reason: Optional[str] = None
     closed_until: Optional[str] = None
@@ -104,12 +109,21 @@ class Campground:
     def booking_label(self) -> str:
         """One honest sentence about how you get a site here.
 
-        Says nothing about walk-up sites when `first_come_sites` is None —
+        Says nothing about first-come sites when `first_come_sites` is None —
         silence, not a cheerful "all sites reservable" we cannot support.
         """
         if self.reservation_type == "first_come":
             return "First-come, first-served — no reservations"
         if self.first_come_sites is True:
+            if self.sites_not_bookable and self.sites_total:
+                # Says what we measured and nothing more. NOT "3 first-come
+                # sites might be free" — we cannot support either word.
+                return (
+                    f"Reservable — but {self.sites_not_bookable} of "
+                    f"{self.sites_total} sites aren't bookable online "
+                    f"(they may be first-come, closed, or unlisted — "
+                    f"the provider doesn't say which)"
+                )
             return "Reservable, and some sites are first-come"
         if self.first_come_sites is False:
             return "Reservable — every site is bookable"

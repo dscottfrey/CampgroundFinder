@@ -2184,7 +2184,7 @@ class TestScanDoesNotOverreach(DBTestCase):
 
 class TestFirstComeIsTwoSeparateClaims(DBTestCase):
     """"This campground takes no reservations" and "this bookable campground
-    also has walk-up sites" are different facts, and we usually know only the
+    also has first-come sites" are different facts, and we usually know only the
     first. Three-state per §8g: yes / no / **unknown**, never inferred.
     """
 
@@ -2260,7 +2260,7 @@ class TestFirstComeIsTwoSeparateClaims(DBTestCase):
     def test_a_walk_up_site_inside_a_bookable_campground_is_coherent(self):
         """The case the two fields exist for.
 
-        A reservable campground that also has walk-up sites: the campground
+        A reservable campground that also has first-come sites: the campground
         keeps its booking route, while an individual first-come site in it
         still gets no booking link (§4). Neither fact overrides the other.
         """
@@ -2275,6 +2275,208 @@ class TestFirstComeIsTwoSeparateClaims(DBTestCase):
         bookable = a_site(campsite_id="b1", facility_id="mixed")
         self.assertNotIn("http", format_alert(walk_up))
         self.assertIn("http", format_alert(bookable))
+
+
+# ------------------------------- site inventory backfill (2026-07-28) ----
+
+from app import inventory  # noqa: E402
+
+
+def ridb_site(name, reservable=True, site_type="STANDARD NONELECTRIC"):
+    return {"CampsiteName": name, "CampsiteReservable": reservable,
+            "CampsiteType": site_type, "TypeOfUse": "Overnight"}
+
+
+class TestSiteClassification(unittest.TestCase):
+    def test_management_sites_are_excluded_from_both_sides(self):
+        """Camp-host pitches are nobody's to book.
+
+        At Trillium Lake 11 non-reservable sites are MANAGEMENT. Counting them
+        would offer a camper sites that are somebody else's job.
+        """
+        counts = inventory.classify_sites([
+            ridb_site("1"), ridb_site("2"),
+            ridb_site("3", reservable=False),
+            ridb_site("host", reservable=False, site_type="MANAGEMENT"),
+            ridb_site("host2", reservable=False, site_type="MANAGEMENT"),
+        ])
+        self.assertEqual(counts.total, 3)            # management not counted
+        self.assertEqual(counts.bookable, 2)
+        self.assertEqual(counts.not_bookable, 1)
+        self.assertEqual(counts.management, 2)
+        self.assertTrue(counts.has_unbookable_sites)
+
+    def test_a_fully_bookable_campground_reports_none_unbookable(self):
+        counts = inventory.classify_sites([ridb_site("1"), ridb_site("2")])
+        self.assertEqual(counts.not_bookable, 0)
+        self.assertFalse(counts.has_unbookable_sites)
+
+
+class TestSiteInventoryBackfill(DBTestCase):
+    def setUp(self):
+        super().setUp()
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="RecreationDotGov", id="mixed", name="Mixed",
+                       state="OR"),
+            Campground(provider="RecreationDotGov", id="pure", name="Pure",
+                       state="OR"),
+            Campground(provider="RecreationDotGov", id="empty", name="No Inventory",
+                       state="OR", reservation_type="first_come"),
+        ], now=NOW)
+        self.data = {
+            "mixed": [ridb_site("a"), ridb_site("b", reservable=False),
+                      ridb_site("h", reservable=False, site_type="MANAGEMENT")],
+            "pure": [ridb_site("a"), ridb_site("b")],
+            "empty": [],
+        }
+
+    def fetcher(self, overrides=None):
+        seen = []
+
+        def fetch(path, params):
+            seen.append(path)
+            fid = path.split("/")[1]
+            recs = (overrides or self.data).get(fid, [])
+            offset = params.get("offset", 0)
+            page = recs[offset:offset + params["limit"]]
+            return {"RECDATA": page,
+                    "METADATA": {"RESULTS": {"TOTAL_COUNT": len(recs)}}}
+        fetch.seen = seen
+        return fetch
+
+    def test_counts_are_recorded_and_the_flag_is_derived_from_them(self):
+        f = self.fetcher()
+        report = inventory.backfill_site_inventory(
+            self.conn, states=["OR"], fetcher=f, now=NOW)
+        self.assertEqual(report.recorded, 2)
+        mixed = store.get_campground(self.conn, "RecreationDotGov", "mixed")
+        self.assertEqual(mixed.sites_total, 2)          # management excluded
+        self.assertEqual(mixed.sites_not_bookable, 1)
+        self.assertIs(mixed.first_come_sites, True)
+        pure = store.get_campground(self.conn, "RecreationDotGov", "pure")
+        self.assertEqual(pure.sites_not_bookable, 0)
+        self.assertIs(pure.first_come_sites, False)     # a real answer, not unknown
+
+    def test_a_facility_with_no_site_list_stays_unknown_not_zero(self):
+        """"RIDB doesn't know" and "there are no sites" are different claims.
+
+        Every first-come facility returns zero campsite records, because RIDB's
+        inventory comes from the reservation system.
+        """
+        report = inventory.backfill_site_inventory(
+            self.conn, states=["OR"], fetcher=self.fetcher(), now=NOW)
+        self.assertIn("No Inventory", report.no_inventory)
+        cg = store.get_campground(self.conn, "RecreationDotGov", "empty")
+        self.assertIsNone(cg.first_come_sites)
+        self.assertIsNone(cg.sites_total)
+
+    def test_it_uses_the_nested_path_not_the_ignored_query_parameter(self):
+        # campsites?facilityID=X returns all 137,117 campsites in RIDB.
+        f = self.fetcher()
+        inventory.backfill_site_inventory(self.conn, states=["OR"], fetcher=f, now=NOW)
+        self.assertTrue(all(p.startswith("facilities/") and p.endswith("/campsites")
+                            for p in f.seen), f.seen)
+
+    def test_a_short_page_raises_rather_than_undercounting(self):
+        def liar(path, params):
+            return {"RECDATA": [ridb_site("only-one")],
+                    "METADATA": {"RESULTS": {"TOTAL_COUNT": 99}}}
+        with self.assertRaises(inventory.IncompleteInventory):
+            inventory.fetch_facility_campsites("mixed", fetcher=liar)
+
+    def test_a_facility_error_is_recorded_and_does_not_stop_the_run(self):
+        def flaky(path, params):
+            if "pure" in path:
+                raise RuntimeError("upstream 500")
+            return self.fetcher()(path, params)
+        report = inventory.backfill_site_inventory(
+            self.conn, states=["OR"], fetcher=flaky, now=NOW)
+        self.assertIn("Pure", report.errors)
+        self.assertEqual(
+            store.get_campground(self.conn, "RecreationDotGov", "mixed").sites_total, 2)
+
+    def test_rerunning_only_fills_blanks(self):
+        # Measured once and kept: inventory changes on the order of years.
+        f = self.fetcher()
+        inventory.backfill_site_inventory(self.conn, states=["OR"], fetcher=f, now=NOW)
+        before = len(f.seen)
+        second = inventory.backfill_site_inventory(
+            self.conn, states=["OR"], fetcher=f, now=NOW)
+        self.assertEqual(second.recorded, 0)
+        # Only the still-unknown facility is re-queried.
+        self.assertLess(len(f.seen) - before, before)
+
+    def test_the_label_states_what_was_measured_and_nothing_more(self):
+        cg = Campground(provider="p", id="1", name="n", first_come_sites=True,
+                        sites_total=279, sites_not_bookable=131)
+        label = cg.booking_label
+        self.assertIn("131 of 279", label)
+        self.assertIn("aren't bookable online", label)
+        # Must NOT claim they are first-come or available.
+        self.assertNotIn("first-come sites", label)
+        self.assertNotIn("available", label)
+
+    def test_counts_survive_the_seed_round_trip(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "seed.json"
+            catalog.write_seed([Campground(
+                provider="RecreationDotGov", id="mixed", name="Mixed",
+                first_come_sites=True, sites_total=279,
+                sites_not_bookable=131)], path=path)
+            back = catalog.load_seed(path)[0]
+        self.assertEqual(back.sites_total, 279)
+        self.assertEqual(back.sites_not_bookable, 131)
+        self.assertIs(back.first_come_sites, True)
+
+# ------------- RA changed its markup and every park read "full" (2026-07-28) ----
+
+class TestMatrixMarkupChange(unittest.TestCase):
+    """ReserveAmerica appended `&lengthOfStay=1` to every matrix link.
+
+    The old pattern required the arrival date to be followed immediately by the
+    closing quote, so it matched 150 cells in the 2026-07-27 capture and ZERO
+    live — while the page still advertised 138 available cells. Silently, every
+    Oregon park read as full.
+    """
+
+    def setUp(self):
+        from app.providers.reserveamerica import ReserveAmericaProvider
+        self.parse = ReserveAmericaProvider.parse_park_matrix
+
+    def test_both_link_shapes_parse(self):
+        old = (FIXTURES / "ra_park_412704_matrix.html").read_text()
+        new = (FIXTURES / "ra_park_412704_matrix_v2.html").read_text()
+        self.assertGreater(len(self.parse(old)), 0, "the original capture")
+        self.assertGreater(len(self.parse(new)), 0, "after &lengthOfStay=1 appeared")
+
+    def test_extra_query_parameters_do_not_break_it(self):
+        old = (FIXTURES / "ra_park_412704_matrix.html").read_text()
+        mutated = old.replace("arvdate=8/10/2026",
+                              "arvdate=8/10/2026&amp;lengthOfStay=1&amp;more=x")
+        self.assertEqual(len(self.parse(mutated)), len(self.parse(old)))
+
+    def test_an_unreadable_grid_raises_instead_of_reporting_full(self):
+        """The guard this class of bug earned.
+
+        An empty result means "this park is full" to every caller downstream,
+        which is the answer that quietly sends someone somewhere else. If the
+        page shows available cells and none parse, that is a parser failure and
+        it must say so.
+        """
+        from app.providers.reserveamerica import MatrixParseError
+        old = (FIXTURES / "ra_park_412704_matrix.html").read_text()
+        unreadable = old.replace("aria-label='A for", "aria-label='Available for")
+        self.assertIn("td status a", unreadable)
+        with self.assertRaises(MatrixParseError):
+            self.parse(unreadable)
+
+    def test_a_genuinely_full_park_still_reports_empty(self):
+        # No available cells at all is a real answer, not an error.
+        old = (FIXTURES / "ra_park_412704_matrix.html").read_text()
+        full = old.replace("class='td status a'", "class='td status r'")
+        self.assertEqual(self.parse(full), {})
+
 
 
 if __name__ == "__main__":

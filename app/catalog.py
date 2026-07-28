@@ -55,6 +55,8 @@ def load_seed(path: str | Path | None = None) -> list[Campground]:
             status_reason=e.get("status_reason"),
             coord_source=e.get("coord_source"),
             first_come_sites=e.get("first_come_sites"),
+            sites_total=e.get("sites_total"),
+            sites_not_bookable=e.get("sites_not_bookable"),
         )
         for e in entries
     ]
@@ -100,6 +102,11 @@ def write_seed(
                 # durable as someone's local .db file.
                 "coord_source": c.coord_source,
                 "first_come_sites": c.first_come_sites,
+                # Measured once and committed: site inventory changes on the
+                # order of years, so this must survive a database rebuild
+                # rather than being re-fetched.
+                "sites_total": c.sites_total,
+                "sites_not_bookable": c.sites_not_bookable,
             }
             for c in sorted(campgrounds, key=lambda c: (c.provider, c.id))
         ],

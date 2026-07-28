@@ -99,7 +99,7 @@ can't be scanned.
 ### First-come: two separate claims
 
 "This campground takes no reservations" and "this bookable campground *also*
-has walk-up sites" are different facts, and we usually know only the first.
+has first-come sites" are different facts, and we usually know only the first.
 They're modelled separately, three-state per §8g:
 
 | `reservation_type` | `first_come_sites` | shown as |
@@ -110,7 +110,7 @@ They're modelled separately, three-state per §8g:
 | `reservable` | `None` *(default)* | Reservable |
 
 The last row is the point: when we don't know, the label **says nothing** about
-walk-up sites rather than implying there are none.
+first-come sites rather than implying there are none.
 
 Nothing populates `first_come_sites` yet. `docs/first-come-research.md` has the
 findings: RIDB *can* tell us how many sites at a reservable campground aren't
@@ -162,9 +162,10 @@ Two fixes, both in `app/providers/reserveamerica.py`:
 
 | File | What's in it |
 |---|---|
+| `docs/terminology.md` | **first-come vs hike-in — two axes, never say "walk-up"** |
 | `docs/scraping-policy.md` | **How we behave toward platforms — supersedes §6c** |
 | `docs/bc-coordinates.md` | Why BC parks had no coordinates, and how it was fixed |
-| `docs/first-come-research.md` | Can we count a campground's walk-up sites? Partly |
+| `docs/first-come-research.md` | Can we count a campground's first-come sites? Partly |
 | `docs/scanning-design.md` | Two-tier scanning, pacing rules, on-demand guards |
 | `docs/reserveamerica-handoff.md` | RA endpoints (working), and the GoingToCamp blocker |
 | `docs/reserveamerica-clients.md` | Which agencies run on ReserveAmerica |

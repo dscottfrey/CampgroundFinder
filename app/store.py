@@ -171,7 +171,9 @@ def upsert_campgrounds(
                      reservation_type=?, status=?, status_reason=?, closed_until=?,
                      last_checked=?, seeded=?,
                      coord_source=COALESCE(?, coord_source),
-                     first_come_sites=COALESCE(?, first_come_sites)
+                     first_come_sites=COALESCE(?, first_come_sites),
+                     sites_total=COALESCE(?, sites_total),
+                     sites_not_bookable=COALESCE(?, sites_not_bookable)
                    WHERE provider=? AND id=?""",
                 (
                     cg.name, cg.rec_area, cg.state, cg.latitude, cg.longitude,
@@ -183,6 +185,7 @@ def upsert_campgrounds(
                     # COALESCE again: an enumeration that cannot tell must not
                     # flip a known answer back to "unknown".
                     None if cg.first_come_sites is None else int(cg.first_come_sites),
+                    cg.sites_total, cg.sites_not_bookable,
                     cg.provider, cg.id,
                 ),
             )
@@ -193,14 +196,15 @@ def upsert_campgrounds(
                      provider, id, name, rec_area, state, latitude, longitude,
                      reservation_type, status, status_reason, closed_until,
                      first_cataloged, last_checked, seeded, coord_source,
-                     first_come_sites)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                     first_come_sites, sites_total, sites_not_bookable)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     cg.provider, cg.id, cg.name, cg.rec_area, cg.state,
                     cg.latitude, cg.longitude, cg.reservation_type, cg.status,
                     cg.status_reason, cg.closed_until, stamp, stamp,
                     1 if seeded else 0, cg.coord_source,
                     None if cg.first_come_sites is None else int(cg.first_come_sites),
+                    cg.sites_total, cg.sites_not_bookable,
                 ),
             )
             added += 1
@@ -226,6 +230,10 @@ def row_to_campground(row: sqlite3.Row) -> Campground:
             None if "first_come_sites" not in row.keys()
             or row["first_come_sites"] is None
             else bool(row["first_come_sites"])
+        ),
+        sites_total=row["sites_total"] if "sites_total" in row.keys() else None,
+        sites_not_bookable=(
+            row["sites_not_bookable"] if "sites_not_bookable" in row.keys() else None
         ),
     )
 
@@ -331,6 +339,38 @@ def set_campground_coordinates(
     return cur.rowcount > 0
 
 
+def set_site_inventory(
+    conn: sqlite3.Connection,
+    provider: str,
+    cg_id: str,
+    sites_total: int,
+    sites_not_bookable: int,
+    source: str,
+    site_types: Optional[dict] = None,
+    now: Optional[datetime] = None,
+) -> bool:
+    """Record a campground's site counts, measured once and kept.
+
+    Inventory changes on the order of years, so this is written by a
+    maintenance backfill and then left alone — it is never part of a scan.
+    `first_come_sites` is derived here rather than stored independently, so the
+    flag and the counts can never disagree.
+    """
+    if not source:
+        raise ValueError("site counts must record where they came from")
+    cur = conn.execute(
+        """UPDATE campgrounds
+             SET sites_total=?, sites_not_bookable=?, first_come_sites=?,
+                 site_types=?, inventory_source=?, inventory_updated=?
+           WHERE provider=? AND id=?""",
+        (sites_total, sites_not_bookable, 1 if sites_not_bookable > 0 else 0,
+         dumps(site_types) if site_types else None,
+         source, iso(now), provider, cg_id),
+    )
+    conn.commit()
+    return cur.rowcount > 0
+
+
 def coordinate_provenance(conn: sqlite3.Connection) -> dict[str, int]:
     """How many catalogue coordinates came from where — including unlocated."""
     counts: dict[str, int] = {}
@@ -421,8 +461,10 @@ def map_view(
                 "located": cg.has_location,
                 "reservation_type": cg.reservation_type,
                 # Three-state and deliberately nullable: the UI must be able to
-                # say nothing about walk-up sites when we don't know (§8g).
+                # say nothing about first-come sites when we don't know (§8g).
                 "first_come_sites": cg.first_come_sites,
+                "sites_total": cg.sites_total,
+                "sites_not_bookable": cg.sites_not_bookable,
                 "booking_label": cg.booking_label,
             }
         )

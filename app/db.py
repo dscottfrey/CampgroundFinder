@@ -22,10 +22,23 @@ CREATE TABLE IF NOT EXISTS campgrounds (
   -- and neither is a guess — which must never appear here at all.
   coord_source TEXT,
   coord_updated TEXT,
-  -- Does a reservable campground ALSO hold walk-up sites? Three-state (§8g):
+  -- Does a reservable campground ALSO hold first-come sites? Three-state (§8g):
   -- 1 yes, 0 no, NULL unknown. Distinct from reservation_type, which says what
   -- the campground as a whole is.
   first_come_sites INTEGER,
+  -- Site counts from the provider's own inventory, where it has one.
+  -- `sites_not_bookable` deliberately means "not bookable online" and NOT
+  -- "first-come" — see docs/first-come-research.md. Management/host pitches
+  -- are excluded from both figures.
+  sites_total INTEGER,
+  sites_not_bookable INTEGER,
+  -- CampsiteType -> {bookable, not_bookable}, as JSON. Captured from the same
+  -- request as the counts so the ACCESS question (hike-in, boat-in,
+  -- equestrian, tent-only) never needs a second 545-request pass. Access mode
+  -- and booking mode are different axes — see docs/terminology.md.
+  site_types TEXT,
+  inventory_source TEXT,
+  inventory_updated TEXT,
   PRIMARY KEY (provider, id)
 );
 
@@ -109,6 +122,11 @@ MIGRATIONS = [
     ("campgrounds", "coord_source", "TEXT"),
     ("campgrounds", "coord_updated", "TEXT"),
     ("campgrounds", "first_come_sites", "INTEGER"),
+    ("campgrounds", "sites_total", "INTEGER"),
+    ("campgrounds", "sites_not_bookable", "INTEGER"),
+    ("campgrounds", "site_types", "TEXT"),
+    ("campgrounds", "inventory_source", "TEXT"),
+    ("campgrounds", "inventory_updated", "TEXT"),
 ]
 
 
