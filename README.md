@@ -108,7 +108,16 @@ failure with a new cause each time.
    TENT SITE he has camped in a van. Only an explicit "RV prohibited" in the
    site description says otherwise, and we don't read descriptions — so
    "does my van fit?" is *unknown*, and unknown is shown, not filtered away.
-2. **The driveway length is a floor, not a measurement.** A park manager told
+2. **The driveway length is a floor, and how much you trust it depends on how
+   often it repeats.** No real campground has most of its sites the exact same
+   length — a forested loop bends around trees. So a value repeated across a
+   park is a form default and means nothing; a rare value was entered
+   deliberately and should be believed. `app/equipment.py` detects this and
+   answers in three buckets, never merging "fits" with "no idea". At Beverly
+   Beach a 40 ft rig gets **0 confirmed fits, 21 unknown, 4 no** — not 21 fake
+   candidates.
+
+   Original note: **the driveway length is a floor, not a measurement.** A park manager told
    Scott they had no staffing to measure when going onto ReserveAmerica, so
    most sites carry a default — 21 of 24 on one loop read exactly "20 Back-In".
    A01 lists 20 ft and is really 53; A15, genuinely short, was entered

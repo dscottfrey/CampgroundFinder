@@ -2693,6 +2693,74 @@ class TestDrivewayIsAMinimum(unittest.TestCase):
         # A01 is really 53ft, so a 40ft rig must not be told "no".
         self.assertIsNone(self.fits(sites["A01"]["equipment_length"], 40))
 
+# ---------------- trusting a length by how often it repeats (2026-07-28) ----
+
+class TestDefaultLengthDetection(unittest.TestCase):
+    """Scott's tell: no real campground has most sites the exact same length.
+
+    A forested loop bends around trees; identical figures across a park are a
+    form default, not a measurement. So a repeated value is untrustworthy and a
+    rare one was entered deliberately and should be believed.
+    """
+
+    def setUp(self):
+        from app import equipment
+        from app.providers.reserveamerica import ReserveAmericaProvider
+        self.eq = equipment
+        self.sites = ReserveAmericaProvider.parse_sites(
+            (FIXTURES / "ra_beverly_loop_a.html").read_text())
+
+    def test_the_repeated_value_is_flagged_as_a_default(self):
+        from app.providers.reserveamerica import parse_driveway
+        stated = [parse_driveway(s["equipment_length"])[0] for s in self.sites]
+        self.assertEqual(self.eq.default_lengths(stated), {20})
+
+    def test_a_small_sample_yields_no_verdict(self):
+        # Three sites reading 20 is not evidence of anything.
+        self.assertEqual(self.eq.default_lengths([20, 20, 20]), set())
+
+    def test_a_varied_park_has_no_default(self):
+        self.assertEqual(
+            self.eq.default_lengths([15, 20, 22, 28, 31, 35, 40, 44]), set())
+
+    def test_a_default_below_the_need_is_unknown_never_no(self):
+        # A01 lists 20 and is really 53ft.
+        r = self.eq.read_length(20, True, {20})
+        self.assertIsNone(self.eq.fits(r, 40))
+
+    def test_a_specific_value_below_the_need_is_believed(self):
+        # A15 lists 15 and really is 15ft.
+        r = self.eq.read_length(15, True, {20})
+        self.assertIs(self.eq.fits(r, 40), False)
+
+    def test_a_forty_foot_rig_gets_no_false_candidates(self):
+        """The point Scott made: never show "minimum 20" to a 40ft RV.
+
+        Merging unknowns into the results would hand a 40-footer 21 sites
+        listed at a default 20 as though they were matches.
+        """
+        fit, unknown, no = self.eq.filter_by_length(self.sites, 40)
+        self.assertEqual(len(fit), 0, "nothing here is confirmed to fit 40ft")
+        self.assertEqual(len(unknown), 21)
+        self.assertIn("A15", [s["name"] for s in no])
+
+    def test_unknowns_are_kept_separate_not_discarded(self):
+        # §8g: unknown is shown, never hidden — but never as a match either.
+        fit, unknown, no = self.eq.filter_by_length(self.sites, 40)
+        self.assertEqual(len(fit) + len(unknown) + len(no), len(self.sites))
+        self.assertIn("A01", [s["name"] for s in unknown])
+
+    def test_a_confident_fit_is_still_reported(self):
+        fit, _unknown, _no = self.eq.filter_by_length(self.sites, 25)
+        self.assertEqual([s["name"] for s in fit], ["A19"])   # listed 30ft
+
+    def test_the_copy_does_not_encourage_a_forty_foot_rig(self):
+        r = self.eq.read_length(20, True, {20})
+        text = self.eq.describe(r, 40)
+        self.assertIn("not reliably recorded", text)
+        self.assertNotIn("minimum", text.lower())
+        self.assertNotIn("may be longer", text.lower())
+
 
 
 if __name__ == "__main__":
