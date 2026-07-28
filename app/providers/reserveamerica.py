@@ -18,9 +18,13 @@ Verified live 2026-07-27 against Oregon:
   * `campgroundDetails.do?contractCode=OR&parkId=N` — one park's complete,
     unfiltered site list: site id, name, type, and attributes.
 
-NOT yet working: the date-range availability calendar. `campsiteCalendar.do`
-redirects back to the park page, so `search()` currently reports the site
-inventory without per-date availability. See `search()` for details.
+  * `campsiteDetails.do?contractCode=OR&parkId=N&siteId=M&arvdate=MM/DD/YYYY`
+    — a **two-week availability grid for one site**. Day cells carry
+    `data-auto-id='mdayYYYYMMDD'` and `class='td status a|x|r'`.
+
+There is **no park-level matrix**: `campsiteCalendar.do` redirects to the park
+page however it is called, so availability costs one request per site. See
+`search()` for what that means for scheduling.
 """
 
 from __future__ import annotations
@@ -29,7 +33,7 @@ import html
 import logging
 import re
 import time
-from datetime import date
+from datetime import date, timedelta
 from typing import Iterable, Optional
 from urllib.parse import urlencode
 
@@ -52,6 +56,12 @@ _DIRECTORY_ROW = re.compile(
     r"parkId=(\d+)'[^>]*>(?:<br>)?\s*([^<]{2,80})<br></a>.*?"
     r"switchViewType\([^)]*?&#39;(-?\d+\.\d+):(-?\d+\.\d+)&#39;",
     re.S,
+)
+#: One day cell in a site's two-week calendar. `a` available, `x` not
+#: available, `r` reserved. The date rides along in data-auto-id.
+_CALENDAR_CELL = re.compile(
+    r"<div id='avail\d+' class='td status ([a-z]+)[^']*' title='([^']*)' "
+    r"data-auto-id='mday(\d{8})'"
 )
 _SITE_ROW = re.compile(r"<div class='br'>(.*?)(?=<div class='br'>|<div class='tfoot'|\Z)", re.S)
 _SITE_ID = re.compile(r"changeSelectedSiteOL\((\d+)\)")
@@ -187,26 +197,91 @@ class ReserveAmericaProvider(Provider):
 
     # -- availability ------------------------------------------------------
 
-    def search(self, req: SearchRequest) -> list[Campsite]:
-        """Per-date availability. **Not implemented — do not fake it.**
+    @staticmethod
+    def parse_calendar(page: str) -> list[tuple[date, str]]:
+        """Extract (date, status) from a site's two-week calendar grid.
 
-        `campsiteCalendar.do?page=calendar&contractCode=..&parkId=..&
-        calarvdate=MM/DD/YYYY&sitepage=true&startIdx=0` redirects back to the
-        park detail page, with or without a session cookie from a prior visit
-        to that page. The ASP.NET session/viewstate handshake that unlocks it
-        has not been worked out yet (§6c).
-
-        Returning an empty list here would read as "nothing is available",
-        which is exactly the silent-missing failure this project exists to
-        prevent (§8g, §8k). So it raises instead: the scanner records the
-        source as failed, and every catalogued park drops to `stale` rather
-        than vanishing from the map.
+        Status is RA's own letter: `a` available, `x` not available,
+        `r` reserved. We do not collapse x and r into "unavailable" — they
+        mean different things and the distinction is worth keeping.
         """
-        raise NotImplementedError(
-            f"{self.name}: availability calendar not implemented yet — "
-            "campsiteCalendar.do redirects to the park page. Park directory "
-            "and per-park site inventory do work; see docs/reserveamerica-handoff.md"
+        collapsed = re.sub(r"\s+", " ", page)
+        out = []
+        for status, _title, day in _CALENDAR_CELL.findall(collapsed):
+            out.append(
+                (date(int(day[:4]), int(day[4:6]), int(day[6:])), status)
+            )
+        return out
+
+    def site_availability(self, park_id: str, site_id: str, arrival: date):
+        """One site's two-week grid starting at `arrival`."""
+        page = self._fetch(
+            "campsiteDetails.do",
+            {
+                "contractCode": self.contract_code,
+                "parkId": park_id,
+                "siteId": site_id,
+                "arvdate": arrival.strftime("%m/%d/%Y"),
+            },
         )
+        return self.parse_calendar(page)
+
+    def search(self, req: SearchRequest) -> list[Campsite]:
+        """Availability for specific parks — **watch-scoped, never a full sweep.**
+
+        Cost reality, measured 2026-07-27: RA exposes no park-level matrix.
+        `campsiteCalendar.do` redirects to the park page however it is called,
+        so availability is only readable **one site at a time** via
+        `campsiteDetails.do?...&arvdate=MM/DD/YYYY`, which returns 14 days.
+
+        Reehers alone is 34 sites; at the 6s pace that is ~3.5 minutes per park
+        per fortnight, and ~4 hours to sweep all 65 Oregon parks. So this
+        provider must be pointed at the handful of parks someone is actually
+        watching. `req.campground_ids` is therefore **required** — a blank
+        request raises rather than quietly starting a four-hour crawl.
+        """
+        if not req.campground_ids:
+            raise ValueError(
+                f"{self.name}: refusing an unscoped search. RA availability is "
+                "one request per site, so name the parks you want in "
+                "campground_ids (a full Oregon sweep is ~4 hours)."
+            )
+
+        found: list[Campsite] = []
+        for park_id in req.campground_ids:
+            sites = self.list_sites(park_id)
+            for site in sites:
+                grid = dict(
+                    self.site_availability(park_id, site["site_id"], req.start_date)
+                )
+                found.extend(self._runs(req, park_id, site, grid))
+        return found
+
+    def _runs(self, req, park_id, site, grid) -> Iterable[Campsite]:
+        """Turn a day->status map into bookable runs of `req.nights`."""
+        for day, status in sorted(grid.items()):
+            if day < req.start_date or day > req.end_date:
+                continue
+            window = [day + timedelta(days=n) for n in range(req.nights)]
+            if not all(grid.get(d) == "a" for d in window):
+                continue
+            yield Campsite(
+                provider=self.name,
+                campsite_id=site["site_id"],
+                available_date=day,
+                nights=req.nights,
+                site_name=site["name"] or site["site_id"],
+                campsite_type=site["site_type_label"] or site["site_type"],
+                status="available",
+                facility_id=park_id,
+                state=self.state,
+                booking_url=(
+                    f"https://{self.host}/campsiteDetails.do"
+                    f"?contractCode={self.contract_code}&parkId={park_id}"
+                    f"&siteId={site['site_id']}&arvdate={day.strftime('%m/%d/%Y')}"
+                ),
+                attributes={"site_type_icon": site["site_type"]},
+            )
 
 
 class BlockedByProvider(RuntimeError):

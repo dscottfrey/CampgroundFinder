@@ -804,10 +804,10 @@ class TestReserveAmericaSiteList(unittest.TestCase):
 
 
 class TestReserveAmericaHonesty(unittest.TestCase):
-    def test_availability_raises_rather_than_returning_empty(self):
-        """An unimplemented calendar must not look like 'nothing available'."""
+    def test_unscoped_search_refuses_rather_than_returning_empty(self):
+        """Refusing beats an empty list, which would read as 'nothing available'."""
         from app.providers.base import SearchRequest as SR
-        with self.assertRaises(NotImplementedError):
+        with self.assertRaises(ValueError):
             ra_provider().search(SR(provider="ReserveAmerica:OR",
                                     start_date=START, end_date=START))
 
@@ -830,3 +830,66 @@ class TestReserveAmericaHonesty(unittest.TestCase):
         p = bp("ReserveAmerica:GA", state="GA", host="a1.reserveamerica.com")
         self.assertEqual(p.host, "a1.reserveamerica.com")
         self.assertEqual(p.contract_code, "GA")
+
+
+class TestReserveAmericaAvailability(unittest.TestCase):
+    """The two-week per-site grid — the call that finally works."""
+
+    CAL = FIXTURES / "ra_site_45859_calendar.html"
+
+    def test_parses_real_grid(self):
+        from app.providers.reserveamerica import ReserveAmericaProvider as RA
+        days = RA.parse_calendar(self.CAL.read_text())
+        self.assertEqual(len(days), 14)
+        self.assertEqual(days[0][0], date(2026, 8, 10))
+        self.assertEqual(days[-1][0], date(2026, 8, 23))
+        self.assertTrue(all(s in ("a", "x", "r") for _d, s in days))
+
+    def test_keeps_reserved_and_unavailable_distinct(self):
+        from app.providers.reserveamerica import ReserveAmericaProvider as RA
+        html_doc = self.CAL.read_text().replace(
+            "class='td status a' title='Available' data-auto-id='mday20260811'",
+            "class='td status r' title='Reserved' data-auto-id='mday20260811'", 1)
+        grid = dict(RA.parse_calendar(html_doc))
+        self.assertEqual(grid[date(2026, 8, 11)], "r")
+        self.assertEqual(grid[date(2026, 8, 10)], "a")
+
+    def _provider(self):
+        from app.providers.reserveamerica import ReserveAmericaProvider as RA
+        def fetcher(path, params):
+            if path == "campgroundDetails.do":
+                return (FIXTURES / "ra_park_412704.html").read_text()
+            if path == "campsiteDetails.do":
+                return self.CAL.read_text()
+            raise AssertionError(path)
+        return RA("OR", "oregonstateparks.reserveamerica.com",
+                  state="OR", delay=0, fetcher=fetcher)
+
+    def test_search_yields_runs_with_booking_links(self):
+        from app.providers.base import SearchRequest as SR
+        sites = self._provider().search(SR(
+            provider="ReserveAmerica:OR", start_date=date(2026, 8, 10),
+            end_date=date(2026, 8, 23), nights=2, campground_ids=["412704"]))
+        self.assertTrue(sites)
+        s = sites[0]
+        self.assertEqual(s.available_date, date(2026, 8, 10))
+        self.assertEqual(s.nights, 2)
+        self.assertEqual(s.facility_id, "412704")
+        self.assertEqual(s.state, "OR")
+        self.assertIn("arvdate=08/10/2026", s.booking_url)
+
+    def test_run_must_be_fully_available(self):
+        from app.providers.base import SearchRequest as SR
+        # A 20-night run cannot fit inside a 14-day grid.
+        sites = self._provider().search(SR(
+            provider="ReserveAmerica:OR", start_date=date(2026, 8, 10),
+            end_date=date(2026, 8, 23), nights=20, campground_ids=["412704"]))
+        self.assertEqual(sites, [])
+
+    def test_unscoped_search_refuses_rather_than_crawling_everything(self):
+        from app.providers.base import SearchRequest as SR
+        with self.assertRaises(ValueError) as ctx:
+            self._provider().search(SR(provider="ReserveAmerica:OR",
+                                       start_date=START, end_date=START))
+        self.assertIn("campground_ids", str(ctx.exception))
+

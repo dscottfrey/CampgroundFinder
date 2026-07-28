@@ -1,5 +1,11 @@
 # ReserveAmerica scraper — build handoff
 
+> **STATUS 2026-07-27: built and working for Oregon.** Directory, per-park site
+> inventory, and per-site availability all verified live. See
+> `app/providers/reserveamerica.py`. What remains is scheduling policy (below)
+> and extending to more contract codes. The endpoint notes below are kept
+> because they record what was tried and what failed.
+
 Everything needed to build and run the ReserveAmerica (Aspira) provider.
 Written 2026-07-27. **Nothing in here has been tested against the live site.**
 Treat every endpoint, parameter, and ID below as unverified until proven.
@@ -79,8 +85,8 @@ browser devtools (Network → XHR) before writing code against it.
 |---|---|
 | Park directory for a contract | `campgroundDirectoryList` |
 | Park search | `unifSearch.do` — **do not use, see above** |
-| Park availability calendar | `campsiteCalendar.do` |
-| Per-site detail | site detail call, name unconfirmed |
+| Park availability calendar | `campsiteCalendar.do` — **dead end, always redirects** |
+| Per-site 2-week calendar | `campsiteDetails.do?…&siteId=M&arvdate=MM/DD/YYYY` — **WORKS** |
 
 - Contract code for Oregon: `contractCode=OR`, host
   `oregonstateparks.reserveamerica.com`.
