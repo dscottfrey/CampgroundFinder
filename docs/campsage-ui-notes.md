@@ -64,6 +64,33 @@ needed, but a neat shape for a future "pin this campground" view.
   catalog with honest status (§8k); cancellations are one event within that,
   not the organizing idea.
 
+## Zoom as a scan priority signal (Scott's idea, 2026-07-27)
+
+Scott noticed CampSage shows fewer campgrounds zoomed out and more zoomed in,
+and suggested **availability discovery could be rate-limited by zoom level.**
+
+Worth doing, because we have a hard scarcity problem: ReserveAmerica
+availability costs one request per site with no park-level matrix, measured at
+~3.5 minutes per park per fortnight and ~4 hours to sweep all 65 Oregon parks.
+We cannot check everything, so *something* must choose the order.
+
+**The version to build:** the viewport and zoom of recent map views feed a
+**priority queue for the scanner**. Parks people actually look at get
+re-checked sooner; parks nobody has viewed in weeks drift to the back. The
+scanner's pace never changes — same one-at-a-time, same seconds between
+requests — only the order does.
+
+**The version not to build:** zoom or pan triggering an upstream fetch. That
+breaks the rule in §6c that only the scheduled scanner talks upstream, and it
+makes outbound traffic scale with how much people browse. A dozen friends
+panning around on a Friday evening would produce exactly the correlated burst
+that gets a home IP blocked. Same reasoning as the idle/active cadence
+decision: user activity may change *what* and *when*, never *how fast*.
+
+**Separately, for display:** zoom-based decluttering is worth copying on its
+own merits. Cluster markers at low zoom, and don't render labels until the
+pins are far enough apart to read — see below.
+
 ## The interface itself
 
 Scott's verdict is that it's poor, and the map screenshot backs the main
