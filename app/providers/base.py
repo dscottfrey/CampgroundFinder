@@ -1,0 +1,110 @@
+"""Normalized provider interface — the core extensibility point (§5).
+
+Everything a source returns is normalized into `Campsite` (availability) and
+`Campground` (catalog), so the map, filters, and alerts never care where a
+record came from.
+"""
+
+from __future__ import annotations
+
+from abc import ABC, abstractmethod
+from dataclasses import dataclass, field
+from datetime import date
+from typing import Optional
+
+
+@dataclass
+class SearchRequest:
+    provider: str                     # e.g. "RecreationDotGov" or "PerfectMind:SanJuanCoWA"
+    start_date: date
+    end_date: date
+    nights: int = 1
+    weekends_only: bool = False
+    rec_area_ids: list[str] = field(default_factory=list)
+    campground_ids: list[str] = field(default_factory=list)
+    campsite_ids: list[str] = field(default_factory=list)
+
+
+@dataclass
+class Campsite:                        # normalized availability record
+    provider: str
+    campsite_id: str
+    available_date: date               # first night of the run
+    nights: int
+    site_name: str
+    loop: Optional[str] = None
+    campsite_type: Optional[str] = None
+    status: str = "available"
+    reservation_type: str = "reservable"  # 'reservable' | 'first_come' (FCFS: status, no booking link — §4)
+    rec_area: Optional[str] = None
+    rec_area_id: Optional[str] = None
+    facility_name: Optional[str] = None
+    facility_id: Optional[str] = None
+    booking_url: Optional[str] = None
+    state: Optional[str] = None        # region code: "OR", "WA", "BC", "CA-NAT" — drives the region selector
+    aqi_status: Optional[str] = None   # 'green' | 'not_green' | 'tbd' | 'unknown' (§8d enricher, step 4)
+    fire_status: Optional[str] = None  # 'clear' | 'near' | 'unknown' (§8e enricher, step 4)
+    attributes: dict = field(default_factory=dict)  # normalized; null value = unknown (§8f/§8g)
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    extra: dict = field(default_factory=dict)   # provider-specific: rating, equipment, price…
+
+    @property
+    def key(self) -> str:              # stable identity for dedupe/notify
+        return f"{self.provider}|{self.campsite_id}|{self.available_date}|{self.nights}"
+
+
+# Catalog statuses (§8k). `unknown`/`stale` mean "we couldn't confirm", never
+# "it doesn't exist" — a catalogued campground is never dropped from the map.
+STATUS_AVAILABLE = "available"
+STATUS_FULL = "full"
+STATUS_CLOSED = "closed"
+STATUS_UNKNOWN = "unknown"
+STATUS_STALE = "stale"
+
+
+@dataclass
+class Campground:
+    """One row of the known universe (§8k) — the map is drawn from these."""
+
+    provider: str
+    id: str                            # provider-native id (e.g. ReserveAmerica parkId 412704)
+    name: str
+    rec_area: Optional[str] = None
+    state: Optional[str] = None
+    latitude: Optional[float] = None   # None is legitimate — show "location unknown", don't drop (§13)
+    longitude: Optional[float] = None
+    reservation_type: str = "reservable"
+    status: str = STATUS_UNKNOWN
+    status_reason: Optional[str] = None
+    closed_until: Optional[str] = None
+
+    @property
+    def key(self) -> tuple[str, str]:
+        return (self.provider, self.id)
+
+    @property
+    def has_location(self) -> bool:
+        return self.latitude is not None and self.longitude is not None
+
+
+class Provider(ABC):
+    name: str
+
+    @abstractmethod
+    def search(self, req: SearchRequest) -> list[Campsite]:
+        ...
+
+    def list_campgrounds(
+        self,
+        state: Optional[str] = None,
+        rec_area_ids: Optional[list[str]] = None,
+    ) -> list[Campground]:
+        """Enumerate this provider's full campground directory (§8k).
+
+        Optional: providers that can't enumerate return [] and contribute
+        nothing to the catalog beyond what the seed already holds. Never
+        return a hand-picked shortlist here — a shortlist is exactly how
+        Reehers vanished from CampSage's map.
+        """
+        return []

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CampgroundFinder</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header>
+    <h1>CampgroundFinder</h1>
+    <p class="sub">Every campground we know about — open, full, or unchecked.</p>
+  </header>
+
+  <div id="status" class="status">
+    <span class="spinner" aria-hidden="true"></span>
+    <span id="status-text">Loading…</span>
+  </div>
+
+  <section class="controls">
+    <input id="search" type="search" placeholder="Search by name…" autocomplete="off">
+    <div id="regions" class="regions"></div>
+  </section>
+
+  <section id="legend" class="legend">
+    <span class="chip available"><b></b>Open now</span>
+    <span class="chip full"><b></b>Full — set a watch</span>
+    <span class="chip unknown"><b></b>Not checked yet</span>
+    <span class="chip stale"><b></b>Couldn't reach the website</span>
+    <span class="chip closed"><b></b>Closed</span>
+  </section>
+
+  <main>
+    <table id="table">
+      <thead>
+        <tr>
+          <th>Campground</th><th>Where</th><th>Status</th><th>Open sites</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p id="empty" class="empty" hidden>Nothing matches that search.</p>
+  </main>
+
+  <footer>
+    <p id="foot"></p>
+    <p class="note">
+      The map view needs an internet connection for its background imagery,
+      so it isn't switched on yet. This list shows the same campgrounds.
+    </p>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+# Copy to config.yaml and edit. Ships with OR + WA sources only (§8c).
+# Rec-area IDs below are ILLUSTRATIVE — look yours up before enabling:
+#   camply recreation-areas --search "Mount Hood" --provider RecreationDotGov
+#   camply campgrounds --rec-area 1106 --provider RecreationDotGov
+
+home_base: { label: "Home", latitude: 45.52, longitude: -122.68 }
+scan_interval_minutes: 30        # be polite; don't go below ~10 (§13)
+default_window_days: 60
+default_states: [OR, WA]
+
+notify:
+  default_targets:
+    - ntfy://ntfy.sh/change-me-campgroundfinder   # keep the topic secret — it is the auth
+
+access:
+  mode: tailscale
+  admins: ["you@example.com"]
+  auto_provision_friends: true
+
+sources:
+  # `provider` is the camply PROVIDER name (e.g. RecreationDotGov), which is how
+  # camply's CAMPSITE_SEARCH_PROVIDER registry is actually keyed. The build plan's
+  # §6/§12 say "SearchRecreationDotGov"; that is wrong against camply 0.34.2.
+  # Both spellings are accepted and normalized, so either works here.
+  - { label: "Mt Hood NF",         provider: RecreationDotGov, state: OR, rec_area_ids: ["1106"] }
+  - { label: "Deschutes NF",       provider: RecreationDotGov, state: OR, rec_area_ids: ["1113"] }
+  - { label: "Gifford Pinchot NF", provider: RecreationDotGov, state: WA, rec_area_ids: ["1131"] }
+  - { label: "WA GoingToCamp",     provider: GoingToCamp,      state: WA, rec_area_ids: [] }
+
+  # Offline demo source — no network, no deps. Handy for `scan-once` smoke tests.
+  # - { label: "Mock (offline demo)", provider: Mock, state: OR }
+
+  # --- Not implemented yet; enable as the later build steps land ---
+  # - label: "San Juan County (PerfectMind)"     # §7, step 7
+  #   provider: "PerfectMind:SanJuanCoWA"
+  #   state: WA
+  #   perfectmind: { host: sanjuancountywa.perfectmind.com, widget_id: d69eb041-59af-41a7-9182-35e8487e05c1 }
+  # - { label: "Oregon State Parks", provider: "ReserveAmerica:OR", state: OR, contract_code: OR, campground_ids: [] }  # §4d, step 8
+  # - { label: "BC Provincial Parks", provider: GoingToCamp, state: BC, rec_area_ids: [] }
+  # - { label: "Parks Canada",        provider: "ParksCanada",  state: CA-NAT, rec_area_ids: [] }
+
+watches:
+  - name: "Labor Day dream spot"
+    mode: targeted
+    provider: RecreationDotGov
+    campground_ids: ["232876"]
+    start_date: 2026-09-04
+    end_date: 2026-09-07
+    nights: 2
+    notify_targets: ["tgram://<bot_token>/<chat_id>"]
+  - name: "Any good OR/WA weekend within 120mi"
+    mode: autonomous
+    states: [OR, WA]
+    weekends_only: true
+    nights: 2
+    filters: { max_miles: 120, min_rating: 4.0, campsite_type_any: ["STANDARD NONELECTRIC", "TENT ONLY"] }
+    batch: true
+    notify_targets: ["ntfy://ntfy.sh/change-me-campgroundfinder"]

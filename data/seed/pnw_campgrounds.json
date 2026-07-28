@@ -1,0 +1,5468 @@
+{
+  "_meta": {
+    "note": "OR+WA federal campgrounds enumerated live from the RIDB facilities directory (activity=CAMPING) on 2026-07-27, paged at 50/request with a 2s pause. ReserveAmerica/PerfectMind/Campspot/ParksCanada entries are NOT here yet - those providers are not built. Regenerate with scripts/manage.py catalog-refresh --write-seed",
+    "count": 546
+  },
+  "campgrounds": [
+    {
+      "provider": "RecreationDotGov",
+      "id": "10000447",
+      "name": "Castle Rock Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.15814,
+      "longitude": -120.83395,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10001666",
+      "name": "Stillwater Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.14494,
+      "longitude": -120.82925,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10005523",
+      "name": "Jackman Park Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.719085,
+      "longitude": -118.624208,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10005676",
+      "name": "Mecca Flat Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.770355,
+      "longitude": -121.207595,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10038314",
+      "name": "Juniper Dunes OHV Area",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 46.343144,
+      "longitude": -118.930988,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10039204",
+      "name": "Palisades Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.131359,
+      "longitude": -120.823479,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10039215",
+      "name": "Lone Pine Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.131359,
+      "longitude": -120.823479,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10039225",
+      "name": "Cobble Rock Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.128203,
+      "longitude": -120.809837,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10039234",
+      "name": "Poison Butte Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.120494,
+      "longitude": -120.798678,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10039245",
+      "name": "Post Pile Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.128743,
+      "longitude": -120.801998,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10039255",
+      "name": "Big Bend Campground (Crooked River)",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.11304,
+      "longitude": -120.793586,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10067370",
+      "name": "Hyatt Lake Recreation Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.167173,
+      "longitude": -122.463698,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10068748",
+      "name": "Rock Springs Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.998972,
+      "longitude": -118.8396,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10069654",
+      "name": "Pittsburg Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.635533793,
+      "longitude": -116.477585809,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10071157",
+      "name": "River Bench Day Use",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10072265",
+      "name": "Smith Lake Campground",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 48.77878,
+      "longitude": -116.264,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10072883",
+      "name": "Finner Creek Campground",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.951393,
+      "longitude": -120.768842,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10074569",
+      "name": "Brice Creek",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10074574",
+      "name": "Tin Can Flat Campground",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.230012,
+      "longitude": -115.620794,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10076602",
+      "name": "Methow Valley Ranger District",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 48.47911,
+      "longitude": -120.189335,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10078676",
+      "name": "Godman Campground/Trailhead",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 46.099718,
+      "longitude": -117.786291,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10078697",
+      "name": "Conrad Crossing Campground",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.158576,
+      "longitude": -115.415957,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10136092",
+      "name": "Crab Creek - Rocky Ford Area",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.30175,
+      "longitude": -118.25383,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10154777",
+      "name": "Coffeepot Lake Recreation Site",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.50107,
+      "longitude": -118.55511,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10154906",
+      "name": "Pacific Lake Recreation Site - Lakeview Ranch",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.415175,
+      "longitude": -118.733509,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10155226",
+      "name": "Rock Creek Recreation Site",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.01468,
+      "longitude": -117.94328,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10155245",
+      "name": "Rattlesnake Canyon Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.336445,
+      "longitude": -120.931064,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10155457",
+      "name": "Long Bend Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.126444,
+      "longitude": -121.130251,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10159357",
+      "name": "Reservoir Road Off Highway Vehicle Play Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.08204,
+      "longitude": -120.82101,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10221499",
+      "name": "Surveyor Recreation Site",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.25073,
+      "longitude": -122.22813,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10278932",
+      "name": "Muleshoe Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.80732,
+      "longitude": -119.96704,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10279050",
+      "name": "Donnelly Service Creek River Access Park",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.79331,
+      "longitude": -120.00137,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10279174",
+      "name": "John Day Crossing Historic Site",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.59608,
+      "longitude": -120.409691,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10283829",
+      "name": "Beavertail Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.33628,
+      "longitude": -120.94796,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10283852",
+      "name": "Jones Canyon Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.308084,
+      "longitude": -120.95741,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10314202",
+      "name": "Chukar Park Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.80335,
+      "longitude": -118.15549,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10319380",
+      "name": "Lone Pine Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.777423,
+      "longitude": -119.622878,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10319389",
+      "name": "Big Bend Campground (John Day River)",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.780507,
+      "longitude": -119.611289,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10321880",
+      "name": "Twin Springs Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.309082,
+      "longitude": -121.005574,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "10322469",
+      "name": "Devil's Canyon Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.117931,
+      "longitude": -121.129682,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "201792",
+      "name": "Liberty Recreation Site",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.246301,
+      "longitude": -120.682359,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "231800",
+      "name": "Crater Lake Lodge",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.90924,
+      "longitude": -122.05661,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "231979",
+      "name": "BROKEN ARROW CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.13281,
+      "longitude": -122.1472,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "231980",
+      "name": "DIAMOND LAKE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.1593,
+      "longitude": -122.13309,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "231981",
+      "name": "POOLE CREEK",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.31002,
+      "longitude": -122.20047,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "231982",
+      "name": "SOUTH SHORE PAVILION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.136821,
+      "longitude": -122.14184,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "231983",
+      "name": "ROARING RIVER (GROUP)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.95089,
+      "longitude": -122.08383,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "231984",
+      "name": "HORSE CREEK GROUP CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.160072,
+      "longitude": -122.1488051,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "231985",
+      "name": "MCKENZIE BRIDGE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.175,
+      "longitude": -122.175,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "231986",
+      "name": "PARADISE IN OREGON",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.1861111,
+      "longitude": -122.0961111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "231987",
+      "name": "EAST SULLIVAN",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.8613889,
+      "longitude": -117.2827778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "231988",
+      "name": "NOISY CREEK",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.7838889,
+      "longitude": -117.2786111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "231989",
+      "name": "WEST SULLIVAN",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.8613889,
+      "longitude": -117.2883333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232018",
+      "name": "Beckler River Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.732406,
+      "longitude": -121.333063,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232023",
+      "name": "Boulder Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.715415,
+      "longitude": -121.694457,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232033",
+      "name": "The Dalles Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.0783333,
+      "longitude": -121.5830556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232035",
+      "name": "Denny Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.412132,
+      "longitude": -121.442183,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232038",
+      "name": "Douglas Fir Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.902656,
+      "longitude": -121.911954,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232043",
+      "name": "Excelsior Group Camp",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.908801,
+      "longitude": -121.821982,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232051",
+      "name": "Gold Basin Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.07758,
+      "longitude": -121.738008,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232059",
+      "name": "Horseshoe Cove Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.671943,
+      "longitude": -121.676449,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232064",
+      "name": "KACHESS",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.35484,
+      "longitude": -121.24342,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232072",
+      "name": "Miller River Group Camp",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.69023,
+      "longitude": -121.395555,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232074",
+      "name": "Money Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.729089,
+      "longitude": -121.408165,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232081",
+      "name": "Panorama Point Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.724189,
+      "longitude": -121.672679,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232082",
+      "name": "Park Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.735756,
+      "longitude": -121.667532,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232094",
+      "name": "SALMON LA SAC",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.403564,
+      "longitude": -121.098554,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232096",
+      "name": "Shannon Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.740375,
+      "longitude": -121.600532,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232099",
+      "name": "Silver Fir Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.903321,
+      "longitude": -121.696105,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232113",
+      "name": "Tinkham Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.402524,
+      "longitude": -121.56748,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232118",
+      "name": "Turlo Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.0955556,
+      "longitude": -121.7902778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232120",
+      "name": "Verlot Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.090365,
+      "longitude": -121.777802,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232298",
+      "name": "Silver Springs Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.993591,
+      "longitude": -121.531511,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232315",
+      "name": "Troublesome Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.898188,
+      "longitude": -121.402685,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232356",
+      "name": "Bumping Lake Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.8552778,
+      "longitude": -121.3044444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232373",
+      "name": "Esswine Group Camp",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.07325,
+      "longitude": -121.69682,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232374",
+      "name": "Coal Creek Group Camp",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.083837,
+      "longitude": -121.555926,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232375",
+      "name": "Wiley Creek Group Camp",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.073443,
+      "longitude": -121.714102,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232377",
+      "name": "Tulalip Group Camp",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.091896,
+      "longitude": -121.782878,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232407",
+      "name": "MINERAL SPRINGS GROUP",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.290203,
+      "longitude": -120.699224,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232464",
+      "name": "KALALOCH",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.6130556,
+      "longitude": -124.3747222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232465",
+      "name": "OHANAPECOSH CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.7311111,
+      "longitude": -121.5702778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232466",
+      "name": "COUGAR ROCK CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.7672222,
+      "longitude": -121.7944444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232509",
+      "name": "OHANAPECOSH GROUP CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.7311111,
+      "longitude": -121.5702778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232510",
+      "name": "COUGAR ROCK GROUP CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.7672222,
+      "longitude": -121.7944444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232778",
+      "name": "WHITEFISH HORSE CAMP",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.4655556,
+      "longitude": -122.0313889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232779",
+      "name": "Simax Group Camp",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.4944444,
+      "longitude": -121.9619444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232787",
+      "name": "BLUE BAY",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.42,
+      "longitude": -121.7319444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232788",
+      "name": "LINK CREEK",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.4158333,
+      "longitude": -121.7552778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232789",
+      "name": "Scout Lake",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.41095,
+      "longitude": -121.7472778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232791",
+      "name": "South Shore",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.4194444,
+      "longitude": -121.7383333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232797",
+      "name": "Atkisson Group camp",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 45.9625,
+      "longitude": -121.6088889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232799",
+      "name": "Moss Creek campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 45.7977778,
+      "longitude": -121.6391667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232800",
+      "name": "Oklahoma campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 45.87,
+      "longitude": -121.6272222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232831",
+      "name": "TRILLIUM",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.270695,
+      "longitude": -121.734511,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232834",
+      "name": "RILEY HORSE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.382545,
+      "longitude": -121.861533,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232835",
+      "name": "STILL CREEK",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.300445,
+      "longitude": -121.735172,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232836",
+      "name": "TOLLGATE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.322123,
+      "longitude": -121.905572,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232837",
+      "name": "CAMP CREEK",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.305163,
+      "longitude": -121.867252,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232838",
+      "name": "LOST CREEK",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.382076,
+      "longitude": -121.836551,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232839",
+      "name": "FISH CREEK (OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.160502,
+      "longitude": -122.151444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232840",
+      "name": "Riverside (Mt. Hood National Forest, OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.057053,
+      "longitude": -122.052751,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232841",
+      "name": "LAZY BEND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.190487,
+      "longitude": -122.207334,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232842",
+      "name": "LOCKABY",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.163541,
+      "longitude": -122.152031,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232843",
+      "name": "ARMSTRONG",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.162987,
+      "longitude": -122.152048,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232844",
+      "name": "RIPPLEBROOK",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.080028,
+      "longitude": -122.042821,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232845",
+      "name": "RAINBOW (OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.078932,
+      "longitude": -122.04311,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232846",
+      "name": "SUNSTRIP",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.152287,
+      "longitude": -122.107149,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232847",
+      "name": "ROARING RIVER",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.157197,
+      "longitude": -122.11423,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232848",
+      "name": "FROG LAKE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.224166,
+      "longitude": -121.694361,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232849",
+      "name": "CLEAR LAKE (OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.17945,
+      "longitude": -121.69675,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232850",
+      "name": "RAAB",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.025031,
+      "longitude": -122.067144,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232851",
+      "name": "INDIAN HENRY",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.108807,
+      "longitude": -122.075848,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232852",
+      "name": "North Fork Campground (WA)",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.4508333,
+      "longitude": -121.7877778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232853",
+      "name": "Iron Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.4297222,
+      "longitude": -121.9869444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232854",
+      "name": "KINGFISHER",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.977266,
+      "longitude": -122.092535,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232855",
+      "name": "Tower Rock Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.445,
+      "longitude": -121.8680556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232856",
+      "name": "Lake Harriet Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.073611,
+      "longitude": -121.958611,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232857",
+      "name": "Adams Fork Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.3388889,
+      "longitude": -121.6469444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232860",
+      "name": "Walupt Lake Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.4230556,
+      "longitude": -121.4736111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232861",
+      "name": "Takhlakh Lake Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.2808333,
+      "longitude": -121.5986111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232862",
+      "name": "Paradise Creek campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 45.95,
+      "longitude": -121.9366667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232863",
+      "name": "JOE GRAHAM HORSE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.101285,
+      "longitude": -121.74755,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232864",
+      "name": "Beaver Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 45.8561111,
+      "longitude": -121.9569444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232865",
+      "name": "Pine Point Campground (Timothy Lake, OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.113333,
+      "longitude": -121.801667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232866",
+      "name": "Gone Creek Campground (Timothy Lake, OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.112778,
+      "longitude": -121.775556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232867",
+      "name": "Hoodview Campground (Timothy Lake, OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.107778,
+      "longitude": -121.791667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232868",
+      "name": "Oak Fork Campground (Timothy Lake, OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.115,
+      "longitude": -121.770833,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232870",
+      "name": "CLACKAMAS LAKE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.095598,
+      "longitude": -121.746535,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232872",
+      "name": "LITTLE CRATER LAKE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.148354,
+      "longitude": -121.74555,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232873",
+      "name": "Rock Creek Campground (Mt. Hood National Forest, OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.216939,
+      "longitude": -121.385283,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232892",
+      "name": "Indian Creek Campground (WA)",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.645,
+      "longitude": -121.2425,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232894",
+      "name": "PACKARD CREEK",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.6997222,
+      "longitude": -122.4316667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232895",
+      "name": "Peterson Prairie Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 45.9694444,
+      "longitude": -121.6608333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232896",
+      "name": "North Fork Bear Group Camp",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.4508333,
+      "longitude": -121.7877778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232897",
+      "name": "North Fork Beaver Group Camp",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.4508333,
+      "longitude": -121.7877778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "232898",
+      "name": "North Fork Elk Group Camp",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.4525,
+      "longitude": -121.7888889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233103",
+      "name": "Panther Creek campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 45.8197222,
+      "longitude": -121.8797222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233113",
+      "name": "WINDY GROUP CAMP",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.4608333,
+      "longitude": -122.0302778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233114",
+      "name": "Boardman Group Camp",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.069965,
+      "longitude": -121.676385,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233133",
+      "name": "TIMBER BUTTE CABIN",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.9256,
+      "longitude": -122.57077,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233136",
+      "name": "Anthony Lake",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.9631917,
+      "longitude": -118.2335528,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233143",
+      "name": "COTTONWOOD CABIN",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.020957,
+      "longitude": -120.641222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233153",
+      "name": "Eagleview Group Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.4977778,
+      "longitude": -123.4930556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233154",
+      "name": "Lone Pine Group Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.3836111,
+      "longitude": -122.9463889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233155",
+      "name": "MILLPOND PAVILION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.3808333,
+      "longitude": -122.9475,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233156",
+      "name": "ROCK CREEK PAVILION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.3986111,
+      "longitude": -122.9275,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233186",
+      "name": "HART-TISH PARK at APPLEGATE LAKE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.0547222,
+      "longitude": -123.1144444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233193",
+      "name": "Gull Point Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.7033417,
+      "longitude": -121.7631917,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233195",
+      "name": "Trapper Creek Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.5825,
+      "longitude": -122.045,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233197",
+      "name": "SMILING RIVER CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.4933333,
+      "longitude": -121.6405556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233198",
+      "name": "CAMP SHERMAN CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.4819444,
+      "longitude": -121.6391667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233215",
+      "name": "Little Lava Lake",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.9101167,
+      "longitude": -121.7616972,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233217",
+      "name": "BIG RIVER",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.8183333,
+      "longitude": -121.4986111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233225",
+      "name": "SPRING",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.4616667,
+      "longitude": -122.0166667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233236",
+      "name": "MUD LAKE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.9644444,
+      "longitude": -118.2319444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233237",
+      "name": "SOUTH SHORE GROUP SITES",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.49166667,
+      "longitude": -121.14916667,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233247",
+      "name": "Rooks Park (WA) Bennington Lake",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.0805556,
+      "longitude": -118.255,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233248",
+      "name": "SHORT CREEK GUARD STATION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.265881,
+      "longitude": -118.397,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233297",
+      "name": "Swift Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.729637,
+      "longitude": -121.658618,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233305",
+      "name": "OLALLIE LAKE GUARD STATION CABIN",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.8138889,
+      "longitude": -121.7902778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233322",
+      "name": "ACKER ROCK LOOKOUT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.05243,
+      "longitude": -122.6457,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233323",
+      "name": "SPRING DRIVE RV CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.114494,
+      "longitude": -121.516829,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233326",
+      "name": "TILLY JANE A-FRAME",
+      "rec_area": "Permit",
+      "state": "OR",
+      "latitude": 45.3988889,
+      "longitude": -121.6480556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233329",
+      "name": "TILLY JANE GUARD STATION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.3988889,
+      "longitude": -121.6480556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233339",
+      "name": "SLIDE CREEK",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.0747222,
+      "longitude": -122.2247222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233340",
+      "name": "DELTA",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.1636111,
+      "longitude": -122.2816667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233341",
+      "name": "MONA",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.2011,
+      "longitude": -122.2629694,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233351",
+      "name": "CHINQUAPIN GROUP CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.14033,
+      "longitude": -123.456603,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233364",
+      "name": "NORTH WALDO",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.7580556,
+      "longitude": -122.0038889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233384",
+      "name": "COHO CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.390403,
+      "longitude": -123.604732,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233386",
+      "name": "HEMLOCK CABIN",
+      "rec_area": "Permit",
+      "state": "OR",
+      "latitude": 43.1325,
+      "longitude": -122.1944444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233406",
+      "name": "OCHOCO DIVIDE GROUP SITE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.500575,
+      "longitude": -120.3871861,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233454",
+      "name": "Charbonneau Park and Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.2555556,
+      "longitude": -118.8447222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233499",
+      "name": "FISHHOOK PARK",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.315,
+      "longitude": -118.7661111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233514",
+      "name": "HOOD PARK",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.2137194,
+      "longitude": -119.013,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233536",
+      "name": "LEPAGE PARK",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.7283972,
+      "longitude": -120.6512639,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233587",
+      "name": "Plymouth Park",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 45.933733,
+      "longitude": -119.350712,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233675",
+      "name": "WINDUST PARK",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.53305556,
+      "longitude": -118.58333333,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233682",
+      "name": "CLE ELUM RIVER GROUP SITE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.351055,
+      "longitude": -121.104394,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233705",
+      "name": "Sunset - Lake of the Woods (OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.3722222,
+      "longitude": -122.1969444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233706",
+      "name": "RAINBOW BAY",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.3776361,
+      "longitude": -122.208075,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233707",
+      "name": "Aspen Point (Lake of the Woods, OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.3847222,
+      "longitude": -122.2125,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233713",
+      "name": "Blue Lake Creek Campground - Gifford Pinchot NF (WA)",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.4036111,
+      "longitude": -121.7363889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233727",
+      "name": "TANEUM CABIN",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.107109,
+      "longitude": -120.854696,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233770",
+      "name": "SHEEP SPRINGS HORSE CAMP",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.5786111,
+      "longitude": -121.6797222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233787",
+      "name": "Little Fawn Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.9630556,
+      "longitude": -121.7958333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233818",
+      "name": "CAYUSE HORSE CAMP",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.399582,
+      "longitude": -121.094828,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233820",
+      "name": "CLARK CREEK ORGANIZATION CAMP",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.9736111,
+      "longitude": -122.5822222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233861",
+      "name": "BUCK CREEK CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.268337,
+      "longitude": -121.328317,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233862",
+      "name": "Marble Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.5332,
+      "longitude": -121.272114,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233863",
+      "name": "Sulphur Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.248509,
+      "longitude": -121.194058,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233864",
+      "name": "Bedal Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.096843,
+      "longitude": -121.386943,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233865",
+      "name": "Clear Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.220268,
+      "longitude": -121.574083,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233866",
+      "name": "Red Bridge Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.070752,
+      "longitude": -121.650441,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233877",
+      "name": "La Wis Wis Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.6738889,
+      "longitude": -121.5877778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233885",
+      "name": "SUTTON CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.0541667,
+      "longitude": -124.1072222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233891",
+      "name": "Mineral Park Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.463774,
+      "longitude": -121.168329,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233894",
+      "name": "OCHOCO FOREST CAMP",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.3972222,
+      "longitude": -120.4252778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233895",
+      "name": "WALTON LAKE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.4330556,
+      "longitude": -120.3366667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233900",
+      "name": "CAPE PERPETUA",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.2811111,
+      "longitude": -124.1002778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233903",
+      "name": "RIVER EDGE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.3772222,
+      "longitude": -123.7586111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233916",
+      "name": "CANAL CREEK",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.3930556,
+      "longitude": -123.9252778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233937",
+      "name": "CHATTER CREEK GROUP SITE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.6083333,
+      "longitude": -120.885,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233938",
+      "name": "BRIDGE CREEK GROUP SITE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.5638889,
+      "longitude": -120.7808333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233939",
+      "name": "TUMWATER GROUP SITE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.6780556,
+      "longitude": -120.7308333,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233940",
+      "name": "EIGHTMILE GROUP SITE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.5508333,
+      "longitude": -120.7661111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233949",
+      "name": "PANHANDLE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.51,
+      "longitude": -117.2713889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233950",
+      "name": "PIONEER PARK",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.2141667,
+      "longitude": -117.0536111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233963",
+      "name": "Rock Creek Oregon Coast (Siuslaw National Forest, OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.1847222,
+      "longitude": -124.115,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233964",
+      "name": "BLACKBERRY",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.3711111,
+      "longitude": -123.835,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233965",
+      "name": "TILLICUM",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.3672222,
+      "longitude": -124.0911111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233984",
+      "name": "AMERICAN RIDGE LODGE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.973,
+      "longitude": -121.172997,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233985",
+      "name": "KANER FLAT GROUP SITE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.0104,
+      "longitude": -121.131,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233986",
+      "name": "INDIAN FLAT GROUP SITE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.979977,
+      "longitude": -121.148972,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233987",
+      "name": "PINE NEEDLE GROUP SITE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.9688889,
+      "longitude": -121.21,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233988",
+      "name": "CLEAR LAKE GROUP SITE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.631477,
+      "longitude": -121.267933,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "233997",
+      "name": "EAST KACHESS GROUP SITE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.312187,
+      "longitude": -121.23717,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234016",
+      "name": "Cottonwood Campground - Naches River (WA)",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.9072222,
+      "longitude": -121.0261111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234017",
+      "name": "Hause Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.6755556,
+      "longitude": -121.0763889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234018",
+      "name": "HELLS CROSSING CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.9647222,
+      "longitude": -121.2658333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234020",
+      "name": "COUGAR FLAT",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.9169444,
+      "longitude": -121.2336111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234021",
+      "name": "PLEASANT VALLEY CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.9427778,
+      "longitude": -121.3255556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234022",
+      "name": "SAWMILL FLAT CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.9744444,
+      "longitude": -121.0952778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234023",
+      "name": "CEDAR SPRINGS CAMPGROUND (WA)",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.9733333,
+      "longitude": -121.1630556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234024",
+      "name": "Soda Springs Campground (Bumping River, WA)",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.9256944,
+      "longitude": -121.2141667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234025",
+      "name": "Willows Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.6725,
+      "longitude": -121.0391667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234026",
+      "name": "Windy Point Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.6933333,
+      "longitude": -120.9075,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234027",
+      "name": "Lodgepole Campground (Washington)",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.9158333,
+      "longitude": -121.3844444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234085",
+      "name": "Crane Prairie Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.7963889,
+      "longitude": -121.7608333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234086",
+      "name": "Big Creek (Gifford Pinchot National Forest, WA)",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.7352778,
+      "longitude": -121.9702778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234091",
+      "name": "GOVT MINERAL SPRINGS GUARD STA",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 45.88119,
+      "longitude": -121.993146,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234092",
+      "name": "Peterson Prairie Cabin",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 45.9696,
+      "longitude": -121.660272,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234103",
+      "name": "WILLOW PRAIRIE HORSECAMP",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.40640428,
+      "longitude": -122.390731,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234126",
+      "name": "TEANAWAY GUARD STATION",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.3597222,
+      "longitude": -120.8552778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234136",
+      "name": "Cold Springs Cabin - Ochoco NF (OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.3566667,
+      "longitude": -120.1316667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234137",
+      "name": "EDGEWATER CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.7558333,
+      "longitude": -117.4058333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234138",
+      "name": "TAMARACK CABIN",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.873432,
+      "longitude": -119.66185,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234144",
+      "name": "MUSICK GUARD STATION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.580997,
+      "longitude": -122.641772,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234145",
+      "name": "DITCH CREEK GUARD STATION CAB",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.118988,
+      "longitude": -119.34713,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234146",
+      "name": "STEAMBOAT BALL FIELD GROUP SITE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.339939,
+      "longitude": -122.7285,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234147",
+      "name": "WOLF CREEK GROUP SITE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.2394,
+      "longitude": -122.9349,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234148",
+      "name": "Deer Flat Group Site (Horseshoe Bend Campground)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.288477,
+      "longitude": -122.6274,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234149",
+      "name": "PICKETT BUTTE LOOKOUT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.943699,
+      "longitude": -122.8547,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234154",
+      "name": "BOLAN MOUNTAIN LOOKOUT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.016163,
+      "longitude": -123.459391,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234155",
+      "name": "BALD KNOB LOOKOUT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.694,
+      "longitude": -124.028,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234157",
+      "name": "WILLOW PRAIRIE CABIN",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.40649749,
+      "longitude": -122.3925632,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234159",
+      "name": "SNOW CAMP LOOKOUT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.344,
+      "longitude": -124.165,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234161",
+      "name": "QUAIL PRAIRIE LOOKOUT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.2366667,
+      "longitude": -124.045,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234163",
+      "name": "ONION MOUNTAIN LOOKOUT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.4544444,
+      "longitude": -123.6163889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234168",
+      "name": "LUDLUM HOUSE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.037,
+      "longitude": -124.108,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234170",
+      "name": "BUTLER BUTTE CABIN",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.888248,
+      "longitude": -122.6786,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234173",
+      "name": "INDIAN RIDGE LOOKOUT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.005211,
+      "longitude": -122.255371,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234174",
+      "name": "FISH LAKE REMOUNT DEPOT CABINS",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.4035,
+      "longitude": -122.0066,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234175",
+      "name": "BOX CANYON GUARD STATION CABIN",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.90503,
+      "longitude": -122.0811,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234178",
+      "name": "EVERGREEN MOUNTAIN LOOKOUT",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.8364,
+      "longitude": -121.264,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234179",
+      "name": "WHISKY CAMP GUARD STATION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.912519,
+      "longitude": -122.7336,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234183",
+      "name": "Aspen Cabin (Fremont-Winema National Forest, OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.29130085,
+      "longitude": -120.1936885,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234184",
+      "name": "CURRIER GUARD STATION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.7116,
+      "longitude": -120.9069,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234185",
+      "name": "DRAKE PEAK LOOKOUT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.30056,
+      "longitude": -120.15783,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234186",
+      "name": "Bald Butte Lookout (Fremont-Winema National Forest, OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.6144,
+      "longitude": -120.7898,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234187",
+      "name": "HAGER MOUNTAIN LOOKOUT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.0093,
+      "longitude": -121.0317,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234188",
+      "name": "TIMPANOGAS",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.413906,
+      "longitude": -122.113381,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234189",
+      "name": "WARNER MOUNTAIN LOOKOUT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.5434306,
+      "longitude": -122.3663833,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234202",
+      "name": "MCKEE BRIDGE COMMUNITY KITCHEN",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.12619876,
+      "longitude": -123.0727523,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234203",
+      "name": "Beaver Sulphur Group Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.11265763,
+      "longitude": -123.0333825,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234205",
+      "name": "MINERS RETREAT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.79662944,
+      "longitude": -118.4981107,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234206",
+      "name": "CONGO GULCH",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.79655983,
+      "longitude": -118.497507,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234212",
+      "name": "PEAVY CABIN",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.91,
+      "longitude": -118.265,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234213",
+      "name": "ANTLERS GUARD STATION CABIN",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.6336111,
+      "longitude": -118.2875,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234214",
+      "name": "Black Canyon Campground (Willamette National Forest, OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.8066667,
+      "longitude": -122.5972222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234215",
+      "name": "SUIATTLE GUARD STATION",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.261628,
+      "longitude": -121.318767,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234216",
+      "name": "HARD ROCK CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.0386111,
+      "longitude": -122.2027778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234217",
+      "name": "IDLEWILD",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.799206,
+      "longitude": -118.991367,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234218",
+      "name": "RED DIAMOND CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.0022222,
+      "longitude": -122.1727778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234219",
+      "name": "SHADOW BAY",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.6930556,
+      "longitude": -122.0416667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234239",
+      "name": "CLACKAMAS LAKE HISTORIC CABIN",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.099153,
+      "longitude": -121.75015,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234250",
+      "name": "ANTHONY LAKE GUARD STATION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.9622222,
+      "longitude": -118.2305556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234269",
+      "name": "WENATCHEE GUARD STATION",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.1219461,
+      "longitude": -117.379698,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234270",
+      "name": "GODMAN GUARD STATION",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.1005,
+      "longitude": -117.7852,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234271",
+      "name": "CLEARWATER LOOKOUT CABIN",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.20304,
+      "longitude": -117.574933,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234272",
+      "name": "CLEARWATER BIG HOUSE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.200411,
+      "longitude": -117.567583,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234279",
+      "name": "CARETAKERS CABIN",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.79694,
+      "longitude": -118.49806,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234289",
+      "name": "CONTORTA POINT GROUP CAMP",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.4613889,
+      "longitude": -122.0075,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234306",
+      "name": "EAGLE CREEK OVERLOOK GRP SITE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.642026,
+      "longitude": -121.930379,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234310",
+      "name": "LOST LAKE GROUP UNIT",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.8525,
+      "longitude": -119.0508333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234461",
+      "name": "SUMMIT GUARD STATION BUNKHOUSE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.4763889,
+      "longitude": -118.2088889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234462",
+      "name": "FRY MEADOWS GUARD STATION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.78667,
+      "longitude": -117.83167,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234477",
+      "name": "GREEN RIDGE LOOKOUT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.5338889,
+      "longitude": -121.6086111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234493",
+      "name": "AMERICAN RIVER GUARD STATION",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.97702,
+      "longitude": -121.167121,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234498",
+      "name": "SALMON COVE GROUP SITE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.9608333,
+      "longitude": -121.2766667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234501",
+      "name": "Middle Fork Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.5486111,
+      "longitude": -121.5416667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234502",
+      "name": "ALDER DUNE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.0691667,
+      "longitude": -124.1019444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234503",
+      "name": "South Fork Group Site - Wenatchee NF (WA)",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.622013,
+      "longitude": -121.130493,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234621",
+      "name": "GOLD BUTTE LOOKOUT",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.8052778,
+      "longitude": -122.0837,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234630",
+      "name": "BIG ELK GUARD STATION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.359022,
+      "longitude": -122.357817,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234631",
+      "name": "LODGEPOLE GUARD STATION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.65388649,
+      "longitude": -122.3790542,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234632",
+      "name": "SWAN LAKE KITCHEN",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.5172222,
+      "longitude": -118.8369444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234646",
+      "name": "RUJADA DAY USE PICNIC AREA",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.706581,
+      "longitude": -122.742553,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234661",
+      "name": "FALL RIVER GUARD STATION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.7683333,
+      "longitude": -121.6330556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234673",
+      "name": "SNOW PEAK CABIN",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.5736111,
+      "longitude": -118.4891667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234675",
+      "name": "OCHOCO RANGER RENTAL",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.3975,
+      "longitude": -120.4266,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234682",
+      "name": "TUCANNON GUARD STATION",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.250363,
+      "longitude": -117.678318,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234705",
+      "name": "GROUSE CREEK GROUP SITE",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.8966667,
+      "longitude": -120.6988889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234709",
+      "name": "WISH POOSH CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.28,
+      "longitude": -121.0855556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234711",
+      "name": "Crescent Lake Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.5019444,
+      "longitude": -121.9744444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234720",
+      "name": "Bear Springs Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.116715,
+      "longitude": -121.53162,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234730",
+      "name": "FRENCH PETE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.04225,
+      "longitude": -122.2083889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234731",
+      "name": "FRISSELL CROSSING CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.9616667,
+      "longitude": -122.0791667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234732",
+      "name": "LIMBERLOST CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.1740222,
+      "longitude": -122.0535722,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234733",
+      "name": "SUNNYSIDE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.0597222,
+      "longitude": -122.2197222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234760",
+      "name": "JIM CREEK GROUP CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.8648,
+      "longitude": -122.5119,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234779",
+      "name": "HAYSTACK CAMPGROUND (EAST SHORE)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.49448,
+      "longitude": -121.141687,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234784",
+      "name": "ICICLE GROUP CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.5861111,
+      "longitude": -120.8070278,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234956",
+      "name": "Klamath National Wild & Scenic River",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234991",
+      "name": "Salmon/Scott River Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 41.6012624,
+      "longitude": -122.8471501,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234992",
+      "name": "Big Flat Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 41.068191,
+      "longitude": -122.934797,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "234994",
+      "name": "Hotelling Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 41.2396,
+      "longitude": -123.2753,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "235005",
+      "name": "Salmon National Wild & Scenic River",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "235212",
+      "name": "Mountain Loop Scenic Byway",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 48.025955,
+      "longitude": -121.443515,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "235239",
+      "name": "US Highway 2 - Skykomish Area east to Stevens Pass",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.81364445,
+      "longitude": -121.58653021,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "235248",
+      "name": "Interstate 90 Mountains to Sound Greenway",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.426084,
+      "longitude": -121.605177,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "235270",
+      "name": "Mather Memorial Parkway (SR 410)",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.105128,
+      "longitude": -121.593547,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "235271",
+      "name": "Mt. Baker Highway (SR 542)",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 48.891753,
+      "longitude": -121.959465,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "235294",
+      "name": "Baker Lake / Middle Fork Nooksack",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 48.6441298,
+      "longitude": -121.72961801,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "235295",
+      "name": "North Cascades (SR 20)",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 48.489705,
+      "longitude": -121.577196,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "236856",
+      "name": "Ochoco NF-Ochoco East - Paulina Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.316,
+      "longitude": -119.739,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "236892",
+      "name": "Sugar Creek Campground and Day Use Area",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.234305,
+      "longitude": -119.804511,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "236898",
+      "name": "Ochoco NF-Ochoco West - Prineville Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.3906,
+      "longitude": -120.423,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "236934",
+      "name": "Ochoco NF-Maury Mountains Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.0491,
+      "longitude": -120.377,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "236935",
+      "name": "Deschutes NF-Cascade Lakes Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.98636,
+      "longitude": -121.71889,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237001",
+      "name": "Deschutes NF-Crescent Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.56646,
+      "longitude": -121.85487,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237021",
+      "name": "Deschutes NF-Sisters-Metolius Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.46848,
+      "longitude": -121.64151,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237038",
+      "name": "Deschutes NF-Fort Rock Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.734222,
+      "longitude": -121.208756,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237124",
+      "name": "Odell Lake",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.56496673,
+      "longitude": -121.9823299,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237734",
+      "name": "Shady Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.257367,
+      "longitude": -117.382778,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237750",
+      "name": "Wallowa Mtns/Eagle Cap Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.2503361,
+      "longitude": -117.3760972,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237751",
+      "name": "Hells Canyon National Recreation Area - Idaho",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.660586,
+      "longitude": -116.393703,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237752",
+      "name": "Hells Canyon - Oregon/Wallowa Valley",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.1239,
+      "longitude": -116.836428,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237753",
+      "name": "Blue Mtns North/Grande Ronde River Basin Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.384566,
+      "longitude": -118.311872,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237754",
+      "name": "Southern Elkhorn Mtn/Powder River Basin Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.684127,
+      "longitude": -118.028205,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237765",
+      "name": "Kirkwood Ranch",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.56779,
+      "longitude": -116.497783,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237803",
+      "name": "Buck Creek Forest Camp and Trailhead",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.148175,
+      "longitude": -117.572261,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237807",
+      "name": "Moss Springs Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.275278,
+      "longitude": -117.679978,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237822",
+      "name": "Coyote Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.841778882,
+      "longitude": -117.112640435,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "237894",
+      "name": "Yellow Pine Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.529891009,
+      "longitude": -118.317279006,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "238879",
+      "name": "Klahowya Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.064719,
+      "longitude": -124.111591,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "238889",
+      "name": "Gatton Creek Campground/Day Use Area",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.47312687,
+      "longitude": -123.8379893,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "238898",
+      "name": "Brown Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.4133,
+      "longitude": -123.31879,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "238900",
+      "name": "Collins Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.68308856,
+      "longitude": -123.0214779,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "238901",
+      "name": "Dungeness Forks Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.974581,
+      "longitude": -123.110916,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "238903",
+      "name": "Falls View Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.78955371,
+      "longitude": -122.9255135,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "238906",
+      "name": "Hamma Hamma Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.59565713,
+      "longitude": -123.1221813,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "243693",
+      "name": "Vinegar Hill Indian Rock Scenic Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.718158,
+      "longitude": -118.574,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "243702",
+      "name": "Head O' Boulder Forest Camp",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.754881,
+      "longitude": -118.6923,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "244089",
+      "name": "Detroit Ranger District (US Highway 22)",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.716308,
+      "longitude": -122.192096,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "244090",
+      "name": "Sweet Home Ranger District (US Highway 20)",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.404291,
+      "longitude": -122.687857,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "244091",
+      "name": "Middle Fork Ranger District (Hwy 58)",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.758636,
+      "longitude": -122.533322,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "244092",
+      "name": "McKenzie River Ranger District (Hwy 126)",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.17928,
+      "longitude": -122.116127,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "244100",
+      "name": "Elk Lake Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.82242817,
+      "longitude": -122.1278175,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "244116",
+      "name": "Detroit Lake",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.7104236,
+      "longitude": -122.2203765,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "244134",
+      "name": "Alder Springs Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.17695327,
+      "longitude": -121.914004,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "244139",
+      "name": "Cougar Crossing Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.05819541,
+      "longitude": -122.2198582,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "244174",
+      "name": "Smith Reservoir Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.313667584,
+      "longitude": -122.045009744,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "244193",
+      "name": "Blue Pool Campground (Middle Fork Ranger District)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.710122,
+      "longitude": -122.297742,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "244500",
+      "name": "Forest Road 30/Wind River Highway",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 45.784,
+      "longitude": -121.8688,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "245986",
+      "name": "Heppner Ranger District",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 45.353,
+      "longitude": -119.5578,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "246000",
+      "name": "North Fork John Day Ranger District",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 45.134,
+      "longitude": -118.9324,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "246052",
+      "name": "Pomeroy Ranger District",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 46.4778,
+      "longitude": -117.6283,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "246101",
+      "name": "Walla Walla Ranger District",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 46.059176,
+      "longitude": -118.36358,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "246221",
+      "name": "Bly Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.400068,
+      "longitude": -121.046048,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "246222",
+      "name": "Chemult Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.225875,
+      "longitude": -121.787847,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "246223",
+      "name": "Chiloquin Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.574374,
+      "longitude": -121.88203,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "246224",
+      "name": "Klamath Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.251417,
+      "longitude": -121.790971,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "246225",
+      "name": "Lakeview Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.218113,
+      "longitude": -120.363797,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "246226",
+      "name": "Paisley Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.692828,
+      "longitude": -120.54046,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "246229",
+      "name": "Silver Lake Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "246793",
+      "name": "Little Missouri National Grassland",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 46.913333,
+      "longitude": -103.524722,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "246801",
+      "name": "Sheyenne National Grassland",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 46.4416,
+      "longitude": -97.322,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248309",
+      "name": "Sunnyside Park",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.4277249,
+      "longitude": -122.61100501,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248313",
+      "name": "Roosevelt Park",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.73166068,
+      "longitude": -120.22308083,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248314",
+      "name": "Crow Butte Park",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.8554546,
+      "longitude": -119.8507192,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248315",
+      "name": "Umatilla Park",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.924602,
+      "longitude": -119.328575,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248316",
+      "name": "Boardman Park",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.84341841,
+      "longitude": -119.70857414,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248318",
+      "name": "Arlington - Port",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.72292134,
+      "longitude": -120.20728799,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248323",
+      "name": "Stewart State Park Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.68453925,
+      "longitude": -122.61514164,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248324",
+      "name": "Willow Creek Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.34450304,
+      "longitude": -119.54770903,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248506",
+      "name": "Fort Casey Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.159243,
+      "longitude": -122.675963,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248507",
+      "name": "Boyer Park and Marina",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 46.68119595,
+      "longitude": -117.44803883,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248510",
+      "name": "Lyons Ferry Marina",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 46.58602449,
+      "longitude": -118.22080261,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248511",
+      "name": "Hells Gate State Park",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 46.36882036,
+      "longitude": -117.05770564,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248512",
+      "name": "Chief Timothy Park",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 46.415698,
+      "longitude": -117.192095,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248513",
+      "name": "Granite Lake Rv Park",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 46.42412416,
+      "longitude": -117.04347115,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248514",
+      "name": "Bridgeport State Park",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 48.01495096,
+      "longitude": -119.60794008,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248518",
+      "name": "Maryhill State Park",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.68183132,
+      "longitude": -120.82863142,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "248519",
+      "name": "Columbia Hills State Park",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.644573,
+      "longitude": -121.106766,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "249989",
+      "name": "Edson Creek Campground (OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.8152,
+      "longitude": -124.4109278,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "250031",
+      "name": "Hyatt Lake Recreation Area",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.1669778,
+      "longitude": -122.4641333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "250032",
+      "name": "LOWER FALLS CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.15664,
+      "longitude": -121.878452,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "250072",
+      "name": "Ash Flat Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.0454,
+      "longitude": -122.73216,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "250085",
+      "name": "Cottage Grove Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "250086",
+      "name": "North Umpqua Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "250145",
+      "name": "Tiller Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "250985",
+      "name": "Big Pines",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.7994444,
+      "longitude": -120.4613889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251351",
+      "name": "Susan Creek Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.2966667,
+      "longitude": -122.8933333,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251357",
+      "name": "BOGUS CREEK CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.324534,
+      "longitude": -122.800443,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251360",
+      "name": "TOKETEE GROUP SITE",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.273176,
+      "longitude": -122.408472,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251362",
+      "name": "KANER FLAT CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.0113889,
+      "longitude": -121.13,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251364",
+      "name": "HORSESHOE BEND CAMPGROUND (OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.288477,
+      "longitude": -122.6274,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251365",
+      "name": "FALLS CREEK CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.46956,
+      "longitude": -123.8454,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251448",
+      "name": "LAVA LAKE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.915,
+      "longitude": -121.7680556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251454",
+      "name": "Whispering Pines Horse Camp",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.1363889,
+      "longitude": -123.0647222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251471",
+      "name": "EAGLE ROCK CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.295236,
+      "longitude": -122.554458,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251472",
+      "name": "GRAHAM CORRAL HORSE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.1363889,
+      "longitude": -123.0647222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251546",
+      "name": "Acorn Woman Peak Lookout",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.0696833,
+      "longitude": -123.0118778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251548",
+      "name": "THIELSEN VIEW CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.16949,
+      "longitude": -122.16801,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251566",
+      "name": "Pioneer Ford Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.5505556,
+      "longitude": -121.6222222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251567",
+      "name": "Contorta Flat Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.4591889,
+      "longitude": -121.9965278,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251569",
+      "name": "COLD SPRINGS CAMPGROUND (OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.3091861,
+      "longitude": -121.6306278,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251577",
+      "name": "ALLEN SPRINGS CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.5280306,
+      "longitude": -121.6273389,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251581",
+      "name": "MALLARD MARSH CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.96335,
+      "longitude": -121.7856694,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251611",
+      "name": "FLUMET FLAT GROUP CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.11699,
+      "longitude": -123.08739,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251712",
+      "name": "Fourmile Lake Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.47,
+      "longitude": -122.25,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251722",
+      "name": "LITTLE CULTUS CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.8010194,
+      "longitude": -121.8630694,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251769",
+      "name": "FREMONT POINT CABIN",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.8666,
+      "longitude": -120.8343,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251883",
+      "name": "KELSAY VALLEY HORSE CAMP",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.317896,
+      "longitude": -122.096986,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251884",
+      "name": "AMERICAN FORKS CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.97702,
+      "longitude": -121.167121,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251885",
+      "name": "CANTON CREEK CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.34777,
+      "longitude": -122.730496,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251886",
+      "name": "INLET CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.31155,
+      "longitude": -122.154905,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251894",
+      "name": "EAST LEMOLO CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.310697,
+      "longitude": -122.162651,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251895",
+      "name": "BUNKER HILL CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.319223,
+      "longitude": -122.187839,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251907",
+      "name": "TOKETEE LAKE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.273176,
+      "longitude": -122.408472,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251911",
+      "name": "South Shore Group Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.4916667,
+      "longitude": -121.1491667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251912",
+      "name": "SPILLWAY PARK - CHINOOK SHELTER (OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.9328,
+      "longitude": -119.3030222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251913",
+      "name": "WEST PARK (OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.9256,
+      "longitude": -119.3053444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "251914",
+      "name": "MCNARY BEACH - SOCKEYE SHELTER (OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.9308972,
+      "longitude": -119.271475,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "252036",
+      "name": "BONAPARTE LAKE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.7924639,
+      "longitude": -119.0574194,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "252282",
+      "name": "CRESCENT LAKE GUARD STATION",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.5011111,
+      "longitude": -121.97,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "252325",
+      "name": "Clackamas River Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.29486,
+      "longitude": -122.34411,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "252341",
+      "name": "Wahtum Lake Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.57731,
+      "longitude": -121.79247,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "252367",
+      "name": "Hood River Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.5338,
+      "longitude": -121.56988,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "252385",
+      "name": "Zigzag Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.3420633,
+      "longitude": -121.9420244,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "252463",
+      "name": "Barlow Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.457,
+      "longitude": -121.125126,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "254094",
+      "name": "ISLET CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.7469389,
+      "longitude": -122.00745,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "255175",
+      "name": "Birch Creek Historic Ranch",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.214726,
+      "longitude": -117.503261,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "255182",
+      "name": "Chickahominy Recreation Site",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.545938,
+      "longitude": -119.612,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "255183",
+      "name": "South Steens Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.656738,
+      "longitude": -118.728468,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "255185",
+      "name": "Blind Island",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 48.58495,
+      "longitude": -122.93709,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "255186",
+      "name": "Patos Island",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 48.78285,
+      "longitude": -122.95218,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "255188",
+      "name": "Spring Recreation Site",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.37688,
+      "longitude": -117.2388,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "255189",
+      "name": "Jordan Craters Area of Environmental Concern",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.146148,
+      "longitude": -117.461025,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "255193",
+      "name": "Chimney Rock Trail",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.135034,
+      "longitude": -120.813151,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "255194",
+      "name": "Reynolds Pond Recreation Site",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.059246,
+      "longitude": -121.016147,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "256348",
+      "name": "HALFWAY FLAT CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.980475,
+      "longitude": -121.0958222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "258474",
+      "name": "Little Crane Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "260547",
+      "name": "Priest Hole Recreation Site",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.739287,
+      "longitude": -120.271366,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "260559",
+      "name": "Barr North Staging Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.288562,
+      "longitude": -121.334252,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "261695",
+      "name": "Edson Creek Camping",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.815155,
+      "longitude": -124.410274,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "262718",
+      "name": "Rock Creek Recreation Site",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.39794,
+      "longitude": -122.92818,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "262727",
+      "name": "Lost Forest/Dunes/Fossil ACEC",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.35641,
+      "longitude": -120.371131,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "262728",
+      "name": "Gerber Recreation Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.209823,
+      "longitude": -121.138712,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "262731",
+      "name": "Green Mountain Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.38627,
+      "longitude": -120.72352,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "262739",
+      "name": "Topsy Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.123387,
+      "longitude": -122.041944,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "262741",
+      "name": "Duncan Reservoir Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.071327,
+      "longitude": -120.944932,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "262748",
+      "name": "Palmer Mountain",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 48.844762,
+      "longitude": -119.594726,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "262773",
+      "name": "Three Forks",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.545023,
+      "longitude": -117.167067,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "262776",
+      "name": "Fish Lake Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.740337,
+      "longitude": -118.643732,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "264601",
+      "name": "Baker Beach Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.087483,
+      "longitude": -124.11836,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "264603",
+      "name": "Alsea River Corridor",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.37846016,
+      "longitude": -123.8201673,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "264616",
+      "name": "North Fork Siuslaw Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.101802,
+      "longitude": -123.938244,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "264659",
+      "name": "Tahkenitch Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.801515,
+      "longitude": -124.128246,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "264683",
+      "name": "Tillamook to Newport",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.14961864,
+      "longitude": -123.8336953,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "264686",
+      "name": "Rocky Bend Group Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.239621,
+      "longitude": -123.60603,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265227",
+      "name": "Gold Beach Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265228",
+      "name": "Powers Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265229",
+      "name": "Siskiyou Mountains Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265230",
+      "name": "Wild Rivers Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265231",
+      "name": "High Cascades Ranger District",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265238",
+      "name": "Foster Bar Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.63457405,
+      "longitude": -124.0561522,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265293",
+      "name": "Fish Lake Resort",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.39389826,
+      "longitude": -122.3125457,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265397",
+      "name": "Rogue River (Wild & Scenic): Lower Section",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265411",
+      "name": "Union Creek",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265414",
+      "name": "Illinois River",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265489",
+      "name": "Priest Lake Area",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 48.579308,
+      "longitude": -116.912149,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265497",
+      "name": "Pend Oreille Lake Area",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 48.206967,
+      "longitude": -116.511827,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265501",
+      "name": "Lower Kootenai River Area",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 48.784706,
+      "longitude": -116.383106,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265508",
+      "name": "Coeur d'Alene River Area",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.675444,
+      "longitude": -116.396312,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265516",
+      "name": "St. Joe River Area",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.160145,
+      "longitude": -116.013295,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "265537",
+      "name": "St. Joe Wild & Scenic River",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "266138",
+      "name": "EAST DAVIS CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.5882139,
+      "longitude": -121.8541611,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "266139",
+      "name": "LOWER BRIDGE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.5577556,
+      "longitude": -121.6202278,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "266140",
+      "name": "BULL BEND CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.7254028,
+      "longitude": -121.6274833,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "266142",
+      "name": "JACK CREEK CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.5078222,
+      "longitude": -121.6938556,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "266418",
+      "name": "Harr Point Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.03492011,
+      "longitude": -123.1127922,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "266477",
+      "name": "River Bench Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.2950791,
+      "longitude": -123.7401029,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267070",
+      "name": "SUNSET COVE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.5625167,
+      "longitude": -121.9636861,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267071",
+      "name": "DRIFTWOOD CAMPGROUND - DESCHUTES",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.1008361,
+      "longitude": -121.6304,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267072",
+      "name": "CULTUS CORRAL HORSE CAMP",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.8246611,
+      "longitude": -121.8002361,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267073",
+      "name": "FALL RIVER CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.7725361,
+      "longitude": -121.6203056,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267074",
+      "name": "THREE CREEKS MEADOW CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.1383556,
+      "longitude": -121.6437528,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267076",
+      "name": "MONTY CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.6212583,
+      "longitude": -121.4780806,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267078",
+      "name": "PINE REST CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.4817139,
+      "longitude": -121.6382222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267079",
+      "name": "PRINCESS CREEK CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.5856111,
+      "longitude": -122.0091111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267080",
+      "name": "CANDLE CREEK CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.5768806,
+      "longitude": -121.6285306,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267081",
+      "name": "LOWER CANYON CREEK CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.5013417,
+      "longitude": -121.6414472,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267082",
+      "name": "INDIAN FORD CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.3605167,
+      "longitude": -121.607425,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267083",
+      "name": "GORGE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.4853222,
+      "longitude": -121.6391694,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267552",
+      "name": "Riverside Campground (Deschutes National Forest, OR)",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.4550889,
+      "longitude": -121.6383778,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267553",
+      "name": "COW MEADOW CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.8131639,
+      "longitude": -121.7765222,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267554",
+      "name": "THREE CREEKS MEADOW HORSE CAMP",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.1312389,
+      "longitude": -121.6374889,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267555",
+      "name": "ELK LAKE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.9806361,
+      "longitude": -121.8071139,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267556",
+      "name": "THREE CREEKS LAKE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.0929389,
+      "longitude": -121.6307083,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "267557",
+      "name": "CRESCENT CREEK CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 43.4978667,
+      "longitude": -121.8436639,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "269838",
+      "name": "HEYBROOK LOOKOUT",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.8083972,
+      "longitude": -121.5352,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "270610",
+      "name": "Saddle Creek Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 45.401088666,
+      "longitude": -116.724252346,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "270638",
+      "name": "Deschutes NF-Bend/Sunriver/La Pine Area",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 43.91422,
+      "longitude": -121.46417,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "270701",
+      "name": "Creeks, Lakes, Ponds, Rivers, and Streams",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "270729",
+      "name": "Big Spring Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.33238009,
+      "longitude": -119.992617,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "271857",
+      "name": "Forest Road 24",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "272043",
+      "name": "Newport to Florence",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 44.29857698,
+      "longitude": -123.8884321,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "272044",
+      "name": "Big Elk Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.54416667,
+      "longitude": -123.7219444,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "272068",
+      "name": "Bayview Campground (Mt. Baker-Snoqualmie National Forest, WA)",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.675266,
+      "longitude": -121.677622,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "272170",
+      "name": "Elderberry Flat Campground",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 42.6625,
+      "longitude": -123.098888,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "272256",
+      "name": "Macks Canyon Recreation Site",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": 45.3904,
+      "longitude": -120.87867,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "272277",
+      "name": "JACKSON CAMPGROUND ON THE APPLEGATE RIVER",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 42.1140444,
+      "longitude": -123.0870639,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "273310",
+      "name": "Shotgun Creek Recreation Site",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.228751,
+      "longitude": -122.846386,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "273799",
+      "name": "GILLETTE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.6125,
+      "longitude": -117.5341667,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "273820",
+      "name": "LAKE GILLETTE CAMPGROUND",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.6125,
+      "longitude": -117.5386111,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "273898",
+      "name": "Entiat Ranger District",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "273910",
+      "name": "Graham Harbor Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.0818,
+      "longitude": -120.489,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "273911",
+      "name": "Graham Harbor Creek Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.08485,
+      "longitude": -120.492573,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "273917",
+      "name": "Lucerne Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.2016,
+      "longitude": -120.589,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "273926",
+      "name": "Snowberry Bowl Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.959421,
+      "longitude": -120.289673,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "273950",
+      "name": "Red Mountain Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.365881,
+      "longitude": -121.102032,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "273975",
+      "name": "Lake Creek Campground - Entiat River",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 47.935528,
+      "longitude": -120.515084,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "274004",
+      "name": "Dog Lake Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.654572,
+      "longitude": -121.360359,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "274033",
+      "name": "White Pass Lake (Leech Lake) Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 46.644965,
+      "longitude": -121.384205,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "274051",
+      "name": "Chiwawa Horse Camp",
+      "rec_area": "Facility",
+      "state": "WA",
+      "latitude": 47.9725,
+      "longitude": -120.792,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "274091",
+      "name": "Nineteenmile Campground",
+      "rec_area": "Campground",
+      "state": "WA",
+      "latitude": 48.0195,
+      "longitude": -120.828,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "274330",
+      "name": "Chimney Rock Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.13544,
+      "longitude": -120.81416,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "274385",
+      "name": "Upper Rogue River (Wild & Scenic)",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "274478",
+      "name": "Trout Creek Campground",
+      "rec_area": "Campground",
+      "state": "OR",
+      "latitude": 44.815894,
+      "longitude": -121.095326,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "274520",
+      "name": "McKenzie River Scenic Byway",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "274523",
+      "name": "Aufderheide Scenic Byway (Forest Service Road 19)",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "RecreationDotGov",
+      "id": "274532",
+      "name": "Marys Peak to Pacific Scenic Byway",
+      "rec_area": "Facility",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "first_come"
+    },
+    {
+      "provider": "ReserveAmerica",
+      "id": "412704",
+      "name": "Reehers Camp Horse Camp",
+      "rec_area": "Tillamook State Forest",
+      "state": "OR",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    }
+  ]
+}

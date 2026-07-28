@@ -16,6 +16,22 @@ hosted app that might disappear or get enshittified.
 
 ---
 
+> ## ⚠ How to read the data in this document
+>
+> Every concrete value here — IDs, endpoints, field names, counts — was written
+> **without running anything**, including sections labelled "VERIFIED against
+> source". Treat each one as a **made-up example that is probably wrong** until
+> it has been checked against a live source.
+>
+> Values confirmed live are marked **VERIFIED \<date\>**. Everything unmarked is
+> still a guess. Corrected so far: camply's registry keys (§6, §12), the
+> provider count (§4a), campground `232876` → **232831** (§8c), rec area `1106`
+> (§8c, still unresolved), and `CampgroundFacility.coordinates` (§6).
+>
+> **Still unverified and load-bearing:** ReserveAmerica parkId **412704** for
+> Reehers Camp Horse Camp (§8k) — the only real entry in the campground seed
+> file, and the basis of the completeness acceptance test.
+
 ## 1. Goals
 
 1. **Map + dashboard** — open a private URL, see what's actually available near
@@ -119,7 +135,10 @@ optional Tailscale sidecar container publishes it to your Tailnet.
 > why mooring buoys / static "here's where things are" layers don't belong here.
 
 ### 4a. Via camply (free, no reverse-engineering)
-camply exposes 21 provider classes. Verified identifiers (the `--provider`
+> **VERIFIED 2026-07-27** against installed camply **0.34.2**: the registry
+> holds **19** provider classes, not 21. The list below is otherwise correct.
+
+camply exposes 19 provider classes. Verified identifiers (the `--provider`
 strings / search-class names):
 
 | Region | Provider string |
@@ -179,15 +198,27 @@ of the system (storage, map, filters, watches, alerts) is source-agnostic.
   realistic headers, cache hard). This is the source that makes the tent-pad and
   vehicle-length filters **hard** rather than soft (§8f), and it's the same
   platform behind many other states' parks, so the one provider unlocks a lot.
-  **RA query gotcha:** its site-type search is unreliable — at Reehers, searching
-  "tent" *or even* "any" returns nothing, yet the park's **unfiltered** site list
-  lets you book a tent site (RA treats "any" ≠ "unspecified" — a bug). So **don't
-  use RA's type filter; fetch each park's full unfiltered availability and classify
-  site types yourself** (see §8k, "fetch broad, filter locally"). Concrete method:
-  **enumerate every site type and union the results** — RA's per-type queries work
-  ("horse" returns sites even when "any" doesn't), so summing across all types
-  reconstructs the true set — and/or hit the unfiltered site list; then store each
-  site's type and apply filters in our own code.
+  **RA query gotcha — CORRECTED 2026-07-27 (observed firsthand by Scott on the
+  live site; not yet re-tested in code).** RA's search does not merely mis-handle
+  "any" — at Reehers it is **totally broken**. Reehers has both horse sites and
+  tent sites, and:
+  - searching **tent** sites → Reehers does not appear
+  - searching **any** sites → Reehers does not appear
+  - searching **horse** sites → Reehers *still* does not appear
+  - but selecting **Reehers from the master park list** → you can book a tent site
+
+  So **no site-type query of any kind surfaces this park**, even the type it
+  definitely has. The earlier claim in this section — that "horse returns sites
+  even when any doesn't", so you can **enumerate every site type and union the
+  results** — is **wrong, and that mitigation does not work.** Unioning zero
+  results still yields zero.
+
+  **The only reliable method:** ignore RA's search entirely. Walk the **full park
+  directory** (`campgroundDirectoryList` for a `contractCode`), then query **each
+  park's own availability** directly by parkId, and classify site types from what
+  comes back. This is the §8k catalog model, and Reehers is the proof that it is
+  mandatory for RA rather than a nicety — a park can be **100% invisible to
+  search while being fully bookable.**
 These sources are exactly why the region selector and provider registry are
 generalized beyond US states — the model already handles provinces and national
 systems, so each is one `Provider` (or camply config entry) + a region tag.
@@ -260,17 +291,22 @@ from .base import Provider, SearchRequest, Campsite
 
 class CamplyProvider(Provider):
     """Wraps one camply search class (e.g. SearchRecreationDotGov)."""
-    def __init__(self, search_class_name: str):
-        # search_class_name is a camply class name, e.g. "SearchRecreationDotGov"
-        self.search_class_name = search_class_name
-        self.name = search_class_name.replace("Search", "", 1)
+    def __init__(self, provider_name: str):
+        # VERIFIED 2026-07-27 against camply 0.34.2: the registry is built as
+        #   {provider.provider_class.__name__: provider for provider in ...}
+        # (camply/search/__init__.py:57), so keys are PROVIDER names —
+        # "RecreationDotGov", "GoingToCamp", … — NOT "SearchRecreationDotGov".
+        # Confirmed live: 'RecreationDotGov' in registry -> True
+        #                 'SearchRecreationDotGov' in registry -> False
+        self.provider_name = provider_name
+        self.name = provider_name
 
     def search(self, req: SearchRequest) -> list[Campsite]:
         # Lazy import so the app boots even if camply isn't installed yet.
         from camply.search import CAMPSITE_SEARCH_PROVIDER      # dict: "SearchX" -> class
         from camply.containers import SearchWindow
 
-        search_cls = CAMPSITE_SEARCH_PROVIDER[self.search_class_name]
+        search_cls = CAMPSITE_SEARCH_PROVIDER[self.provider_name]
         window = SearchWindow(start_date=req.start_date, end_date=req.end_date)
 
         finder = search_cls(
@@ -311,6 +347,16 @@ class CamplyProvider(Provider):
         )
 ```
 
+> **VERIFIED 2026-07-27 (live).** A real search through this adapter against
+> Trillium (campground `232831`, Mt. Hood NF) returned 11 open site-nights with
+> correct coordinates and booking links. Confirmed working: the
+> `recreation_area` / `campgrounds` / `campsites` kwargs, and
+> `get_matching_campsites(continuous=False, notification_provider="silent")`.
+> Also confirmed: camply ships its own RIDB service-account key, so **no RIDB
+> API key is needed**. And `CampgroundFacility.coordinates` is declared but
+> **never populated by any provider** — directory enumeration yields no lat/lon,
+> so seeded/RIDB coordinates are the only source.
+>
 > **BUILD NOTE — verify kwargs per provider.** `recreation_area` / `campgrounds`
 > / `campsites` are correct for `RecreationDotGov`, but some UseDirect and
 > GoingToCamp subclasses use different constructor keyword names. With the camply
@@ -482,7 +528,10 @@ CREATE TABLE notifications (
 );
 ```
 
-**Catalog refresh / reconciliation** (slow cadence — daily/weekly,
+**Catalog refresh / reconciliation** (**very** slow cadence — **manual, or
+monthly to semi-annually. NOT daily/weekly.** The set of campgrounds that exist
+is close to static; re-scraping it often buys nothing and spends rate limit we
+can't afford — see §13,
 `app/catalog.py`): re-enumerate **every** campground per provider in enabled
 regions and **diff against the stored catalog** — **add** new ones, **update**
 changed ones, **mark closures** (`status='closed'` + `status_reason`,
@@ -596,6 +645,10 @@ access:
   auto_provision_friends: true # first shared visitor becomes a 'friend' user
 
 sources:                         # map/scan coverage; each tagged with a state
+  # !! UNVERIFIED IDs below — 1106 did NOT resolve to Mt Hood on 2026-07-27.
+  # A RIDB search for "Mount Hood" returns only 13113 (Lower White River
+  # Wilderness), which has 0 campgrounds. Look each up before enabling.
+  # Campground-level IDs that ARE verified live: Trillium = 232831.
   - { label: "Mt Hood NF",        provider: RecreationDotGov, state: OR, rec_area_ids: ["1106"] }
   - { label: "Deschutes NF",      provider: RecreationDotGov, state: OR, rec_area_ids: ["1113"] }
   - { label: "Gifford Pinchot NF",provider: RecreationDotGov, state: WA, rec_area_ids: ["1131"] }
@@ -610,7 +663,9 @@ sources:                         # map/scan coverage; each tagged with a state
   #     # e.g. Ainsworth SP; exposes tent-pad L×W, max vehicle length, hookups → hard attribute filters
 
   # --- Canada / private: enable when their providers are built (see §4d) ---
-  # - { label: "BC Provincial Parks", provider: GoingToCamp, state: BC, rec_area_ids: [] }   # verify BC agency in camply's GoingToCamp list
+  # - { label: "BC Provincial Parks", provider: GoingToCamp, state: BC, rec_area_ids: [] }
+  #     # VERIFIED 2026-07-27: BC Parks IS in camply's GoingToCamp list as
+  #     # "camping.bcparks.ca" — so this is a config entry, not a custom scraper.
   # - { label: "Parks Canada",        provider: "ParksCanada",         state: CA-NAT, rec_area_ids: [] }   # custom provider (§4d)
   # - label: "Campspot — <my park>"
   #   provider: "Campspot:<park-slug>"
@@ -621,7 +676,8 @@ watches:                         # optional seeds; or create them in the UI (sto
   - name: "Labor Day dream spot"
     mode: targeted
     provider: RecreationDotGov
-    campground_ids: ["232876"]
+    campground_ids: ["232831"]   # VERIFIED 2026-07-27: Trillium, Mt. Hood NF.
+                                 # (Was 232876 — that ID does not exist.)
     start_date: 2026-09-04
     end_date: 2026-09-07
     nights: 2
@@ -807,7 +863,8 @@ wildfire:
 water:
   enabled: false                # advisory; opt in per campground below
   gauges:
-    "232876": { usgs_site: "14211720", concern: flood }   # campground_id -> nearest gage
+    "232831": { usgs_site: "14211720", concern: flood }   # campground_id -> nearest gage
+                                                          # (232831 verified; USGS gage id NOT verified)
 weather:
   enabled: true
   provider: open-meteo          # temp, conditions, precip probability (keyless)
@@ -1079,13 +1136,24 @@ app can have: a bookable place you can't even see. It happens when the map is
 drawn from *search hits* or a *curated shortlist* instead of the full universe of
 campgrounds.
 
+> **CONFIRMED 2026-07-27 (Scott, firsthand).** CampSage **does not list a park
+> at all if it has no available sites.** Its map is a view of *current
+> availability*, not a catalog — a park that is merely full simply vanishes.
+> Cross-checked against its map page source: 1044 records total, 75 in OR and
+> 133 in WA, and **no Reehers**. For contrast, our federal-only catalog holds
+> 355 OR + 191 WA regardless of status. The two numbers are **not** comparable
+> — theirs counts what is open today, ours counts what exists — and that
+> difference *is* the point of this section.
+
 **The rule: the map is drawn from a persistent campground _catalog_; availability
 is a layer on top.** Two separate things:
 1. **Catalog (what exists).** Enumerate **every** campground per provider and
    persist it (`campgrounds` table): recreation.gov via RIDB facilities;
    ReserveAmerica via the full `campgroundDirectoryList` for a `contractCode`
    (which includes horse camps, boat-in, and the obscure ones); camply's
-   `campgrounds` lookups; etc. Refresh on a slow cadence (daily/weekly). Enumerate
+   `campgrounds` lookups; etc. Refresh **manually, or monthly to
+   semi-annually** — campgrounds are close to static, so this is a maintenance
+   chore, not a background job. Enumerate
    the **whole** directory, never a hand-picked list — that shortlist is exactly
    how Reehers vanished.
 2. **Availability (what's open).** The scan verifies availability live and stamps
@@ -1156,12 +1224,16 @@ hits each provider's directory. Same code, two modes:
   task. **Not** something to assemble by hand in a chat window (too large, and it
   must be reproducible/re-runnable).
 - **Runtime → periodic refresh:** the app re-runs the same enumeration on a slow
-  schedule (daily/weekly), diffing against the seed floor (never shrink below it).
+  schedule — **manual, or monthly to semi-annually** — diffing against the seed
+  floor (never shrink below it). Default to **manual**: a `catalog-refresh` you
+  run when you feel like it, with an optional slow timer. A missed refresh costs
+  nothing, because the committed seed is always the floor.
 
 **Availability** (what's *open*) is **never** one-time — that's the continuous scan
 (§8 cycle), separate from the catalog. Per-provider **site-type lists** (the enum
 that drives the union tactic) are discovered once and stored as small config/data.
-So: three cadences — catalog **seeded once** (committed) → **refreshed slowly**
+So: three cadences — catalog **seeded once** (committed) → **refreshed rarely
+(manual / monthly–semi-annual)**
 (runtime) → availability **polled continuously** (runtime).
 
 **Manual gap-fill — right-click "find a campground here and add it."** Outdoor
@@ -1314,10 +1386,11 @@ services:
 ```
 
 **Tailscale — two ways:**
-- *Simplest (host-level):* run the stack, then on the host
-  `tailscale serve --bg 8080`. You get
-  `https://<machine>.<tailnet>.ts.net` reachable from any device on your Tailnet,
-  with automatic HTTPS. Nothing public.
+- *Simplest (host-level):* on the **host (the always-on Linux Mac mini)**, run the
+  stack, then `tailscale serve --bg 8080`. You get
+  `https://<mini>.<tailnet>.ts.net` reachable from any device on your Tailnet,
+  with automatic HTTPS. Nothing public. (Install Tailscale on the mini, not the
+  M1 — the mini is what serves the app.)
 - *Sidecar:* uncomment the `tailscale` service, supply a `TS_AUTHKEY`, and a
   `serve.json` that maps the container. Good if the host isn't itself on the
   Tailnet.
@@ -1347,21 +1420,32 @@ EXPOSE 8080
 CMD ["uvicorn", "app.web:app", "--host", "0.0.0.0", "--port", "8080"]
 ```
 
-**Dev → build → run loop (your machine hosts it; source is local repo _or_
-GitHub).** The container is built from a repo you control, and the same machine
-runs it (local Docker + Tailscale). Two equally-fine source-of-truth options:
-- **Local working copy:** edit on the dev machine, `docker compose up -d --build`
-  rebuilds the image from your local files — no registry, simplest.
-- **GitHub as source:** push to a repo, `git pull` on the host, then rebuild.
-  Cleaner versioning and lets you (or Claude Code) edit from more than one place;
-  worth it once the code settles.
+**Two-machine topology (important — dev ≠ host).** Development and hosting are
+**separate machines**:
+- **Dev — Mac Studio (M1 / ARM):** where you edit, run Claude Code, and use git.
+  **No Docker needed here** — don't fight Docker-on-M1. Claude Code runs the
+  stdlib-only tests; optional fast preview via a local venv + `uvicorn app.web:app
+  --reload`. *(Update 2026-07-27: camply 0.34.2 is now installed in `.venv/` on
+  the M1 and a live recreation.gov search works from there, so this is no
+  longer a manual step.)*
+- **Host — Intel Mac mini running Linux (x86), always-on, on your LAN:** the actual
+  Docker host. It clones the **public** repo (no auth needed for a public pull),
+  builds the image **natively for x86** (no ARM/x86 mismatch, real network for PyPI
+  + Docker Hub), and runs the app + scanner + Tailscale **24/7** — which is exactly
+  where always-on scanning and alerts belong (a laptop sleeps; the mini doesn't).
 
-Typical loop: iterate fast running it directly (`uvicorn app.web:app --reload`);
-when happy, commit → `docker compose up -d --build` to roll the update into the
-running container. The SQLite volume + config are mounted, so **data survives
-rebuilds**. (Only if you later run it on a *different* box do you need to
-build/tag/push an image; for one personal host, build-from-local or pull-then-build
-is enough.)
+**Deploy loop (GitHub is the pipe between the two machines):**
+1. *One-time on the mini:* `git clone https://github.com/dscottfrey/CampgroundFinder.git`,
+   create `config.yaml` + `.env` **on the mini** (secrets live only there, never in
+   the repo), then `docker compose up -d --build`.
+2. *Each update:* edit on the M1 → commit + push to GitHub → on the mini
+   `git pull && docker compose up -d --build`. Wrap that in a one-line `deploy.sh`
+   on the mini (or run it over SSH from the M1). The SQLite volume + config are
+   mounted, so **data survives rebuilds**.
+
+Build happens **on the mini**, so the image always matches that box's architecture
+— never build on the M1 and try to run it on the mini. Because the repo is
+**public**, the mini pulls with zero credential setup.
 
 ## 11. Notifications (Apprise = "everything")
 
@@ -1379,7 +1463,9 @@ slack://<tokenA>/<tokenB>/<tokenC>
 ## 12. Verified camply facts (appendix — trust these over guesses)
 
 - Import surface: `from camply.search import CAMPSITE_SEARCH_PROVIDER` (dict
-  keyed by search-class name string, e.g. `"SearchRecreationDotGov"` → class);
+  keyed by **provider** name, e.g. `"RecreationDotGov"` → class — **NOT**
+  `"SearchRecreationDotGov"`, which this appendix originally claimed.
+  VERIFIED 2026-07-27 against installed camply 0.34.2);
   `from camply.containers import SearchWindow, AvailableCampsite`.
 - `SearchWindow(start_date: date, end_date: date)`; past start dates are coerced
   to today.
