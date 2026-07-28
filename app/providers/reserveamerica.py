@@ -85,6 +85,10 @@ _MATRIX_CELL = re.compile(
 )
 _SITE_ROW = re.compile(r"<div class='br'>(.*?)(?=<div class='br'>|<div class='tfoot'|\Z)", re.S)
 _SITE_ID = re.compile(r"changeSelectedSiteOL\((\d+)\)")
+#: The site id also rides in the last cell's class name.
+_SITE_ID_FROM_CLASS = re.compile(r"sitescompareselectorbtn(\d+)")
+#: One cell of the site table, in document order.
+_ROW_CELL = re.compile(r"<div class='(td[^']*)'[^>]*>(.*?)(?=<div class='td|\Z)")
 #: The row's type icon. **Do not treat this as access mode or equipment.**
 #: Ground-truthed by Scott 2026-07-28: the sites in "Brooke Creek Hike-In Camp"
 #: at L.L. Stub Stewart are named HIKE 01..HIKE 21, sit in a loop with
@@ -316,24 +320,61 @@ class ReserveAmericaProvider(Provider):
 
     @staticmethod
     def parse_sites(page: str) -> list[dict]:
+        """Parse the site table by COLUMN, not by pattern-hunting.
+
+        The table is, in order:
+
+            Site# | Loop | Site type | Max # of people | Equip length/Driveway
+                  | Amenities | Online availability
+
+        Reading it positionally matters. An earlier version grabbed the first
+        uppercase cell it could find and labelled it `site_type_label`, which
+        actually returned the **Loop** ("BROOKE CREEK HIKE-IN CAMP") and never
+        the Site type. The Site type is where the access mode lives — for the
+        Brooke Creek sites it reads **`WALK TO`**, which is the honest signal
+        that you park elsewhere and carry your gear in.
+
+        `equipment_length` empty is a second, independent signal for the same
+        thing: a site no vehicle can reach has no driveway length. Both were
+        confirmed against the live page by Scott, 2026-07-28.
+
+        The type ICON is deliberately not used for this: those same WALK TO
+        sites carry an `rv` icon and cannot take an RV (docs/terminology.md).
+        """
         collapsed = re.sub(r"\s+", " ", page)
-        sites = []
+        sites: list[dict] = []
+        seen: set[str] = set()
         for row in _SITE_ROW.findall(collapsed):
-            site_id = _SITE_ID.search(row)
+            site_id = _SITE_ID.search(row) or _SITE_ID_FROM_CLASS.search(row)
             if not site_id:
                 continue
+            site_id = site_id.group(1)
+            if site_id in seen:
+                # The page repeats each row (once rendered, once as a
+                # template), which used to double every count.
+                continue
+            seen.add(site_id)
+
+            cells = [
+                _clean(re.sub(r"<[^>]+>", " ", inner)) or ""
+                for _cls, inner in _ROW_CELL.findall(row)
+            ]
+            cells = [re.sub(r"\s+", " ", c).strip() for c in cells]
+            # Column 0 carries the map link's text before the site number.
+            number = cells[0].replace("Map", "").strip() if cells else ""
             icon = _SITE_TYPE_ICON.search(row)
-            label = _SITE_TYPE_LABEL.search(row)
             sites.append(
                 {
-                    "site_id": site_id.group(1),
-                    "name": _clean(_SITE_NAME.search(row).group(1))
-                    if _SITE_NAME.search(row)
-                    else None,
-                    # Icon is the reliable signal; the text label is missing on
-                    # some rows. Both are recorded — neither is guessed.
-                    "site_type": icon.group(1) if icon else None,
-                    "site_type_label": _clean(label.group(1)) if label else None,
+                    "site_id": site_id,
+                    "name": number or None,
+                    "loop": cells[1] if len(cells) > 1 else None,
+                    # The real one. "WALK TO", "STANDARD", "TENT SITE", …
+                    "site_type": cells[2] if len(cells) > 2 else None,
+                    "max_people": cells[3] if len(cells) > 3 else None,
+                    # Empty means no driveway — i.e. no vehicle reaches it.
+                    "equipment_length": cells[4] if len(cells) > 4 else None,
+                    # Recorded but NOT to be trusted as access or equipment.
+                    "type_icon": icon.group(1) if icon else None,
                 }
             )
         return sites

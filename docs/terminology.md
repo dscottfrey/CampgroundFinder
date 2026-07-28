@@ -43,6 +43,21 @@ Access mode appears to live in RIDB's `CampsiteType`, which
 `inventory.classify_sites` now captures per campground so the question never
 costs a second pass over every facility.
 
+## ReserveAmerica publishes access mode — in the Site type column
+
+The park page's site table is:
+
+    Site# | Loop | Site type | Max # of people | Equip length/Driveway
+          | Amenities | Online availability
+
+**"Site type" is the access mode**, and it is authoritative: Brooke Creek's
+sites read `WALK TO`. **"Equip length/Driveway" empty is the same fact stated
+twice** — a site no vehicle can reach has no driveway. At Reehers the drive-in
+horse sites read `Back-In`; all 21 Brooke Creek sites are blank.
+
+Two independent signals, both from the operator, both per-site. That is what to
+filter a bikepacker search on — not the icon.
+
 ## ReserveAmerica's site type icon is NOT access mode
 
 Confirmed by Scott against the real campground, 2026-07-28: the sites in

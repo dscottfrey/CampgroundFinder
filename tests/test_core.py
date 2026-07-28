@@ -804,15 +804,61 @@ class TestReserveAmericaSiteList(unittest.TestCase):
         self.assertTrue(all(s["site_id"] for s in self.sites))
 
     def test_reehers_has_tent_sites_not_only_horse_sites(self):
+        # `site_type` is now the table's own "Site type" column, not the icon.
         types = {s["site_type"] for s in self.sites}
-        self.assertIn("horse", types)
+        self.assertIn("HORSE SITE", types)
         # The whole point: searching "tent" at Reehers returns nothing on the
         # live site, yet tent sites plainly exist on the park's own page.
-        self.assertIn("tent", types)
+        self.assertIn("TENT SITE", types)
 
-    def test_missing_type_label_is_none_not_guessed(self):
-        for s in self.sites:
-            self.assertTrue(s["site_type_label"] is None or s["site_type_label"].isupper())
+    def test_each_site_appears_exactly_once(self):
+        # The page repeats every row; the parser used to return each twice.
+        ids = [s["site_id"] for s in self.sites]
+        self.assertEqual(len(ids), len(set(ids)))
+
+    def test_columns_are_read_positionally_not_guessed(self):
+        site = self.sites[0]
+        self.assertEqual(site["loop"], "A")               # Loop column
+        self.assertEqual(site["site_type"], "HORSE SITE")  # Site type column
+        # A drive-in site states its driveway; a walk-to site leaves it empty.
+        self.assertEqual(site["equipment_length"], "Back-In")
+
+
+class TestWalkToSitesAreIdentifiable(unittest.TestCase):
+    """The access-mode signal, ground-truthed against the live page.
+
+    Scott checked L.L. Stub Stewart's Brooke Creek Hike-In Camp: the "Site
+    type" column reads WALK TO, the "Equip length/Driveway" column is empty,
+    and the sites cannot take an RV — despite carrying an `rv` type icon.
+    """
+
+    def setUp(self):
+        from app.providers.reserveamerica import ReserveAmericaProvider
+        self.sites = ReserveAmericaProvider.parse_sites(
+            (FIXTURES / "ra_stub_stewart_sites.html").read_text())
+
+    def test_walk_to_is_read_from_the_site_type_column(self):
+        walk = [s for s in self.sites if s["site_type"] == "WALK TO"]
+        self.assertEqual(len(walk), 21)
+        self.assertTrue(all(s["name"].startswith("HIKE") for s in walk))
+
+    def test_the_loop_name_is_not_mistaken_for_the_site_type(self):
+        # The old parser returned "BROOKE CREEK HIKE-IN CAMP" as the type.
+        walk = [s for s in self.sites if s["site_type"] == "WALK TO"][0]
+        self.assertEqual(walk["loop"], "BROOKE CREEK HIKE-IN CAMP")
+        self.assertNotEqual(walk["site_type"], walk["loop"])
+
+    def test_an_empty_driveway_corroborates_walk_to(self):
+        # Two independent signals for "no vehicle reaches this site".
+        walk = [s for s in self.sites if s["site_type"] == "WALK TO"]
+        self.assertTrue(all(not s["equipment_length"] for s in walk))
+        drive = [s for s in self.sites if s["site_type"] != "WALK TO"]
+        self.assertTrue(any(s["equipment_length"] for s in drive))
+
+    def test_the_type_icon_is_wrong_and_must_not_be_trusted(self):
+        # Every one of these says `rv`. They cannot take an RV.
+        walk = [s for s in self.sites if s["site_type"] == "WALK TO"]
+        self.assertTrue(all(s["type_icon"] == "rv" for s in walk))
 
 
 class TestReserveAmericaHonesty(unittest.TestCase):
