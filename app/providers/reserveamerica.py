@@ -368,10 +368,17 @@ class ReserveAmericaProvider(Provider):
                     "site_id": site_id,
                     "name": number or None,
                     "loop": cells[1] if len(cells) > 1 else None,
-                    # The real one. "WALK TO", "STANDARD", "TENT SITE", …
+                    # The real one: "WALK TO", "STANDARD", "TENT SITE", …
+                    # NOT an equipment restriction — "TENT SITE" does not
+                    # preclude a campervan, confirmed at Beverly Beach C27.
+                    # Only an explicit "RV prohibited" in the site description
+                    # says that, and we don't fetch descriptions yet.
                     "site_type": cells[2] if len(cells) > 2 else None,
                     "max_people": cells[3] if len(cells) > 3 else None,
-                    # Empty means no driveway — i.e. no vehicle reaches it.
+                    # PRESENT vs EMPTY is meaningful — empty means no
+                    # driveway, i.e. no vehicle reaches it. The NUMBER is not:
+                    # Beverly Beach C27/C28 read "20 Back-In" and are really
+                    # 40+ feet. Never use it as a hard bound (docs/terminology.md).
                     "equipment_length": cells[4] if len(cells) > 4 else None,
                     # Recorded but NOT to be trusted as access or equipment.
                     "type_icon": icon.group(1) if icon else None,

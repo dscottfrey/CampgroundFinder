@@ -855,6 +855,31 @@ class TestWalkToSitesAreIdentifiable(unittest.TestCase):
         drive = [s for s in self.sites if s["site_type"] != "WALK TO"]
         self.assertTrue(any(s["equipment_length"] for s in drive))
 
+    def test_tent_site_is_not_treated_as_an_equipment_restriction(self):
+        """Beverly Beach C27 is a TENT SITE that Scott has camped in a van.
+
+        Nothing may turn the site type into a vehicle prohibition. Only an
+        explicit "RV prohibited" in the site description does that, and we do
+        not read descriptions — so "does my van fit?" is unknown, and §8g says
+        unknown is shown, never filtered away.
+        """
+        import inspect
+        import app.providers.reserveamerica as ra
+        source = inspect.getsource(ra)
+        # No code may branch on the tent type to exclude anything.
+        self.assertNotIn('site_type"] == "TENT', source)
+        self.assertNotIn("site_type'] == 'TENT", source)
+
+    def test_the_driveway_number_is_never_used_as_a_bound(self):
+        # C27/C28 read "20 Back-In" and are really 40+ feet — source data
+        # error. Presence is usable; the value is not.
+        import inspect
+        import app.providers.reserveamerica as ra
+        source = inspect.getsource(ra)
+        for bad in ("int(cells[4]", "float(cells[4]", "equipment_length >",
+                    "equipment_length <"):
+            self.assertNotIn(bad, source)
+
     def test_the_type_icon_is_wrong_and_must_not_be_trusted(self):
         # Every one of these says `rv`. They cannot take an RV.
         walk = [s for s in self.sites if s["site_type"] == "WALK TO"]

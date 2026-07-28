@@ -58,6 +58,34 @@ horse sites read `Back-In`; all 21 Brooke Creek sites are blank.
 Two independent signals, both from the operator, both per-site. That is what to
 filter a bikepacker search on — not the icon.
 
+## Site type is not an equipment restriction
+
+Ground-truthed by Scott, 2026-07-28: Beverly Beach C27 is listed `TENT SITE`,
+and he has camped it **in a van**. So:
+
+> **"TENT SITE" does not preclude a campervan or an RV.**
+
+The site type describes the site's character, not what may park on it. The only
+authoritative prohibition is an explicit "RV prohibited" in the site's own
+**description**, which we do not currently fetch.
+
+Consequence for filtering: **an equipment filter may inform, but must never
+exclude.** Hiding every `TENT SITE` from a van owner would remove sites they
+have literally slept in — the Reehers failure with a different cause. Until we
+read the description, "can my van fit?" is *unknown*, and §8g says unknown is
+shown, not filtered away.
+
+## The driveway length is unreliable as a number
+
+Same site: the table says `20 Back-In` for C27 and C28; both are **at least 40
+feet**. Plain data-entry error at the source, and nothing we can fix.
+
+So the numeric length must never be a hard bound — a van owner filtering on
+"needs 30 ft" would lose a site that fits comfortably. What still appears
+sound is **present vs empty**, which is a different claim: every `WALK TO` site
+at Stub Stewart has the field blank, and every drive-in site has something in
+it. Use the presence, distrust the value.
+
 ## ReserveAmerica's site type icon is NOT access mode
 
 Confirmed by Scott against the real campground, 2026-07-28: the sites in

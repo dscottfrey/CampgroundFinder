@@ -96,6 +96,22 @@ can't be scanned.
    record which rec area it belongs to — it stamps only what came back and
    leaves the rest alone. Silence beats a confident wrong answer.
 
+### Three source-data rules, learned the hard way
+
+All ground-truthed by Scott against campgrounds he has actually stayed at.
+Each one, applied naively, would have hidden a bookable site — the Reehers
+failure with a new cause each time.
+
+1. **"TENT SITE" is not an equipment restriction.** Beverly Beach C27 is a
+   TENT SITE he has camped in a van. Only an explicit "RV prohibited" in the
+   site description says otherwise, and we don't read descriptions — so
+   "does my van fit?" is *unknown*, and unknown is shown, not filtered away.
+2. **The driveway length is unreliable as a number.** C27/C28 read
+   "20 Back-In" and are really 40+ feet. Presence vs absence is still usable —
+   every WALK TO site has it blank — but the value must never be a bound.
+3. **The site-type icon is simply wrong.** All 21 Brooke Creek WALK TO sites
+   carry an `rv` icon and cannot take an RV.
+
 ### First-come: two separate claims
 
 "This campground takes no reservations" and "this bookable campground *also*
