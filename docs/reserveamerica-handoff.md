@@ -115,6 +115,7 @@ browser devtools (Network → XHR) before writing code against it.
 | Park directory for a contract | `campgroundDirectoryList` |
 | Park search | `unifSearch.do` — **do not use, see above** |
 | Park availability calendar | `campsiteCalendar.do` — **dead end, always redirects** |
+| **Site list, page 2+** | `campsitePaging.do?contractCode=OR&parkId=N&startIdx=25` — the park page shows only 25 rows and IGNORES `startIdx`; this is the real control, taken from its own Next link |
 | **Park matrix (use this)** | `campgroundDetails.do?…&parkId=N&arvdate=MM/DD/YYYY` — every site x 14 days in ONE request |
 | Per-site 2-week calendar | `campsiteDetails.do?…&siteId=M&arvdate=MM/DD/YYYY` — works, but 34x more requests |
 

@@ -2572,6 +2572,78 @@ class TestMatrixMarkupChange(unittest.TestCase):
         full = old.replace("class='td status a'", "class='td status r'")
         self.assertEqual(self.parse(full), {})
 
+# --------------- the park page shows 25 of 279 sites (found 2026-07-28) ----
+
+class TestSiteListPaging(unittest.TestCase):
+    """Beverly Beach looked like a 27-site park. It has 279.
+
+    `campgroundDetails.do` shows only the first 25 rows and silently ignores
+    `startIdx`. The real control is a separate endpoint, taken from the page's
+    own Next link:
+
+        executePaging("/campsitePaging.do?...&startIdx=25")
+
+    Until this was found, the entire C loop was invisible — which is why site
+    C29 could not be looked up at all.
+    """
+
+    def setUp(self):
+        from app.providers.reserveamerica import ReserveAmericaProvider
+        self.cls = ReserveAmericaProvider
+
+    def rows(self, names, total, base=0):
+        # Ids are unique per position across the whole park, as a real park's
+        # are. Colliding ids would dedupe pages together and make the walk look
+        # short — which is exactly what the guard is there to catch.
+        def site_id(offset):
+            return 1000 + base + offset
+
+        cells = "".join(
+            f"<div class='br'><div class='td'>Map {n}</div>"
+            f"<div class='td'>C</div><div class='td'>TENT SITE</div>"
+            f"<div class='td maxPeopleCell'>8</div><div class='td'>20 Back-In</div>"
+            f"<div class='td amenitiesicons'></div>"
+            f"<div class='td sitescompareselectorbtn{site_id(k)}'>Enter Date</div></div>"
+            for k, n in enumerate(names))
+        return (f"<div class='matchSummary mb5'>{total} site(s) found</div>"
+                + cells + "<div class='tfoot'></div>")
+
+    def provider(self, pages, total):
+        calls = []
+
+        def fetch(path, params):
+            calls.append((path, params.get("startIdx")))
+            idx = params.get("startIdx", 0) or 0
+            chunk = pages[idx // 25] if idx // 25 < len(pages) else []
+            return self.rows(chunk, total, base=idx)
+        p = self.cls("OR", "oregonstateparks.reserveamerica.com",
+                     delay=0, fetcher=fetch)
+        return p, calls
+
+    def test_it_walks_every_page(self):
+        pages = [[f"C{i:02d}" for i in range(1, 26)],
+                 [f"D{i:02d}" for i in range(1, 26)],
+                 [f"E{i:02d}" for i in range(1, 4)]]
+        p, calls = self.provider(pages, total=53)
+        sites = p.list_sites("402126")
+        self.assertEqual(len(sites), 53)
+        self.assertIn("campsitePaging.do", [c[0] for c in calls])
+        # First request is the park page; the rest go to the paging endpoint.
+        self.assertEqual(calls[0][0], "campgroundDetails.do")
+        self.assertTrue(all(c[0] == "campsitePaging.do" for c in calls[1:]))
+
+    def test_a_short_walk_raises_rather_than_reporting_a_partial_park(self):
+        from app.providers.reserveamerica import IncompleteSiteList
+        # The page claims 279 but only one page of rows is ever served.
+        p, _ = self.provider([[f"C{i:02d}" for i in range(1, 26)]], total=279)
+        with self.assertRaises(IncompleteSiteList):
+            p.list_sites("402126")
+
+    def test_a_single_page_park_makes_no_paging_request(self):
+        p, calls = self.provider([[f"A{i:02d}" for i in range(1, 6)]], total=5)
+        self.assertEqual(len(p.list_sites("412704")), 5)
+        self.assertEqual([c[0] for c in calls], ["campgroundDetails.do"])
+
 
 
 if __name__ == "__main__":
