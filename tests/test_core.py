@@ -962,3 +962,24 @@ class TestReserveAmericaParkMatrix(unittest.TestCase):
         self.assertLess(len(two), len(one))
         self.assertTrue(all(s.nights == 2 for s in two))
 
+
+
+class TestScopeLimits(unittest.TestCase):
+    """Scott's scope decisions, 2026-07-27: 2-4 night trips, western states."""
+
+    def test_defaults_are_two_to_four_nights(self):
+        cfg = parse_config({})
+        self.assertEqual(cfg.nights_options, [2, 3, 4])
+
+    def test_scan_regions_default_to_declared_states_not_everywhere(self):
+        # An unset scan scope must never silently mean "the whole country".
+        cfg = parse_config({"default_states": ["OR", "WA", "CA"]})
+        self.assertEqual(cfg.scan_regions, ["OR", "WA", "CA"])
+        self.assertEqual(parse_config({}).scan_regions, ["OR", "WA"])
+
+    def test_scan_regions_can_be_narrower_than_displayed_states(self):
+        # The catalog may span more regions than we actively scan (§8k).
+        cfg = parse_config({"default_states": ["OR", "WA", "BC"],
+                            "scan_regions": ["OR"]})
+        self.assertEqual(cfg.scan_regions, ["OR"])
+        self.assertIn("BC", cfg.default_states)

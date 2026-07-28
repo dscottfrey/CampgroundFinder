@@ -32,6 +32,8 @@ class Config:
     default_states: list[str] = field(default_factory=lambda: ["OR", "WA"])
     notify: dict = field(default_factory=dict)
     access: dict = field(default_factory=dict)
+    nights_options: list[int] = field(default_factory=lambda: [2, 3, 4])
+    scan_regions: list[str] = field(default_factory=list)
     sources: list[Source] = field(default_factory=list)
     watches: list[dict] = field(default_factory=list)
     raw: dict = field(default_factory=dict)
@@ -95,6 +97,14 @@ def parse_config(data: dict) -> Config:
         scan_interval_minutes=int(data.get("scan_interval_minutes", 30)),
         default_window_days=int(data.get("default_window_days", 60)),
         default_states=_as_str_list(data.get("default_states")) or ["OR", "WA"],
+        nights_options=[int(n) for n in (data.get("nights_options") or [2, 3, 4])],
+        # Falls back to default_states so an unset value never means "scan
+        # everywhere" — widening scan scope should always be deliberate.
+        scan_regions=(
+            _as_str_list(data.get("scan_regions"))
+            or _as_str_list(data.get("default_states"))
+            or ["OR", "WA"]
+        ),
         notify=data.get("notify") or {},
         access=data.get("access") or {},
         sources=sources,

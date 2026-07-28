@@ -8,6 +8,19 @@ scan_interval_minutes: 30        # be polite; don't go below ~10 (§13)
 default_window_days: 60
 default_states: [OR, WA]
 
+# Trip lengths worth tracking. This is a RELEVANCE filter, not a rate limit:
+# the ReserveAmerica park matrix returns every site x 14 days in one request
+# regardless, so nights are filtered in our own code after the fetch. What it
+# buys is less noise, fewer pointless alerts, and a smaller database.
+# (CampSage ships 2-3; Scott chose 2-4 on 2026-07-27.)
+nights_options: [2, 3, 4]
+
+# Regions we actually scan. THIS one is a real load reduction — fewer parks
+# means fewer upstream requests. The catalog still holds every campground it
+# knows about; only availability scanning is narrowed (§8k).
+scan_regions: [OR, WA]
+# Widen westward when wanted: [OR, WA, CA, ID, MT, NV, UT, AZ, CO, AK, BC]
+
 notify:
   default_targets:
     - ntfy://ntfy.sh/change-me-campgroundfinder   # keep the topic secret — it is the auth
