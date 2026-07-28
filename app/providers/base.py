@@ -89,6 +89,11 @@ class Campground:
     #: "first-come", which RIDB never states (docs/first-come-research.md).
     sites_total: Optional[int] = None
     sites_not_bookable: Optional[int] = None
+    #: How far THIS campground's stated driveway lengths can be trusted:
+    #: 'measured' | 'default' | 'unknown'. Measured from the campground's own
+    #: spread of values, never assumed from which agency or platform runs it —
+    #: the same platform carries both kinds (docs/terminology.md).
+    length_data_quality: Optional[str] = None
     status: str = STATUS_UNKNOWN
     status_reason: Optional[str] = None
     closed_until: Optional[str] = None

@@ -173,7 +173,8 @@ def upsert_campgrounds(
                      coord_source=COALESCE(?, coord_source),
                      first_come_sites=COALESCE(?, first_come_sites),
                      sites_total=COALESCE(?, sites_total),
-                     sites_not_bookable=COALESCE(?, sites_not_bookable)
+                     sites_not_bookable=COALESCE(?, sites_not_bookable),
+                     length_data_quality=COALESCE(?, length_data_quality)
                    WHERE provider=? AND id=?""",
                 (
                     cg.name, cg.rec_area, cg.state, cg.latitude, cg.longitude,
@@ -185,7 +186,7 @@ def upsert_campgrounds(
                     # COALESCE again: an enumeration that cannot tell must not
                     # flip a known answer back to "unknown".
                     None if cg.first_come_sites is None else int(cg.first_come_sites),
-                    cg.sites_total, cg.sites_not_bookable,
+                    cg.sites_total, cg.sites_not_bookable, cg.length_data_quality,
                     cg.provider, cg.id,
                 ),
             )
@@ -196,15 +197,16 @@ def upsert_campgrounds(
                      provider, id, name, rec_area, state, latitude, longitude,
                      reservation_type, status, status_reason, closed_until,
                      first_cataloged, last_checked, seeded, coord_source,
-                     first_come_sites, sites_total, sites_not_bookable)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                     first_come_sites, sites_total, sites_not_bookable,
+                     length_data_quality)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     cg.provider, cg.id, cg.name, cg.rec_area, cg.state,
                     cg.latitude, cg.longitude, cg.reservation_type, cg.status,
                     cg.status_reason, cg.closed_until, stamp, stamp,
                     1 if seeded else 0, cg.coord_source,
                     None if cg.first_come_sites is None else int(cg.first_come_sites),
-                    cg.sites_total, cg.sites_not_bookable,
+                    cg.sites_total, cg.sites_not_bookable, cg.length_data_quality,
                 ),
             )
             added += 1
@@ -234,6 +236,9 @@ def row_to_campground(row: sqlite3.Row) -> Campground:
         sites_total=row["sites_total"] if "sites_total" in row.keys() else None,
         sites_not_bookable=(
             row["sites_not_bookable"] if "sites_not_bookable" in row.keys() else None
+        ),
+        length_data_quality=(
+            row["length_data_quality"] if "length_data_quality" in row.keys() else None
         ),
     )
 
@@ -371,6 +376,91 @@ def set_site_inventory(
     return cur.rowcount > 0
 
 
+def upsert_campsites(
+    conn: sqlite3.Connection,
+    provider: str,
+    campground_id: str,
+    sites: Iterable[dict],
+    source: str,
+    now: Optional[datetime] = None,
+) -> int:
+    """Write a campground's per-site inventory. Measured once, then left alone."""
+    stamp = iso(now)
+    n = 0
+    for site in sites:
+        conn.execute(
+            """INSERT INTO campsites (
+                 provider, campground_id, site_id, name, loop, site_type,
+                 type_of_use, reservable, max_vehicle_length, site_access,
+                 driveway_entry, max_people, accessible, latitude, longitude,
+                 permitted_equipment, attributes, source, updated)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+               ON CONFLICT(provider, campground_id, site_id) DO UPDATE SET
+                 name=excluded.name, loop=excluded.loop,
+                 site_type=excluded.site_type, type_of_use=excluded.type_of_use,
+                 reservable=excluded.reservable,
+                 max_vehicle_length=excluded.max_vehicle_length,
+                 site_access=excluded.site_access,
+                 driveway_entry=excluded.driveway_entry,
+                 max_people=excluded.max_people, accessible=excluded.accessible,
+                 latitude=excluded.latitude, longitude=excluded.longitude,
+                 permitted_equipment=excluded.permitted_equipment,
+                 attributes=excluded.attributes, source=excluded.source,
+                 updated=excluded.updated""",
+            (
+                provider, campground_id, str(site["site_id"]), site.get("name"),
+                site.get("loop"), site.get("site_type"), site.get("type_of_use"),
+                None if site.get("reservable") is None else int(site["reservable"]),
+                site.get("max_vehicle_length"), site.get("site_access"),
+                site.get("driveway_entry"), site.get("max_people"),
+                None if site.get("accessible") is None else int(site["accessible"]),
+                site.get("latitude"), site.get("longitude"),
+                dumps(site.get("permitted_equipment")) if site.get("permitted_equipment") else None,
+                dumps(site.get("attributes")) if site.get("attributes") else None,
+                source, stamp,
+            ),
+        )
+        n += 1
+    conn.commit()
+    return n
+
+
+def has_campsites(conn: sqlite3.Connection, provider: str, campground_id: str) -> bool:
+    """Do we already hold this campground's per-site inventory?"""
+    row = conn.execute(
+        "SELECT 1 FROM campsites WHERE provider=? AND campground_id=? LIMIT 1",
+        (provider, campground_id),
+    ).fetchone()
+    return row is not None
+
+
+def list_campsites(
+    conn: sqlite3.Connection,
+    provider: str,
+    campground_id: str,
+) -> list[dict]:
+    rows = conn.execute(
+        "SELECT * FROM campsites WHERE provider=? AND campground_id=? ORDER BY name",
+        (provider, campground_id),
+    )
+    return [dict(r) for r in rows]
+
+
+def set_length_quality(
+    conn: sqlite3.Connection,
+    provider: str,
+    cg_id: str,
+    quality: str,
+    now: Optional[datetime] = None,
+) -> None:
+    """How far this campground's driveway figures can be trusted."""
+    conn.execute(
+        "UPDATE campgrounds SET length_data_quality=? WHERE provider=? AND id=?",
+        (quality, provider, cg_id),
+    )
+    conn.commit()
+
+
 def coordinate_provenance(conn: sqlite3.Connection) -> dict[str, int]:
     """How many catalogue coordinates came from where — including unlocated."""
     counts: dict[str, int] = {}
@@ -466,6 +556,7 @@ def map_view(
                 "sites_total": cg.sites_total,
                 "sites_not_bookable": cg.sites_not_bookable,
                 "booking_label": cg.booking_label,
+                "length_data_quality": cg.length_data_quality,
             }
         )
     return out

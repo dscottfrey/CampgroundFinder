@@ -57,6 +57,7 @@ def load_seed(path: str | Path | None = None) -> list[Campground]:
             first_come_sites=e.get("first_come_sites"),
             sites_total=e.get("sites_total"),
             sites_not_bookable=e.get("sites_not_bookable"),
+            length_data_quality=e.get("length_data_quality"),
         )
         for e in entries
     ]
@@ -107,6 +108,7 @@ def write_seed(
                 # rather than being re-fetched.
                 "sites_total": c.sites_total,
                 "sites_not_bookable": c.sites_not_bookable,
+                "length_data_quality": c.length_data_quality,
             }
             for c in sorted(campgrounds, key=lambda c: (c.provider, c.id))
         ],

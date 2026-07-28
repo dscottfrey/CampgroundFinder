@@ -115,6 +115,28 @@ So `_SITE_TYPE_ICON` must not be treated as an access or equipment signal. The
 site *name* and the loop name were right where the icon was wrong.
 
 
+## Data quality belongs to the campground, not the provider
+
+A correction Scott made while this was being built: do not say "the filter
+works on federal sites". Say **"the filter works on campgrounds with
+believable, varied data"**. The same platform carries carefully measured parks
+and parks that filled the form with one number, and generalising from one
+sample to a whole agency is exactly the assumption this project keeps getting
+punished for.
+
+`equipment.grade_lengths()` therefore grades each campground from **its own
+spread of values**:
+
+| grade | meaning | shown as |
+|---|---|---|
+| `measured` | genuinely varied figures | "This campground lists precise driveway lengths" |
+| `default` | one value repeats across most sites | "…entered the same length for most of its sites" |
+| `unknown` | too few sites to judge | "Driveway lengths not recorded" |
+
+Two RecreationDotGov campgrounds can land on opposite grades, and that is the
+point. Alder Dune measures at 18/26/32/33/36/38/39/40 — believable. Beverly
+Beach loop A is 20 twenty-one times over.
+
 ## Exceptions are signal — believe them, and say why they stand out
 
 A repeated value is a form default (above). The converse is just as useful:

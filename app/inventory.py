@@ -48,7 +48,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Iterable, Optional
 
-from . import store
+from . import equipment, store
 from .pacing import shared_limiter
 
 log = logging.getLogger(__name__)
@@ -98,6 +98,55 @@ class SiteCounts:
     @property
     def has_unbookable_sites(self) -> bool:
         return self.not_bookable > 0
+
+
+def parse_ridb_site(record: dict) -> dict:
+    """One RIDB campsite record, normalized.
+
+    Keeps what the earlier version threw away. RIDB states, per site:
+    `Max Vehicle Length`, `Site Access` (Drive-In / Hike-In — the access axis,
+    explicitly), `Driveway Entry`, `Loop`, per-site coordinates, and permitted
+    equipment. Running 545 facilities' worth of requests and storing only a
+    count would have discarded all of it.
+    """
+    attributes = {
+        a.get("AttributeName"): a.get("AttributeValue")
+        for a in record.get("ATTRIBUTES") or []
+    }
+
+    def number(name):
+        raw = attributes.get(name)
+        try:
+            value = int(str(raw).strip())
+        except (TypeError, ValueError):
+            return None
+        # Upstream writes 0 for "not applicable", not "zero feet".
+        return value or None
+
+    def coord(value):
+        try:
+            f = float(value)
+        except (TypeError, ValueError):
+            return None
+        return f or None
+
+    return {
+        "site_id": record.get("CampsiteID"),
+        "name": record.get("CampsiteName"),
+        "loop": record.get("Loop") or None,
+        "site_type": (record.get("CampsiteType") or "").strip().upper() or None,
+        "type_of_use": record.get("TypeOfUse"),
+        "reservable": bool(record.get("CampsiteReservable")),
+        "max_vehicle_length": number("Max Vehicle Length"),
+        "site_access": attributes.get("Site Access"),
+        "driveway_entry": attributes.get("Driveway Entry"),
+        "max_people": number("Max Num of People"),
+        "accessible": bool(record.get("CampsiteAccessible")),
+        "latitude": coord(record.get("CampsiteLatitude")),
+        "longitude": coord(record.get("CampsiteLongitude")),
+        "permitted_equipment": record.get("PERMITTEDEQUIPMENT") or None,
+        "attributes": attributes or None,
+    }
 
 
 def classify_sites(records: Iterable[dict]) -> SiteCounts:
@@ -175,9 +224,13 @@ def backfill_site_inventory(
     RIDB has no inventory for; unknown stays unknown.
     """
     report = report or InventoryReport()
+    # "Already done" means we hold the PER-SITE rows, not merely a count. An
+    # earlier version of this backfill stored counts only, and those campgrounds
+    # were committed to the seed — so testing the old flag would skip exactly
+    # the ones that still need the richer pass.
     campgrounds = [
         cg for cg in store.list_campgrounds(conn, provider=provider, states=states)
-        if cg.first_come_sites is None
+        if not store.has_campsites(conn, cg.provider, cg.id)
     ]
     if limit:
         campgrounds = campgrounds[:limit]
@@ -203,12 +256,25 @@ def backfill_site_inventory(
             report.no_inventory.append(campground.name)
             continue
 
+        parsed = [parse_ridb_site(r) for r in records
+                  if (r.get("CampsiteType") or "").strip().upper() not in EXCLUDED_TYPES]
+        store.upsert_campsites(
+            conn, campground.provider, campground.id, parsed,
+            source=RIDB_SOURCE, now=now,
+        )
         store.set_site_inventory(
             conn, campground.provider, campground.id,
             sites_total=counts.total,
             sites_not_bookable=counts.not_bookable,
             site_types=counts.types,
             source=RIDB_SOURCE, now=now,
+        )
+        # How far THIS campground's driveway figures can be trusted — measured
+        # from its own spread, never assumed from who runs it.
+        store.set_length_quality(
+            conn, campground.provider, campground.id,
+            equipment.grade_lengths(s["max_vehicle_length"] for s in parsed),
+            now=now,
         )
         report.recorded += 1
         if counts.has_unbookable_sites:

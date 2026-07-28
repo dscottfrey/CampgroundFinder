@@ -93,6 +93,40 @@ def default_lengths(stated: Iterable[Optional[int]]) -> set:
     }
 
 
+#: How much a campground's stated driveway lengths can be trusted. A property
+#: of the CAMPGROUND, never of the provider or the agency — the same platform
+#: carries carefully measured parks and parks that filled the form with one
+#: number, and assuming otherwise from a sample of one is how you get it wrong.
+QUALITY_MEASURED = "measured"     # genuinely varied; believe the figures
+QUALITY_DEFAULT = "default"       # one value repeats; the figures mean little
+QUALITY_UNKNOWN = "unknown"       # too few sites to judge
+
+
+def grade_lengths(stated: Iterable[Optional[int]]) -> str:
+    """Grade one campground's driveway data. Provider-agnostic by design.
+
+    A campground whose sites vary — 20, 25, 26, 30, 35, 40, 60, 80, 95 — had
+    somebody measure them, and the numbers can carry a filter. A campground
+    where one figure repeats across most sites filled in a form. The test is
+    the data, not who publishes it.
+    """
+    values = [f for f in stated if f is not None]
+    if len(values) < MIN_SAMPLE:
+        return QUALITY_UNKNOWN
+    return QUALITY_DEFAULT if default_lengths(values) else QUALITY_MEASURED
+
+
+def quality_note(quality: str) -> str:
+    """One line for the interface about how far to trust the lengths."""
+    return {
+        QUALITY_MEASURED: "This campground lists precise driveway lengths",
+        QUALITY_DEFAULT: (
+            "This campground entered the same driveway length for most of its "
+            "sites, so the figures may not reflect the real sites"
+        ),
+    }.get(quality, "Driveway lengths not recorded for this campground")
+
+
 def read_length(
     feet: Optional[int],
     has_driveway: bool,

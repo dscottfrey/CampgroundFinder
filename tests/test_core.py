@@ -2829,6 +2829,128 @@ class TestLoopOutliers(unittest.TestCase):
                  "amenities": ["Electric Hookup available: 30 amp"]}]
         self.assertEqual(self.eq.loop_outliers(tiny), {})
 
+# ------------- per-site inventory, and trusting lengths per campground ----
+
+def ridb_full_site(site_id, name, length=None, access=None, reservable=True,
+                   site_type="STANDARD NONELECTRIC", loop="A", lat=45.0, lon=-122.0):
+    attrs = [{"AttributeName": "Max Num of People", "AttributeValue": "6"}]
+    if length is not None:
+        attrs.append({"AttributeName": "Max Vehicle Length",
+                      "AttributeValue": str(length)})
+    if access:
+        attrs.append({"AttributeName": "Site Access", "AttributeValue": access})
+    return {
+        "CampsiteID": site_id, "CampsiteName": name, "Loop": loop,
+        "CampsiteType": site_type, "TypeOfUse": "Overnight",
+        "CampsiteReservable": reservable, "CampsiteAccessible": False,
+        "CampsiteLatitude": lat, "CampsiteLongitude": lon,
+        "PERMITTEDEQUIPMENT": [{"EquipmentName": "Tent", "MaxLength": 0}],
+        "ATTRIBUTES": attrs,
+    }
+
+
+class TestPerSiteInventory(DBTestCase):
+    """The backfill keeps per-site records, not just a count.
+
+    RIDB states Max Vehicle Length, Site Access (Drive-In / Hike-In), Driveway
+    Entry, Loop and per-site coordinates for every site. Spending 545
+    facilities' worth of requests and storing a single number would throw all
+    of that away — the same mistake caught earlier with CampsiteType.
+    """
+
+    def setUp(self):
+        super().setUp()
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="RecreationDotGov", id="varied", name="Varied",
+                       state="OR"),
+            Campground(provider="RecreationDotGov", id="lazy", name="Lazy", state="OR"),
+        ], now=NOW)
+        self.data = {
+            # Genuinely varied — somebody measured these.
+            "varied": [ridb_full_site(i, f"S{i}", length=L)
+                       for i, L in enumerate([18, 26, 32, 33, 36, 38, 39, 40], 1)],
+            # One figure repeated — a form default.
+            "lazy": [ridb_full_site(i, f"L{i}", length=20) for i in range(1, 9)],
+        }
+
+    def fetcher(self):
+        def fetch(path, params):
+            fid = path.split("/")[1]
+            recs = self.data.get(fid, [])
+            off = params.get("offset", 0)
+            return {"RECDATA": recs[off:off + params["limit"]],
+                    "METADATA": {"RESULTS": {"TOTAL_COUNT": len(recs)}}}
+        return fetch
+
+    def test_site_rows_are_written(self):
+        inventory.backfill_site_inventory(
+            self.conn, states=["OR"], fetcher=self.fetcher(), now=NOW)
+        rows = store.list_campsites(self.conn, "RecreationDotGov", "varied")
+        self.assertEqual(len(rows), 8)
+        self.assertEqual(sorted(r["max_vehicle_length"] for r in rows),
+                         [18, 26, 32, 33, 36, 38, 39, 40])
+
+    def test_per_site_coordinates_are_kept(self):
+        inventory.backfill_site_inventory(
+            self.conn, states=["OR"], fetcher=self.fetcher(), now=NOW)
+        rows = store.list_campsites(self.conn, "RecreationDotGov", "varied")
+        self.assertTrue(all(r["latitude"] is not None for r in rows))
+
+    def test_the_access_axis_is_captured_when_stated(self):
+        self.data["varied"][0] = ridb_full_site(1, "S1", length=18, access="Hike-In")
+        inventory.backfill_site_inventory(
+            self.conn, states=["OR"], fetcher=self.fetcher(), now=NOW)
+        rows = {r["name"]: r for r in
+                store.list_campsites(self.conn, "RecreationDotGov", "varied")}
+        self.assertEqual(rows["S1"]["site_access"], "Hike-In")
+        # Unstated stays unstated — never assumed to be Drive-In.
+        self.assertIsNone(rows["S2"]["site_access"])
+
+    def test_a_zero_length_upstream_means_not_stated(self):
+        self.data["varied"] = [ridb_full_site(1, "Z", length=0)]
+        inventory.backfill_site_inventory(
+            self.conn, states=["OR"], fetcher=self.fetcher(), now=NOW)
+        rows = store.list_campsites(self.conn, "RecreationDotGov", "varied")
+        self.assertIsNone(rows[0]["max_vehicle_length"])
+
+    def test_length_quality_is_graded_per_campground_not_per_provider(self):
+        """Both are RecreationDotGov. One measured its sites; one did not."""
+        inventory.backfill_site_inventory(
+            self.conn, states=["OR"], fetcher=self.fetcher(), now=NOW)
+        varied = store.get_campground(self.conn, "RecreationDotGov", "varied")
+        lazy = store.get_campground(self.conn, "RecreationDotGov", "lazy")
+        self.assertEqual(varied.provider, lazy.provider)
+        self.assertEqual(varied.length_data_quality, "measured")
+        self.assertEqual(lazy.length_data_quality, "default")
+
+    def test_a_campground_with_site_rows_is_not_refetched(self):
+        f = self.fetcher()
+        calls = []
+
+        def counting(path, params):
+            calls.append(path)
+            return f(path, params)
+        inventory.backfill_site_inventory(
+            self.conn, states=["OR"], fetcher=counting, now=NOW)
+        before = len(calls)
+        second = inventory.backfill_site_inventory(
+            self.conn, states=["OR"], fetcher=counting, now=NOW)
+        self.assertEqual(second.visited, 0)
+        self.assertEqual(len(calls), before)
+
+    def test_resume_is_keyed_on_site_rows_not_the_old_count_flag(self):
+        # Campgrounds backfilled by the earlier counts-only pass were committed
+        # to the seed. Testing the old flag would skip exactly the ones that
+        # still need the richer pass.
+        store.set_site_inventory(self.conn, "RecreationDotGov", "varied",
+                                 sites_total=8, sites_not_bookable=0,
+                                 source="old counts-only pass", now=NOW)
+        self.assertIsNotNone(
+            store.get_campground(self.conn, "RecreationDotGov", "varied").first_come_sites)
+        report = inventory.backfill_site_inventory(
+            self.conn, states=["OR"], fetcher=self.fetcher(), now=NOW)
+        self.assertEqual(report.recorded, 2, "the counts-only campground is redone")
+
 
 
 if __name__ == "__main__":

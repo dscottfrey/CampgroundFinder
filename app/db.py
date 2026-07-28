@@ -37,9 +37,33 @@ CREATE TABLE IF NOT EXISTS campgrounds (
   -- equestrian, tent-only) never needs a second 545-request pass. Access mode
   -- and booking mode are different axes — see docs/terminology.md.
   site_types TEXT,
+  -- How far the driveway figures at THIS campground can be trusted:
+  -- 'measured' | 'default' | 'unknown'. A property of the campground, never of
+  -- the provider — the same platform carries both (docs/terminology.md).
+  length_data_quality TEXT,
   inventory_source TEXT,
   inventory_updated TEXT,
   PRIMARY KEY (provider, id)
+);
+
+-- Per-site inventory: what EXISTS at a campground, as opposed to what is open
+-- on a date. Measured once by a backfill and then left alone — a campground's
+-- sites change on the order of years (app/inventory.py).
+CREATE TABLE IF NOT EXISTS campsites (
+  provider TEXT, campground_id TEXT, site_id TEXT,
+  name TEXT, loop TEXT, site_type TEXT, type_of_use TEXT,
+  reservable INTEGER,
+  -- 'not bookable online', NOT 'first-come' — see docs/first-come-research.md
+  max_vehicle_length INTEGER,     -- NULL when unstated; 0 upstream means n/a
+  site_access TEXT,               -- 'Drive-In' | 'Hike-In' | …  the access axis
+  driveway_entry TEXT,            -- 'Back-In' | 'Pull-Through'
+  max_people INTEGER,
+  accessible INTEGER,
+  latitude REAL, longitude REAL,  -- some sources give per-SITE coordinates
+  permitted_equipment TEXT,       -- JSON
+  attributes TEXT,                -- JSON: everything else the source stated
+  source TEXT, updated TEXT,
+  PRIMARY KEY (provider, campground_id, site_id)
 );
 
 CREATE TABLE IF NOT EXISTS availability (
@@ -95,6 +119,9 @@ CREATE INDEX IF NOT EXISTS idx_avail_facility
 CREATE INDEX IF NOT EXISTS idx_avail_last_seen
   ON availability (last_seen);
 CREATE INDEX IF NOT EXISTS idx_campgrounds_state ON campgrounds (state);
+CREATE INDEX IF NOT EXISTS idx_campsites_campground
+  ON campsites (provider, campground_id);
+CREATE INDEX IF NOT EXISTS idx_campsites_access ON campsites (site_access);
 CREATE INDEX IF NOT EXISTS idx_notifications_lookup
   ON notifications (watch_id, campsite_key, sent_at);
 """
@@ -125,6 +152,7 @@ MIGRATIONS = [
     ("campgrounds", "sites_total", "INTEGER"),
     ("campgrounds", "sites_not_bookable", "INTEGER"),
     ("campgrounds", "site_types", "TEXT"),
+    ("campgrounds", "length_data_quality", "TEXT"),
     ("campgrounds", "inventory_source", "TEXT"),
     ("campgrounds", "inventory_updated", "TEXT"),
 ]
