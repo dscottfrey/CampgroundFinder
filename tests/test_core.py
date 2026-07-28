@@ -2761,6 +2761,74 @@ class TestDefaultLengthDetection(unittest.TestCase):
         self.assertNotIn("minimum", text.lower())
         self.assertNotIn("may be longer", text.lower())
 
+# --------------------- a site that differs from its own loop (2026-07-28) ----
+
+class TestLoopOutliers(unittest.TestCase):
+    """Beverly Beach A19, read off the page by Scott.
+
+    It is the only STANDARD site in a loop of tent sites, the only one with
+    power and water, and the longest driveway — and the map shows it by the
+    hiker/biker camps. His read: probably the camp host pitch.
+
+    It also happened to be the SINGLE confirmed fit for a 25 ft rig in that
+    loop. A lone confident answer that turns out to be a host pitch is worse
+    than no answer, so it has to carry its caveat.
+    """
+
+    def setUp(self):
+        from app import equipment
+        from app.providers.reserveamerica import ReserveAmericaProvider
+        self.eq = equipment
+        self.sites = ReserveAmericaProvider.parse_sites(
+            (FIXTURES / "ra_beverly_loop_a.html").read_text())
+        self.by_name = {s["name"]: s for s in self.sites}
+
+    def test_amenities_are_captured_at_all(self):
+        # They were being parsed and thrown away.
+        self.assertIn("Electric Hookup available: 30 amp",
+                      self.by_name["A19"]["amenities"])
+        self.assertIn("Electric Hookup - no", self.by_name["A01"]["amenities"])
+
+    def test_the_map_link_is_not_mistaken_for_an_amenity(self):
+        for site in self.sites:
+            for amenity in site["amenities"]:
+                self.assertNotIn("on map", amenity.lower())
+
+    def test_a_negated_amenity_does_not_count_as_a_service(self):
+        # "Electric Hookup - no" must not read as "has electric".
+        self.assertFalse(self.eq._has_service(self.by_name["A01"]["amenities"]))
+        self.assertTrue(self.eq._has_service(self.by_name["A19"]["amenities"]))
+
+    def test_the_lone_serviced_site_is_flagged(self):
+        notes = self.eq.loop_outliers(self.sites)
+        a19 = self.by_name["A19"]["site_id"]
+        self.assertIn(a19, notes)
+        self.assertTrue(any("hookups" in n for n in notes[a19]))
+        self.assertTrue(any("STANDARD" in n for n in notes[a19]))
+
+    def test_ordinary_sites_are_not_flagged(self):
+        notes = self.eq.loop_outliers(self.sites)
+        self.assertNotIn(self.by_name["A01"]["site_id"], notes)
+
+    def test_the_caveat_hedges_rather_than_asserting_camp_host(self):
+        """We observe the anomaly; we do not claim the cause.
+
+        "Camp host" needs a map and local knowledge. Asserting it from this
+        data would be the confident guess the rest of the codebase refuses.
+        """
+        notes = self.eq.loop_outliers(self.sites)
+        text = self.eq.outlier_caveat(notes[self.by_name["A19"]["site_id"]])
+        self.assertIn("sometimes", text)
+        self.assertIn("worth checking", text)
+        self.assertNotIn("is the camp host", text)
+
+    def test_a_small_loop_makes_no_claim(self):
+        # Two sites differing from each other proves nothing.
+        tiny = [{"site_id": "1", "loop": "Z", "site_type": "TENT SITE", "amenities": []},
+                {"site_id": "2", "loop": "Z", "site_type": "STANDARD",
+                 "amenities": ["Electric Hookup available: 30 amp"]}]
+        self.assertEqual(self.eq.loop_outliers(tiny), {})
+
 
 
 if __name__ == "__main__":

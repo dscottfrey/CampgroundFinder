@@ -90,6 +90,10 @@ _SITE_TOTAL = re.compile(r"matchSummary[^>]*>\s*(\d+) site\(s\) found")
 _SITE_ID = re.compile(r"changeSelectedSiteOL\((\d+)\)")
 #: The site id also rides in the last cell's class name.
 _SITE_ID_FROM_CLASS = re.compile(r"sitescompareselectorbtn(\d+)")
+#: Amenity flags ride as alt/title text on the icons in the Amenities cell:
+#: "Electric Hookup available: 30 amp", "Electric Hookup - no", "Water Hookup",
+#: "Pets Allowed", "Near Water - no". Real, per-site, and worth keeping.
+_AMENITY = re.compile(r"alt='([^']+)'")
 #: One cell of the site table, in document order.
 _ROW_CELL = re.compile(r"<div class='(td[^']*)'[^>]*>(.*?)(?=<div class='td|\Z)")
 #: The row's type icon. **Do not treat this as access mode or equipment.**
@@ -449,6 +453,11 @@ class ReserveAmericaProvider(Provider):
             # Column 0 carries the map link's text before the site number.
             number = cells[0].replace("Map", "").strip() if cells else ""
             icon = _SITE_TYPE_ICON.search(row)
+            amenities = [
+                _clean(a) for a in dict.fromkeys(_AMENITY.findall(row))
+                if a and "on map" not in a.lower()
+                and not a.lower().startswith("view site")
+            ]
             sites.append(
                 {
                     "site_id": site_id,
@@ -468,6 +477,9 @@ class ReserveAmericaProvider(Provider):
                     "equipment_length": cells[4] if len(cells) > 4 else None,
                     # Recorded but NOT to be trusted as access or equipment.
                     "type_icon": icon.group(1) if icon else None,
+                    # "Electric Hookup available: 30 amp", "Water Hookup",
+                    # "Pets Allowed", "Electric Hookup - no", …
+                    "amenities": amenities,
                 }
             )
         return sites

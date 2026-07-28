@@ -113,3 +113,35 @@ ReserveAmerica, and cannot accommodate an RV at all.
 
 So `_SITE_TYPE_ICON` must not be treated as an access or equipment signal. The
 site *name* and the loop name were right where the icon was wrong.
+
+
+## Exceptions are signal — believe them, and say why they stand out
+
+A repeated value is a form default (above). The converse is just as useful:
+**a site that differs from its own loop was entered deliberately.**
+
+Beverly Beach A19, read off the page by Scott:
+
+* the only `STANDARD` site in a loop of `TENT SITE`s
+* the only one with hookups — `Electric Hookup available: 30 amp`, `Water
+  Hookup`, where every neighbour reads `Electric Hookup - no`
+* the longest driveway in the loop, at 30 ft against a default 20
+* and on the campground map, it sits by the hiker/biker camps
+
+His read: probably the camp host pitch. A lone electrical service in a sea of
+no services is a strong clue.
+
+This matters practically. A19 was the **single confirmed fit** for a 25 ft rig
+in that loop — so our one confident answer may be a site nobody can book. A
+lone confident answer that turns out to be a host pitch is worse than no answer.
+
+`equipment.loop_outliers()` therefore reports **the anomaly, not the
+conclusion**: "the only site with hookups in loop A". Whether it is a camp host
+needs a map and local knowledge, and asserting it from data this thin would be
+exactly the confident guess everything else here refuses to make. The caveat
+hedges — *"sites like this are sometimes reserved for a camp host; worth
+checking before you count on it."*
+
+Note also that ReserveAmerica states amenity **absence** explicitly
+(`Electric Hookup - no`), so a naive contains-check for "hookup" marks every
+unserviced site as serviced.

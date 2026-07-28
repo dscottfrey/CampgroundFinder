@@ -177,3 +177,76 @@ def filter_by_length(sites: list, length_needed: int, getter=None):
         reading = read_length(feet, has_driveway, defaults)
         buckets[fits(reading, length_needed)].append(site)
     return buckets[FITS], buckets[UNKNOWN], buckets[DOES_NOT_FIT]
+
+
+# --------------------------------------------------------------------------
+# outliers within a loop
+# --------------------------------------------------------------------------
+
+#: A loop smaller than this can't support the "everything else differs" claim.
+MIN_LOOP = 5
+
+#: Amenity strings that state a service is PRESENT. ReserveAmerica writes the
+#: absence explicitly ("Electric Hookup - no"), so a plain contains-check would
+#: count every unserviced site as serviced.
+def _has_service(amenities) -> bool:
+    for text in amenities or []:
+        low = text.lower()
+        if low.endswith("- no") or low.endswith("-no"):
+            continue
+        if "hookup" in low and "no" not in low.split(":")[0]:
+            return True
+    return False
+
+
+def loop_outliers(sites: list) -> dict:
+    """Which sites differ from the rest of their own loop, and how.
+
+    Scott's reading of Beverly Beach A19: it is the only `STANDARD` site in a
+    loop of tent sites, the only one with power (30 amp) and water, and the
+    longest driveway — and the map shows it sitting by the hiker/biker camps.
+    His conclusion was "probably the camp host site".
+
+    **This function reports the anomaly, not the conclusion.** "The only site
+    with hookups in loop A" is something we observe. "Camp host" is an
+    inference that needs a map and local knowledge, and asserting it from data
+    this thin would be exactly the sort of confident guess the rest of this
+    codebase refuses to make.
+
+    It matters practically: A19 was the single "confirmed fit" for a 25 ft rig
+    at Beverly Beach. A lone confident answer that turns out to be a host pitch
+    is worse than no answer, so it must carry its caveat.
+
+    Returns `{site_id: [note, …]}` for the sites that stand out.
+    """
+    by_loop: dict = {}
+    for site in sites:
+        by_loop.setdefault(site.get("loop") or "", []).append(site)
+
+    notes: dict = {}
+    for loop, members in by_loop.items():
+        if len(members) < MIN_LOOP:
+            continue
+        serviced = [s for s in members if _has_service(s.get("amenities"))]
+        if len(serviced) == 1:
+            notes.setdefault(serviced[0]["site_id"], []).append(
+                f"the only site with hookups in loop {loop}"
+            )
+        types = Counter(s.get("site_type") for s in members)
+        for site in members:
+            if types[site.get("site_type")] == 1 and len(types) > 1:
+                notes.setdefault(site["site_id"], []).append(
+                    f"the only {site.get('site_type')} in loop {loop}"
+                )
+    return notes
+
+
+def outlier_caveat(notes: list) -> str:
+    """One sentence for a site that stands out from its loop."""
+    if not notes:
+        return ""
+    return (
+        f"Unusual for this loop — {', and '.join(notes)}. Sites like this are "
+        f"sometimes reserved for a camp host; worth checking before you count "
+        f"on it."
+    )
