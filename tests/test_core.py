@@ -816,6 +816,30 @@ class TestReserveAmericaSiteList(unittest.TestCase):
         ids = [s["site_id"] for s in self.sites]
         self.assertEqual(len(ids), len(set(ids)))
 
+    def test_the_whole_park_is_present_seventeen_of_seventeen(self):
+        """Reehers has 17 sites, not the 34 the build plan claimed.
+
+        Verified against the live page by Scott 2026-07-28: A-01..A-09 plus a
+        Host site (10 HORSE SITE) and B-01..B-07 (7 TENT SITE). The earlier
+        "20 horse sites and 14 tent sites" was never true, and the previous
+        fixture was a partial capture of 10 rows.
+        """
+        self.assertEqual(len(self.sites), 17)
+        loops = {s["loop"] for s in self.sites}
+        self.assertEqual(loops, {"A", "B"})
+
+    def test_the_b_loop_is_tent_sites(self):
+        # The entire reason this provider exists: RA's tent search returns
+        # nothing for Reehers, yet loop B is seven tent sites.
+        b = [s for s in self.sites if s["loop"] == "B"]
+        self.assertEqual(len(b), 7)
+        self.assertTrue(all(s["site_type"] == "TENT SITE" for s in b))
+
+    def test_the_host_site_is_visible_and_identifiable(self):
+        # A camp-host pitch, the RA equivalent of RIDB's MANAGEMENT type.
+        hosts = [s for s in self.sites if (s["name"] or "").lower() == "host"]
+        self.assertEqual(len(hosts), 1)
+
     def test_columns_are_read_positionally_not_guessed(self):
         site = self.sites[0]
         self.assertEqual(site["loop"], "A")               # Loop column

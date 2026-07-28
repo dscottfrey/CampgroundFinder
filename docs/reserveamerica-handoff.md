@@ -46,6 +46,11 @@ search**. Observed firsthand on the live site:
 | horse sites (it *has* horse sites) | no |
 | pick Reehers from the master park list | **yes — a tent site can be reserved** |
 
+**Verified 2026-07-28:** Reehers has **17 sites**, not the 34 stated below —
+A-01..A-09 plus a Host pitch (10 HORSE SITE, loop A) and B-01..B-07 (7 TENT
+SITE, loop B). Loop B being entirely tent sites is the point: RA's tent search
+returns nothing for this park while seven tent sites plainly exist.
+
 So the build plan's original fix — "enumerate every site type and union the
 results" — **does not work.** Unioning zero results is still zero.
 

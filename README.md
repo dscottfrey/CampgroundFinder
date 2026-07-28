@@ -35,7 +35,9 @@ Section references below (§5, §8k, …) point into it.
   (campground 232831) returns real openings with booking links.
 - **ReserveAmerica for Oregon** — all 65 state parks in the committed seed
   with coordinates, plus per-park availability. Reehers Camp Horse Camp,
-  parkId 412704, 20 horse sites and 14 tent sites. A source with an empty
+  parkId 412704: **17 sites** — 10 horse (loop A, including the host pitch)
+  and 7 tent (loop B). The build plan's "20 horse and 14 tent" was never
+  true; verified against the live page 2026-07-28. A source with an empty
   `campground_ids` now scans every park in the catalog, one per request —
   about 6m30s for a full Oregon pass.
 - **A web page** — `manage.py demo`, then http://127.0.0.1:8080. List view
