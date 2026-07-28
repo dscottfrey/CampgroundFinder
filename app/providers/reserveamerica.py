@@ -22,9 +22,13 @@ Verified live 2026-07-27 against Oregon:
     — a **two-week availability grid for one site**. Day cells carry
     `data-auto-id='mdayYYYYMMDD'` and `class='td status a|x|r'`.
 
-There is **no park-level matrix**: `campsiteCalendar.do` redirects to the park
-page however it is called, so availability costs one request per site. See
-`search()` for what that means for scheduling.
+  * `campgroundDetails.do?contractCode=OR&parkId=N&arvdate=MM/DD/YYYY`
+    — **the park-level matrix**: every site against 14 days, in ONE request.
+    Only available cells are links; `x`/`r` cells are inert. This is 34x
+    cheaper than walking sites individually, and it is what `search()` uses.
+
+`campsiteCalendar.do` is a dead end — it redirects to the park page however it
+is called. The park matrix above is the bulk route.
 """
 
 from __future__ import annotations
@@ -62,6 +66,13 @@ _DIRECTORY_ROW = re.compile(
 _CALENDAR_CELL = re.compile(
     r"<div id='avail\d+' class='td status ([a-z]+)[^']*' title='([^']*)' "
     r"data-auto-id='mday(\d{8})'"
+)
+#: An available cell in the park-level matrix. Only available cells are links,
+#: and each link carries its own arvdate — which is the only place the year
+#: appears (the visible label is just "Aug 10").
+_MATRIX_CELL = re.compile(
+    r"class='td status a'><a href='[^']*siteId=(\d+)[^']*"
+    r"arvdate=(\d{1,2}/\d{1,2}/\d{4})'[^>]*aria-label='A for ([^']+?) on "
 )
 _SITE_ROW = re.compile(r"<div class='br'>(.*?)(?=<div class='br'>|<div class='tfoot'|\Z)", re.S)
 _SITE_ID = re.compile(r"changeSelectedSiteOL\((\d+)\)")
@@ -226,61 +237,91 @@ class ReserveAmericaProvider(Provider):
         )
         return self.parse_calendar(page)
 
+    @staticmethod
+    def parse_park_matrix(page: str) -> dict[tuple[str, str], set]:
+        """All sites × 14 days from one park page. `{(site_id, name): {dates}}`.
+
+        Only *available* cells carry a link; `x` and `r` cells are inert, so
+        the presence of a link is itself the availability signal. Each link
+        also carries its own `arvdate`, which is where the year comes from —
+        the visible label is only "Aug 10".
+        """
+        collapsed = re.sub(r"\s+", " ", page)
+        start = collapsed.find("id='daterangediv'")
+        if start >= 0:
+            collapsed = collapsed[start:]
+        out: dict[tuple[str, str], set] = {}
+        for site_id, arv, name in _MATRIX_CELL.findall(collapsed):
+            month, day, year = (int(x) for x in arv.split("/"))
+            out.setdefault((site_id, name.strip()), set()).add(date(year, month, day))
+        return out
+
+    def park_availability(self, park_id: str, arrival: date):
+        """One request → every site's availability for a fortnight."""
+        page = self._fetch(
+            "campgroundDetails.do",
+            {
+                "contractCode": self.contract_code,
+                "parkId": park_id,
+                "arvdate": arrival.strftime("%m/%d/%Y"),
+            },
+        )
+        return self.parse_park_matrix(page)
+
     def search(self, req: SearchRequest) -> list[Campsite]:
-        """Availability for specific parks — **watch-scoped, never a full sweep.**
+        """Availability for named parks. One request per park per fortnight.
 
-        Cost reality, measured 2026-07-27: RA exposes no park-level matrix.
-        `campsiteCalendar.do` redirects to the park page however it is called,
-        so availability is only readable **one site at a time** via
-        `campsiteDetails.do?...&arvdate=MM/DD/YYYY`, which returns 14 days.
+        Measured 2026-07-27: passing `arvdate` to `campgroundDetails.do` returns
+        the **whole park matrix** — every site against 14 days — in a single
+        response. Reehers came back as 16 sites and 150 available site-nights
+        at once.
 
-        Reehers alone is 34 sites; at the 6s pace that is ~3.5 minutes per park
-        per fortnight, and ~4 hours to sweep all 65 Oregon parks. So this
-        provider must be pointed at the handful of parks someone is actually
-        watching. `req.campground_ids` is therefore **required** — a blank
-        request raises rather than quietly starting a four-hour crawl.
+        That is 34x cheaper than the per-site page, and it makes a full Oregon
+        sweep about 7 minutes rather than 4 hours. `campsiteCalendar.do` remains
+        a dead end; it redirects however it is called.
+
+        `campground_ids` is still required. Scanning every park in a contract is
+        a decision the caller should make explicitly, not a default.
         """
         if not req.campground_ids:
             raise ValueError(
-                f"{self.name}: refusing an unscoped search. RA availability is "
-                "one request per site, so name the parks you want in "
-                "campground_ids (a full Oregon sweep is ~4 hours)."
+                f"{self.name}: refusing an unscoped search — name the parks you "
+                "want in campground_ids."
             )
 
         found: list[Campsite] = []
         for park_id in req.campground_ids:
-            sites = self.list_sites(park_id)
-            for site in sites:
-                grid = dict(
-                    self.site_availability(park_id, site["site_id"], req.start_date)
-                )
-                found.extend(self._runs(req, park_id, site, grid))
-        return found
+            window_start = req.start_date
+            while window_start <= req.end_date:
+                matrix = self.park_availability(park_id, window_start)
+                for (site_id, name), days in matrix.items():
+                    found.extend(self._runs(req, park_id, site_id, name, days))
+                window_start += timedelta(days=14)
+        # One site-night can appear in two overlapping fortnights.
+        return list({s.key: s for s in found}.values())
 
-    def _runs(self, req, park_id, site, grid) -> Iterable[Campsite]:
-        """Turn a day->status map into bookable runs of `req.nights`."""
-        for day, status in sorted(grid.items()):
+    def _runs(self, req, park_id, site_id, name, days) -> Iterable[Campsite]:
+        """Turn a set of open nights into bookable runs of `req.nights`."""
+        for day in sorted(days):
             if day < req.start_date or day > req.end_date:
                 continue
             window = [day + timedelta(days=n) for n in range(req.nights)]
-            if not all(grid.get(d) == "a" for d in window):
+            if not all(d in days for d in window):
                 continue
             yield Campsite(
                 provider=self.name,
-                campsite_id=site["site_id"],
+                campsite_id=site_id,
                 available_date=day,
                 nights=req.nights,
-                site_name=site["name"] or site["site_id"],
-                campsite_type=site["site_type_label"] or site["site_type"],
+                site_name=name or site_id,
                 status="available",
                 facility_id=park_id,
                 state=self.state,
                 booking_url=(
                     f"https://{self.host}/campsiteDetails.do"
                     f"?contractCode={self.contract_code}&parkId={park_id}"
-                    f"&siteId={site['site_id']}&arvdate={day.strftime('%m/%d/%Y')}"
+                    f"&siteId={site_id}&arvdate={day.strftime('%m/%d/%Y')}"
                 ),
-                attributes={"site_type_icon": site["site_type"]},
             )
 
 

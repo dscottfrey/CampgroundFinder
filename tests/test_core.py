@@ -857,6 +857,10 @@ class TestReserveAmericaAvailability(unittest.TestCase):
     def _provider(self):
         from app.providers.reserveamerica import ReserveAmericaProvider as RA
         def fetcher(path, params):
+            # search() reads the park matrix; the per-site page is only used by
+            # site_availability(), which parse_calendar tests cover directly.
+            if path == "campgroundDetails.do" and params.get("arvdate"):
+                return (FIXTURES / "ra_park_412704_matrix.html").read_text()
             if path == "campgroundDetails.do":
                 return (FIXTURES / "ra_park_412704.html").read_text()
             if path == "campsiteDetails.do":
@@ -892,4 +896,69 @@ class TestReserveAmericaAvailability(unittest.TestCase):
             self._provider().search(SR(provider="ReserveAmerica:OR",
                                        start_date=START, end_date=START))
         self.assertIn("campground_ids", str(ctx.exception))
+
+
+
+class TestReserveAmericaParkMatrix(unittest.TestCase):
+    """One request returns every site x 14 days — the 34x saving."""
+
+    MATRIX = FIXTURES / "ra_park_412704_matrix.html"
+
+    def _provider(self):
+        from app.providers.reserveamerica import ReserveAmericaProvider as RA
+        self.calls = []
+        def fetcher(path, params):
+            self.calls.append((path, params.get("arvdate")))
+            return self.MATRIX.read_text()
+        return RA("OR", "oregonstateparks.reserveamerica.com",
+                  state="OR", delay=0, fetcher=fetcher)
+
+    def test_matrix_parses_every_site(self):
+        from app.providers.reserveamerica import ReserveAmericaProvider as RA
+        matrix = RA.parse_park_matrix(self.MATRIX.read_text())
+        self.assertEqual(len(matrix), 16)
+        total = sum(len(v) for v in matrix.values())
+        self.assertEqual(total, 150)
+
+    def test_year_comes_from_the_link_not_the_label(self):
+        from app.providers.reserveamerica import ReserveAmericaProvider as RA
+        matrix = RA.parse_park_matrix(self.MATRIX.read_text())
+        every = {d for days in matrix.values() for d in days}
+        self.assertTrue(all(d.year == 2026 for d in every))
+        self.assertEqual(min(every), date(2026, 8, 10))
+
+    def test_one_request_per_park_per_fortnight(self):
+        from app.providers.base import SearchRequest as SR
+        p = self._provider()
+        p.search(SR(provider="ReserveAmerica:OR", start_date=date(2026, 8, 10),
+                    end_date=date(2026, 8, 21), nights=1, campground_ids=["412704"]))
+        # 12-day window fits in one fortnight -> exactly one fetch.
+        self.assertEqual(len(self.calls), 1)
+        self.assertEqual(self.calls[0][0], "campgroundDetails.do")
+
+    def test_longer_window_pages_by_fortnight(self):
+        from app.providers.base import SearchRequest as SR
+        p = self._provider()
+        p.search(SR(provider="ReserveAmerica:OR", start_date=date(2026, 8, 10),
+                    end_date=date(2026, 9, 20), nights=1, campground_ids=["412704"]))
+        self.assertEqual(len(self.calls), 3)
+
+    def test_overlapping_windows_do_not_duplicate_site_nights(self):
+        from app.providers.base import SearchRequest as SR
+        p = self._provider()
+        sites = p.search(SR(provider="ReserveAmerica:OR",
+                            start_date=date(2026, 8, 10), end_date=date(2026, 9, 20),
+                            nights=1, campground_ids=["412704"]))
+        keys = [s.key for s in sites]
+        self.assertEqual(len(keys), len(set(keys)))
+
+    def test_two_night_run_requires_both_nights_open(self):
+        from app.providers.base import SearchRequest as SR
+        p = self._provider()
+        one = p.search(SR(provider="ReserveAmerica:OR", start_date=date(2026, 8, 10),
+                          end_date=date(2026, 8, 21), nights=1, campground_ids=["412704"]))
+        two = p.search(SR(provider="ReserveAmerica:OR", start_date=date(2026, 8, 10),
+                          end_date=date(2026, 8, 21), nights=2, campground_ids=["412704"]))
+        self.assertLess(len(two), len(one))
+        self.assertTrue(all(s.nights == 2 for s in two))
 
