@@ -11,11 +11,50 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from app import catalog, db, store  # noqa: E402
+from app import catalog, coordinates, db, store  # noqa: E402
 from app.config import load_config  # noqa: E402
 from app.notifier import Notifier  # noqa: E402
 from app.providers import known_providers  # noqa: E402
 from app.scanner import scan_once  # noqa: E402
+
+
+def cmd_backfill_coordinates(args) -> int:
+    """Locate campgrounds whose own provider doesn't publish coordinates.
+
+    A maintenance job, not part of a scan: coordinates change approximately
+    never. Safe to re-run — it only ever fills in blanks (§8k).
+    """
+    conn = db.open_db(args.db)
+    if args.provider != "GoingToCamp:BC":
+        print(f"no coordinate source configured for {args.provider}; "
+              f"only GoingToCamp:BC is implemented (see docs/bc-coordinates.md)")
+        return 2
+
+    # The bcparks.ca URLs live in the GoingToCamp directory, so ask it once.
+    from app.providers import build_provider
+    provider = build_provider(args.provider)
+    payload = provider._fetch("/api/resourceLocation", {})
+    websites = {}
+    for entry in payload:
+        location_id = entry.get("resourceLocationId")
+        if location_id is None:
+            continue
+        for localized in entry.get("localizedValues") or []:
+            if localized.get("website"):
+                websites[str(location_id)] = localized["website"]
+                break
+
+    report = coordinates.backfill_bc(conn, args.provider, websites=websites)
+    print(report.summary())
+    for name in report.unmatched:
+        print(f"  still unlocated: {name}")
+    print("\ncoordinate provenance across the whole catalog:")
+    for source, count in sorted(store.coordinate_provenance(conn).items()):
+        print(f"  {count:>4}  {source}")
+    if args.write_seed:
+        path = catalog.write_seed(store.list_campgrounds(conn))
+        print(f"\nwrote {path}")
+    return 0
 
 
 def cmd_list_providers(args) -> int:
@@ -165,6 +204,12 @@ def main(argv=None) -> int:
     p.add_argument("--write-seed", action="store_true",
                    help="serialize the resulting catalog back to the seed file")
     p.set_defaults(func=cmd_catalog_refresh)
+
+    p = sub.add_parser("backfill-coordinates",
+                       help="fill in coordinates a provider doesn't publish")
+    p.add_argument("--provider", default="GoingToCamp:BC")
+    p.add_argument("--write-seed", action="store_true")
+    p.set_defaults(func=cmd_backfill_coordinates)
 
     p = sub.add_parser("scan-once")
     p.add_argument("--nights", type=int, default=1)

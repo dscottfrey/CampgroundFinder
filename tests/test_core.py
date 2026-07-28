@@ -1836,5 +1836,205 @@ class TestGoingToCampSeeded(unittest.TestCase):
         self.assertTrue(any(not c.has_location for c in bc))
 
 
+# --------------------------------- coordinate backfill (BC Parks, 2026-07-28) ----
+
+from app import coordinates  # noqa: E402
+
+
+def bc_area(id_, name, slug, lat=50.0, lon=-120.0):
+    return {"id": id_, "protectedAreaName": name,
+            "url": f"https://bcparks.ca/{slug}/", "latitude": lat, "longitude": lon}
+
+
+class TestCoordinateProvenance(DBTestCase):
+    """A coordinate must say where it came from, and never be invented."""
+
+    def setUp(self):
+        super().setUp()
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="GoingToCamp:BC", id="-1", name="Ruckle Provincial Park",
+                       state="BC"),
+            Campground(provider="GoingToCamp:BC", id="-2", name="Already Located",
+                       state="BC", latitude=49.0, longitude=-123.0),
+        ], now=NOW)
+
+    def test_a_coordinate_records_its_source(self):
+        ok = store.set_campground_coordinates(
+            self.conn, "GoingToCamp:BC", "-1", 48.7, -123.4, source="a real source")
+        self.assertTrue(ok)
+        cg = store.get_campground(self.conn, "GoingToCamp:BC", "-1")
+        self.assertEqual(cg.coord_source, "a real source")
+        self.assertTrue(cg.has_location)
+
+    def test_a_missing_coordinate_never_overwrites_a_present_one(self):
+        store.set_campground_coordinates(
+            self.conn, "GoingToCamp:BC", "-2", None, None, source="x")
+        cg = store.get_campground(self.conn, "GoingToCamp:BC", "-2")
+        self.assertEqual(cg.latitude, 49.0)
+
+    def test_provenance_is_not_optional(self):
+        with self.assertRaises(ValueError):
+            store.set_campground_coordinates(
+                self.conn, "GoingToCamp:BC", "-1", 48.7, -123.4, source="")
+
+    def test_provenance_report_counts_unlocated_honestly(self):
+        counts = store.coordinate_provenance(self.conn)
+        self.assertEqual(counts.get("unlocated"), 1)
+
+    def test_a_routine_enumeration_does_not_erase_a_recorded_source(self):
+        # Re-running catalog-refresh must not silently downgrade the claim.
+        store.set_campground_coordinates(
+            self.conn, "GoingToCamp:BC", "-1", 48.7, -123.4, source="BC Parks API")
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="GoingToCamp:BC", id="-1", name="Ruckle Provincial Park",
+                       state="BC", latitude=48.7, longitude=-123.4)], now=NOW)
+        cg = store.get_campground(self.conn, "GoingToCamp:BC", "-1")
+        self.assertEqual(cg.coord_source, "BC Parks API")
+
+
+class TestBCBackfill(DBTestCase):
+    def setUp(self):
+        super().setUp()
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="GoingToCamp:BC", id="-1", name="Ruckle Provincial Park",
+                       state="BC"),
+            Campground(provider="GoingToCamp:BC", id="-2", name="Nowhere In The API",
+                       state="BC"),
+            Campground(provider="GoingToCamp:BC", id="-3", name="Has Coords Already",
+                       state="BC", latitude=49.0, longitude=-123.0),
+        ], now=NOW)
+        self.websites = {
+            "-1": "https://bcparks.ca/ruckle-park/",
+            "-2": "https://bcparks.ca/nowhere-park/",
+            "-3": "https://bcparks.ca/already-park/",
+        }
+        self.areas = [bc_area(1, "Ruckle Park", "ruckle-park", 48.77, -123.38),
+                      bc_area(2, "Already Park", "already-park", 1.0, 2.0)]
+
+    def fetcher(self, areas=None, total=None):
+        areas = self.areas if areas is None else areas
+
+        def fetch(path, params):
+            page = int(params["pagination[page]"])
+            size = int(params["pagination[pageSize]"])
+            chunk = areas[(page - 1) * size: page * size]
+            count = len(areas) if total is None else total
+            pages = max(1, (len(areas) + size - 1) // size)
+            return {"data": chunk,
+                    "meta": {"pagination": {"page": page, "pageSize": size,
+                                            "pageCount": pages, "total": count}}}
+        return fetch
+
+    def test_it_locates_by_url_slug_and_records_the_source(self):
+        report = coordinates.backfill_bc(
+            self.conn, websites=self.websites, fetcher=self.fetcher(), now=NOW)
+        self.assertEqual(report.located, 1)
+        cg = store.get_campground(self.conn, "GoingToCamp:BC", "-1")
+        self.assertAlmostEqual(cg.latitude, 48.77)
+        self.assertIn("BC Parks API", cg.coord_source)
+
+    def test_an_unmatched_park_stays_unlocated_rather_than_guessed(self):
+        # No name fallback: the two systems name parks differently
+        # ("Ruckle Provincial Park" vs "Ruckle Park"), and a near-miss would
+        # put a pin on the wrong park.
+        report = coordinates.backfill_bc(
+            self.conn, websites=self.websites, fetcher=self.fetcher(), now=NOW)
+        self.assertIn("Nowhere In The API", report.unmatched)
+        cg = store.get_campground(self.conn, "GoingToCamp:BC", "-2")
+        self.assertFalse(cg.has_location)
+        self.assertIsNone(cg.coord_source)
+
+    def test_a_park_that_already_has_coordinates_is_left_alone(self):
+        coordinates.backfill_bc(
+            self.conn, websites=self.websites, fetcher=self.fetcher(), now=NOW)
+        cg = store.get_campground(self.conn, "GoingToCamp:BC", "-3")
+        self.assertEqual(cg.latitude, 49.0)     # not the API's 1.0
+        self.assertIsNone(cg.coord_source)
+
+    def test_rerunning_is_idempotent(self):
+        first = coordinates.backfill_bc(
+            self.conn, websites=self.websites, fetcher=self.fetcher(), now=NOW)
+        second = coordinates.backfill_bc(
+            self.conn, websites=self.websites, fetcher=self.fetcher(), now=NOW)
+        self.assertEqual(first.located, 1)
+        self.assertEqual(second.located, 0)     # nothing left to fill in
+
+    def test_a_short_source_list_is_refused_not_used(self):
+        """The pagination trap, caught live.
+
+        The API silently ignores `offset`/`_start`, and its default ordering
+        is not stable across pages — paging without an explicit sort returned
+        1052 rows holding only 736 distinct parks. A third of the province went
+        missing while duplicates filled the gap, which would have read as
+        "the API doesn't have your park" rather than as an error.
+        """
+        short = self.fetcher(total=999)          # API claims more than it sends
+        with self.assertRaises(coordinates.IncompleteSource):
+            coordinates.backfill_bc(
+                self.conn, websites=self.websites, fetcher=short, now=NOW)
+
+    def test_paging_always_asks_for_a_stable_sort(self):
+        asked = []
+
+        def fetch(path, params):
+            asked.append(params)
+            return {"data": self.areas,
+                    "meta": {"pagination": {"page": 1, "pageSize": 100,
+                                            "pageCount": 1, "total": len(self.areas)}}}
+        coordinates.fetch_bc_protected_areas(fetcher=fetch)
+        self.assertTrue(asked)
+        self.assertIn("sort[0]", asked[0])
+
+    def test_slug_parsing(self):
+        self.assertEqual(coordinates.park_slug("https://bcparks.ca/ruckle-park/"),
+                         "ruckle-park")
+        self.assertEqual(coordinates.park_slug("https://bcparks.ca/Ruckle-Park"),
+                         "ruckle-park")
+        self.assertIsNone(coordinates.park_slug(None))
+        self.assertIsNone(coordinates.park_slug(""))
+
+
+class TestSchemaMigration(unittest.TestCase):
+    def test_columns_are_added_to_an_existing_database(self):
+        # A database created before provenance existed must gain the columns,
+        # because CREATE TABLE IF NOT EXISTS will not add them.
+        conn = db.connect(":memory:")
+        conn.executescript("""
+            CREATE TABLE campgrounds (
+              provider TEXT, id TEXT, name TEXT, rec_area TEXT, state TEXT,
+              latitude REAL, longitude REAL, reservation_type TEXT, status TEXT,
+              status_reason TEXT, closed_until TEXT, first_cataloged TEXT,
+              last_checked TEXT, seeded INTEGER DEFAULT 0,
+              PRIMARY KEY (provider, id));""")
+        self.addCleanup(conn.close)
+        applied = db.migrate(conn)
+        self.assertIn("campgrounds.coord_source", applied)
+        self.assertEqual(db.migrate(conn), [])          # idempotent
+        cols = {r["name"] for r in conn.execute("PRAGMA table_info(campgrounds)")}
+        self.assertIn("coord_source", cols)
+        self.assertIn("coord_updated", cols)
+
+
+class TestSeedCarriesProvenance(unittest.TestCase):
+    def test_bc_parks_are_located_in_the_committed_seed(self):
+        seed = catalog.load_seed()
+        bc = [c for c in seed if c.provider == "GoingToCamp:BC"]
+        located = [c for c in bc if c.has_location]
+        self.assertGreaterEqual(len(located), 100,
+                                "the BC backfill result must be committed")
+        self.assertTrue(all("BC Parks API" in (c.coord_source or "")
+                            for c in located if c.coord_source))
+
+    def test_provenance_survives_a_seed_round_trip(self):
+        # Otherwise the claim is only as durable as someone's local .db file.
+        conn = make_db()
+        self.addCleanup(conn.close)
+        catalog.seed_catalog(conn)
+        bc = [c for c in store.list_campgrounds(conn, provider="GoingToCamp:BC")
+              if c.coord_source]
+        self.assertTrue(bc)
+        self.assertIn("BC Parks API", bc[0].coord_source)
+
+
 if __name__ == "__main__":
     unittest.main()

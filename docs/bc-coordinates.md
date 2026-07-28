@@ -1,3 +1,25 @@
+> **STATUS 2026-07-28: BUILT.** `app/coordinates.py`, run via
+> `manage.py backfill-coordinates --provider GoingToCamp:BC`. **110 of 114 BC
+> campgrounds located** from the BC Parks API, the province's own open REST
+> service under the Open Government Licence — BC. Results are committed to the
+> seed, with the source recorded per coordinate.
+>
+> The 4 that stay unlocated are deliberate: a renamed park (Saysutshun), one
+> absent from the API, and two Wells Gray sub-areas whose parent park is
+> enormous — the parent centroid would put a camper tens of kilometres out.
+>
+> **The trap, for whoever paginates the next API.** BC Parks runs Strapi. It
+> paginates on `pagination[page]`/`pagination[pageSize]`, **silently ignores**
+> `offset` and `_start` (both always return page 1), and its default ordering
+> is not stable across pages. Paging without an explicit sort returned 1052
+> rows containing only **736 distinct** parks — a third of the province missing
+> while duplicates filled the gap. It read as "the API doesn't have your park",
+> not as an error. Always sort, and always check the returned count against the
+> API's own `meta.pagination.total`. `fetch_bc_protected_areas` raises rather
+> than backfilling from a short list.
+
+---
+
 # Locating the BC parks — design note, not yet built
 
 113 of the 114 BC Parks campgrounds in the catalog have **no coordinates**,

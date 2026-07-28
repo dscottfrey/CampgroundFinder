@@ -78,6 +78,10 @@ class Campground:
     status: str = STATUS_UNKNOWN
     status_reason: Optional[str] = None
     closed_until: Optional[str] = None
+    #: Where the coordinate came from, when it did not come from this
+    #: provider's own enumeration (see app/coordinates.py). None means the
+    #: provider supplied it, or there is no coordinate at all.
+    coord_source: Optional[str] = None
 
     @property
     def key(self) -> tuple[str, str]:

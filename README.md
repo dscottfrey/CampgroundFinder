@@ -22,14 +22,14 @@ Section references below (§5, §8k, …) point into it.
 | 8 | GoingToCamp | **done** — WA state parks + BC Parks |
 | — | Pacing: shared rate limiter, round-robin, scanner status | **done** (`docs/scanning-design.md` steps 1–2) |
 
-**139 tests, standard library only, no network required.**
+**154 tests, standard library only, no network required.**
 
 ### What actually works
 
 - **803 real campgrounds**, all enumerated live, none hand-listed:
   545 recreation.gov (RIDB), 65 Oregon state parks (ReserveAmerica),
-  79 Washington state parks and 114 BC Parks (GoingToCamp). 664 carry
-  coordinates; the other 139 show as "location unknown" rather than being
+  79 Washington state parks and 114 BC Parks (GoingToCamp). **774 carry
+  coordinates**; the remaining 29 show as "location unknown" rather than being
   dropped or guessed. Reehers Camp Horse Camp is in there at 45.7067, -123.3381.
 - **recreation.gov availability**, through camply. Verified: Trillium
   (campground 232831) returns real openings with booking links.
@@ -73,11 +73,6 @@ sweep with adaptive cadence, then step 4 (on-demand refresh, all four guards)
 and step 5 (zoom-based queue priority). Steps 1 and 2 — the shared rate limiter
 and the scanner status row — are done, so the pacing groundwork wider scanning
 needed is in place.
-
-**Known gap: BC parks have no coordinates.** 113 of 114 are catalogued but
-unmappable, because the platform doesn't publish them. Every one carries its
-authoritative `bcparks.ca` URL, so this is fixable — see `docs/bc-coordinates.md`
-for the design and the one thing needed to start.
 
 One caveat carried forward: camply owns its own HTTP, so its several internal
 requests per search can't be spaced individually. The adapter holds the shared
@@ -151,7 +146,7 @@ Steps 1–3 run on the **standard library alone** — the tests need no
 dependencies at all:
 
 ```bash
-python3 -m unittest discover -s tests -t . -v     # 139 tests, no network
+python3 -m unittest discover -s tests -t . -v     # 154 tests, no network
 ```
 
 To see the whole pipeline with no deps and no network, point a config at the
@@ -165,6 +160,7 @@ manage.py catalog-refresh [--write-seed]  # enumerate + diff the catalog (§8k)
 manage.py scan-once                       # one availability cycle + alerts (§8)
 manage.py search <query> [--state OR]     # search the CATALOG, not search hits
 manage.py map [--state OR]                # every pin + its honest status
+manage.py backfill-coordinates [--write-seed]   # locate parks a provider can't
 manage.py add-watch <name> [...]          # create a watch (§8b)
 manage.py list-watches [--all]
 ```

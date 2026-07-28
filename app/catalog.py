@@ -53,6 +53,7 @@ def load_seed(path: str | Path | None = None) -> list[Campground]:
             reservation_type=e.get("reservation_type", "reservable"),
             status=e.get("status", STATUS_UNKNOWN),
             status_reason=e.get("status_reason"),
+            coord_source=e.get("coord_source"),
         )
         for e in entries
     ]
@@ -93,6 +94,10 @@ def write_seed(
                 "rec_area": c.rec_area, "state": c.state,
                 "latitude": c.latitude, "longitude": c.longitude,
                 "reservation_type": c.reservation_type,
+                # Kept in the committed seed so the provenance of a coordinate
+                # survives a database rebuild — otherwise the claim is only as
+                # durable as someone's local .db file.
+                "coord_source": c.coord_source,
             }
             for c in sorted(campgrounds, key=lambda c: (c.provider, c.id))
         ],

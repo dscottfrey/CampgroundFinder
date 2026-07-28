@@ -169,12 +169,16 @@ def upsert_campgrounds(
                 """UPDATE campgrounds SET
                      name=?, rec_area=?, state=?, latitude=?, longitude=?,
                      reservation_type=?, status=?, status_reason=?, closed_until=?,
-                     last_checked=?, seeded=?
+                     last_checked=?, seeded=?,
+                     coord_source=COALESCE(?, coord_source)
                    WHERE provider=? AND id=?""",
                 (
                     cg.name, cg.rec_area, cg.state, cg.latitude, cg.longitude,
                     cg.reservation_type, cg.status, cg.status_reason, cg.closed_until,
                     stamp, 1 if (seeded or existing["seeded"]) else 0,
+                    # COALESCE, not a plain assignment: a routine enumeration
+                    # carries no provenance and must not erase a recorded one.
+                    cg.coord_source,
                     cg.provider, cg.id,
                 ),
             )
@@ -184,13 +188,13 @@ def upsert_campgrounds(
                 """INSERT INTO campgrounds (
                      provider, id, name, rec_area, state, latitude, longitude,
                      reservation_type, status, status_reason, closed_until,
-                     first_cataloged, last_checked, seeded)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                     first_cataloged, last_checked, seeded, coord_source)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     cg.provider, cg.id, cg.name, cg.rec_area, cg.state,
                     cg.latitude, cg.longitude, cg.reservation_type, cg.status,
                     cg.status_reason, cg.closed_until, stamp, stamp,
-                    1 if seeded else 0,
+                    1 if seeded else 0, cg.coord_source,
                 ),
             )
             added += 1
@@ -211,6 +215,7 @@ def row_to_campground(row: sqlite3.Row) -> Campground:
         status=row["status"] or STATUS_UNKNOWN,
         status_reason=row["status_reason"],
         closed_until=row["closed_until"],
+        coord_source=row["coord_source"] if "coord_source" in row.keys() else None,
     )
 
 
@@ -278,6 +283,54 @@ def set_campground_status(
         (status, reason, closed_until, iso(now), provider, cg_id),
     )
     conn.commit()
+
+
+def set_campground_coordinates(
+    conn: sqlite3.Connection,
+    provider: str,
+    cg_id: str,
+    latitude: Optional[float],
+    longitude: Optional[float],
+    source: str,
+    now: Optional[datetime] = None,
+) -> bool:
+    """Record a coordinate and where it came from. Returns True if it landed.
+
+    Two refusals, both deliberate:
+
+    * **A missing coordinate never overwrites a present one.** A backfill that
+      comes up empty must leave a good point alone.
+    * **Provenance is required.** `source` is not optional, because a point
+      from a province's open-data API and one parsed off a booking page are
+      different claims and a later maintainer has to be able to tell them
+      apart. Nothing here ever writes an estimate — a campground we cannot
+      locate stays unlocated (§13).
+    """
+    if latitude is None or longitude is None:
+        return False
+    if not source:
+        raise ValueError("a coordinate must record where it came from")
+    cur = conn.execute(
+        """UPDATE campgrounds
+             SET latitude=?, longitude=?, coord_source=?, coord_updated=?
+           WHERE provider=? AND id=?""",
+        (latitude, longitude, source, iso(now), provider, cg_id),
+    )
+    conn.commit()
+    return cur.rowcount > 0
+
+
+def coordinate_provenance(conn: sqlite3.Connection) -> dict[str, int]:
+    """How many catalogue coordinates came from where — including unlocated."""
+    counts: dict[str, int] = {}
+    for row in conn.execute(
+        """SELECT COALESCE(coord_source, CASE WHEN latitude IS NULL
+                   THEN 'unlocated' ELSE 'provider enumeration' END) AS src,
+                  COUNT(*) AS n
+             FROM campgrounds GROUP BY src"""
+    ):
+        counts[row["src"]] = row["n"]
+    return counts
 
 
 def stamp_status_from_availability(

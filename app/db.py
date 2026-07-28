@@ -17,6 +17,11 @@ CREATE TABLE IF NOT EXISTS campgrounds (
   status_reason TEXT, closed_until TEXT,
   first_cataloged TEXT, last_checked TEXT,
   seeded INTEGER DEFAULT 0,      -- part of the committed completeness floor (§8k)
+  -- Where this coordinate came from, and when. A point from a province's own
+  -- open-data API and one parsed off a booking page are not the same claim,
+  -- and neither is a guess — which must never appear here at all.
+  coord_source TEXT,
+  coord_updated TEXT,
   PRIMARY KEY (provider, id)
 );
 
@@ -92,8 +97,35 @@ def connect(path: str | os.PathLike | None = None) -> sqlite3.Connection:
     return conn
 
 
+#: Columns added after the first release. `CREATE TABLE IF NOT EXISTS` will not
+#: add a column to a table that already exists, so an existing database needs
+#: these applied explicitly — otherwise the app runs fine until the first query
+#: that names one.
+MIGRATIONS = [
+    ("campgrounds", "coord_source", "TEXT"),
+    ("campgrounds", "coord_updated", "TEXT"),
+]
+
+
+def migrate(conn: sqlite3.Connection) -> list[str]:
+    """Add any missing columns. Idempotent; returns what it applied."""
+    applied = []
+    for table, column, decl in MIGRATIONS:
+        existing = {
+            row["name"] for row in conn.execute(f"PRAGMA table_info({table})")
+        }
+        if not existing or column in existing:
+            continue
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {decl}")
+        applied.append(f"{table}.{column}")
+    if applied:
+        conn.commit()
+    return applied
+
+
 def init_schema(conn: sqlite3.Connection) -> sqlite3.Connection:
     conn.executescript(SCHEMA)
+    migrate(conn)
     conn.commit()
     return conn
 
