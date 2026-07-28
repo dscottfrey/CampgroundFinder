@@ -729,3 +729,104 @@ class TestUtil(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# --------------------------------------------- ReserveAmerica (step 8) ----
+
+FIXTURES = Path(__file__).resolve().parent / "fixtures"
+
+
+def ra_provider(**kw):
+    """Provider wired to replay saved pages — never touches the network."""
+    from app.providers.reserveamerica import ReserveAmericaProvider
+
+    def fetcher(path, params):
+        if path == "campgroundDirectoryList.do":
+            # Page 2+ repeats page 1, which is what the live site does once you
+            # run past the end. The parser must stop on "no new parks".
+            return (FIXTURES / "ra_directory_or.html").read_text()
+        if path == "campgroundDetails.do":
+            return (FIXTURES / "ra_park_412704.html").read_text()
+        raise AssertionError(f"unexpected path {path}")
+
+    kw.setdefault("fetcher", fetcher)
+    kw.setdefault("delay", 0)
+    return ReserveAmericaProvider("OR", "oregonstateparks.reserveamerica.com", **kw)
+
+
+class TestReserveAmericaDirectory(unittest.TestCase):
+    """Parses real pages captured from the live Oregon portal on 2026-07-27."""
+
+    def test_directory_yields_parks_with_coordinates(self):
+        parks = ra_provider(state="OR").list_campgrounds()
+        self.assertTrue(parks)
+        for p in parks:
+            self.assertEqual(p.provider, "ReserveAmerica:OR")
+            self.assertEqual(p.state, "OR")
+            self.assertTrue(p.has_location)
+            # Oregon: latitude 42-46 N, longitude -117 to -125.
+            self.assertTrue(41 < p.latitude < 47, p.latitude)
+            self.assertTrue(-125 < p.longitude < -116, p.longitude)
+
+    def test_paging_stops_when_directory_wraps(self):
+        # Every page returns the same rows; without a "no new parks" check
+        # this would loop to the 1000 bound.
+        parks = ra_provider().list_campgrounds()
+        ids = [p.id for p in parks]
+        self.assertEqual(len(ids), len(set(ids)))
+
+    def test_known_park_is_present_with_verified_id(self):
+        parks = {p.id: p for p in ra_provider().list_campgrounds()}
+        self.assertIn("409402", parks)                     # Ainsworth State Park
+        self.assertIn("Ainsworth", parks["409402"].name)
+
+
+class TestReserveAmericaSiteList(unittest.TestCase):
+    """Reehers: the park RA's own search will not return under any site type."""
+
+    def setUp(self):
+        self.sites = ra_provider().list_sites("412704")
+
+    def test_park_page_lists_sites(self):
+        self.assertTrue(self.sites)
+        self.assertTrue(all(s["site_id"] for s in self.sites))
+
+    def test_reehers_has_tent_sites_not_only_horse_sites(self):
+        types = {s["site_type"] for s in self.sites}
+        self.assertIn("horse", types)
+        # The whole point: searching "tent" at Reehers returns nothing on the
+        # live site, yet tent sites plainly exist on the park's own page.
+        self.assertIn("tent", types)
+
+    def test_missing_type_label_is_none_not_guessed(self):
+        for s in self.sites:
+            self.assertTrue(s["site_type_label"] is None or s["site_type_label"].isupper())
+
+
+class TestReserveAmericaHonesty(unittest.TestCase):
+    def test_availability_raises_rather_than_returning_empty(self):
+        """An unimplemented calendar must not look like 'nothing available'."""
+        from app.providers.base import SearchRequest as SR
+        with self.assertRaises(NotImplementedError):
+            ra_provider().search(SR(provider="ReserveAmerica:OR",
+                                    start_date=START, end_date=START))
+
+    def test_registry_builds_oregon_from_contract_code(self):
+        from app.providers import build_provider as bp
+        from app.providers.reserveamerica import ReserveAmericaProvider
+        p = bp("ReserveAmerica:OR")
+        self.assertIsInstance(p, ReserveAmericaProvider)
+        self.assertEqual(p.host, "oregonstateparks.reserveamerica.com")
+        self.assertEqual(p.state, "OR")
+
+    def test_unknown_contract_code_refuses_rather_than_guessing_a_host(self):
+        from app.providers import build_provider as bp
+        with self.assertRaises(ValueError) as ctx:
+            bp("ReserveAmerica:GA")
+        self.assertIn("no known host", str(ctx.exception))
+
+    def test_explicit_host_is_accepted_for_other_agencies(self):
+        from app.providers import build_provider as bp
+        p = bp("ReserveAmerica:GA", state="GA", host="a1.reserveamerica.com")
+        self.assertEqual(p.host, "a1.reserveamerica.com")
+        self.assertEqual(p.contract_code, "GA")
