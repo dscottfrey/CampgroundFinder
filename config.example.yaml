@@ -45,7 +45,17 @@ sources:
   - { label: "Mt Hood NF",         provider: RecreationDotGov, state: OR, rec_area_ids: ["1106"] }
   - { label: "Deschutes NF",       provider: RecreationDotGov, state: OR, rec_area_ids: ["1113"] }
   - { label: "Gifford Pinchot NF", provider: RecreationDotGov, state: WA, rec_area_ids: ["1131"] }
-  - { label: "WA GoingToCamp",     provider: GoingToCamp,      state: WA, rec_area_ids: [] }
+
+  # State parks. An empty `campground_ids` means "every park in the catalog" —
+  # the scanner fills the scope in and scans one park per request, so these
+  # need `catalog-refresh` (or the committed seed) to have run first.
+  - { label: "Oregon State Parks",     provider: "ReserveAmerica:OR", state: OR, campground_ids: [] }
+  - { label: "Washington State Parks", provider: "GoingToCamp:WA",    state: WA, campground_ids: [] }
+
+  # BC Parks works the same way (114 parks in the seed), but the platform
+  # publishes no coordinates for them — they show as "location unknown" rather
+  # than appearing on the map. Enable if you want them searchable.
+  # - { label: "BC Provincial Parks", provider: "GoingToCamp:BC", state: BC, campground_ids: [] }
 
   # Offline demo source — no network, no deps. Handy for `scan-once` smoke tests.
   # - { label: "Mock (offline demo)", provider: Mock, state: OR }
@@ -55,11 +65,6 @@ sources:
   #   provider: "PerfectMind:SanJuanCoWA"
   #   state: WA
   #   perfectmind: { host: sanjuancountywa.perfectmind.com, widget_id: d69eb041-59af-41a7-9182-35e8487e05c1 }
-  # Oregon state parks. All 65 are in the seed with coordinates (enumerated
-  # live 2026-07-28), and an empty campground_ids means "every park in the
-  # catalog" — the scanner fills the scope in, one park per request.
-  - { label: "Oregon State Parks", provider: "ReserveAmerica:OR", state: OR, campground_ids: [] }
-  # - { label: "BC Provincial Parks", provider: GoingToCamp, state: BC, rec_area_ids: [] }
   # - { label: "Parks Canada",        provider: "ParksCanada",  state: CA-NAT, rec_area_ids: [] }
 
 watches:

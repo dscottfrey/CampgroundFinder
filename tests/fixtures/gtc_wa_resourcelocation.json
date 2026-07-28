@@ -1,0 +1,206 @@
+[
+  {
+    "resourceLocationId": -2147483647,
+    "ianaTimeZone": "America/Los_Angeles",
+    "timeZoneOffset": -420.0,
+    "localizedValues": [
+      {
+        "cultureName": "en-US",
+        "shortName": "Alta Lake",
+        "fullName": "Alta Lake State Park"
+      }
+    ],
+    "email": "",
+    "faxNumber": "",
+    "gpsCoordinates": "48.03218, -119.9347",
+    "googleAddress": null,
+    "region": "Washington",
+    "regionCode": "98846",
+    "country": "USA",
+    "phoneNumber": "",
+    "transactionLocationId": -2147483647,
+    "selfCheckInInstructions": [],
+    "resourceCategoryIds": [
+      -2147483648,
+      -2147483647,
+      -2147483643
+    ],
+    "rootMapId": -2147483396,
+    "maxBookingsOnCart": null
+  },
+  {
+    "resourceLocationId": -2147483646,
+    "ianaTimeZone": "America/Los_Angeles",
+    "timeZoneOffset": -420.0,
+    "localizedValues": [
+      {
+        "cultureName": "en-US",
+        "shortName": "Battle Ground Lake",
+        "fullName": "Battle Ground Lake State Park"
+      }
+    ],
+    "email": "",
+    "faxNumber": "",
+    "gpsCoordinates": "45.80295, -122.4867",
+    "googleAddress": null,
+    "region": "Washington",
+    "regionCode": "98604",
+    "country": "USA",
+    "phoneNumber": "",
+    "transactionLocationId": -2147483646,
+    "selfCheckInInstructions": [],
+    "resourceCategoryIds": [
+      -2147483648,
+      -2147483647,
+      -2147483646,
+      -2147483643,
+      -2147483638,
+      -2147483634
+    ],
+    "rootMapId": -2147483395,
+    "maxBookingsOnCart": null
+  },
+  {
+    "resourceLocationId": -2147483527,
+    "ianaTimeZone": "America/Los_Angeles",
+    "timeZoneOffset": -420.0,
+    "localizedValues": [
+      {
+        "cultureName": "en-US",
+        "shortName": "Anderson Lake",
+        "fullName": "Anderson Lake"
+      }
+    ],
+    "email": "",
+    "faxNumber": "",
+    "gpsCoordinates": "48.01413, -122.8075",
+    "googleAddress": null,
+    "region": "Washington",
+    "regionCode": "98801-5938",
+    "country": "USA",
+    "phoneNumber": "",
+    "transactionLocationId": -2147483620,
+    "selfCheckInInstructions": [],
+    "resourceCategoryIds": [],
+    "rootMapId": null,
+    "maxBookingsOnCart": null
+  },
+  {
+    "resourceLocationId": -2147483645,
+    "ianaTimeZone": "America/Los_Angeles",
+    "timeZoneOffset": -420.0,
+    "localizedValues": [
+      {
+        "cultureName": "en-US",
+        "shortName": "Bay View",
+        "fullName": "Bay View State Park"
+      }
+    ],
+    "email": "",
+    "faxNumber": "",
+    "gpsCoordinates": "48.48806, -122.4805",
+    "googleAddress": null,
+    "region": "Washington",
+    "regionCode": "98273",
+    "country": "USA",
+    "phoneNumber": "",
+    "transactionLocationId": -2147483645,
+    "selfCheckInInstructions": [],
+    "resourceCategoryIds": [
+      -2147483648,
+      -2147483647,
+      -2147483646,
+      -2147483643,
+      -2147483638,
+      -2147483624
+    ],
+    "rootMapId": -2147483394,
+    "maxBookingsOnCart": null
+  },
+  {
+    "resourceLocationId": -2147483643,
+    "ianaTimeZone": "America/Los_Angeles",
+    "timeZoneOffset": -420.0,
+    "localizedValues": [
+      {
+        "cultureName": "en-US",
+        "shortName": "Belfair",
+        "fullName": "Belfair State Park"
+      }
+    ],
+    "email": "",
+    "faxNumber": "",
+    "gpsCoordinates": "47.43167, -122.877",
+    "googleAddress": null,
+    "region": "Washington",
+    "regionCode": "98528",
+    "country": "USA",
+    "phoneNumber": "",
+    "transactionLocationId": -2147483643,
+    "selfCheckInInstructions": [],
+    "resourceCategoryIds": [
+      -2147483648,
+      -2147483647,
+      -2147483646,
+      -2147483639,
+      -2147483638
+    ],
+    "rootMapId": -2147483319,
+    "maxBookingsOnCart": null
+  },
+  {
+    "resourceLocationId": -2147483642,
+    "ianaTimeZone": "America/Los_Angeles",
+    "timeZoneOffset": -420.0,
+    "localizedValues": [
+      {
+        "cultureName": "en-US",
+        "shortName": "Big Eddy",
+        "fullName": "Big Eddy"
+      }
+    ],
+    "email": "",
+    "faxNumber": "",
+    "gpsCoordinates": "",
+    "googleAddress": null,
+    "region": "Washington",
+    "regionCode": "98801-5938",
+    "country": "USA",
+    "phoneNumber": "",
+    "transactionLocationId": -2147483572,
+    "selfCheckInInstructions": [],
+    "resourceCategoryIds": [],
+    "rootMapId": null,
+    "maxBookingsOnCart": null
+  },
+  {
+    "resourceLocationId": -2147483551,
+    "ianaTimeZone": "America/Los_Angeles",
+    "timeZoneOffset": -420.0,
+    "localizedValues": [
+      {
+        "cultureName": "en-US",
+        "shortName": "Sun Lakes",
+        "fullName": "Sun Lakes State Park"
+      }
+    ],
+    "email": "",
+    "faxNumber": "",
+    "gpsCoordinates": "",
+    "googleAddress": null,
+    "region": "Washington",
+    "regionCode": "99115",
+    "country": "USA",
+    "phoneNumber": "",
+    "transactionLocationId": -2147483577,
+    "selfCheckInInstructions": [],
+    "resourceCategoryIds": [
+      -2147483648,
+      -2147483647,
+      -2147483643,
+      -2147483641
+    ],
+    "rootMapId": -2147483353,
+    "maxBookingsOnCart": null
+  }
+]

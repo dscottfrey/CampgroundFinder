@@ -16,6 +16,7 @@ from .base import (
     SearchRequest,
 )
 from .camply_provider import CamplyProvider
+from .goingtocamp import GoingToCampProvider
 from .mock import MockProvider
 from .reserveamerica import ReserveAmericaProvider
 
@@ -23,6 +24,14 @@ from .reserveamerica import ReserveAmericaProvider
 #: code (docs/reserveamerica-clients.md). Only OR is verified.
 RESERVEAMERICA_HOSTS = {
     "OR": ("oregonstateparks.reserveamerica.com", "OR"),   # verified 2026-07-27
+}
+
+#: GoingToCamp portals: (host, rec_area_id, region). Rec-area IDs read from
+#: camply's rec_areas.py; WA verified live 2026-07-28 (79 campable locations).
+GOINGTOCAMP_HOSTS = {
+    "WA": ("washington.goingtocamp.com", 3, "WA"),          # verified 2026-07-28
+    "TacomaPower": ("tacomapower.goingtocamp.com", 6, "WA"),
+    "BC": ("camping.bcparks.ca", 12, "BC"),
 }
 
 #: camply provider names verified present in samples/camply-main (19 classes).
@@ -79,6 +88,21 @@ def build_provider(spec: str, state: Optional[str] = None, **options) -> Provide
             state = state or default_state
         return ReserveAmericaProvider(contract, host, state=state)
 
+    if family == "GoingToCamp":
+        # Our own client, not camply's — camply's GoingToCamp raises
+        # KeyError before returning anything (see goingtocamp.py).
+        known = GOINGTOCAMP_HOSTS.get(instance)
+        if not known:
+            raise ValueError(
+                f"unknown GoingToCamp portal {instance!r} — expected one of "
+                f"{sorted(GOINGTOCAMP_HOSTS)} (see docs/goingtocamp-clients.md)"
+            )
+        host, rec_area_id, default_state = known
+        return GoingToCampProvider(
+            instance, options.get("host") or host, rec_area_id,
+            state=state or default_state,
+        )
+
     normalized = CamplyProvider._normalize(family)
     if normalized in CAMPLY_PROVIDERS:
         return CamplyProvider(normalized, state=state)
@@ -90,12 +114,15 @@ def build_provider(spec: str, state: Optional[str] = None, **options) -> Provide
 
 def known_providers() -> list[str]:
     ra = {f"ReserveAmerica:{code}" for code in RESERVEAMERICA_HOSTS}
-    return sorted(CAMPLY_PROVIDERS | {"Mock"} | ra)
+    gtc = {f"GoingToCamp:{code}" for code in GOINGTOCAMP_HOSTS}
+    # camply's own GoingToCamp entry is deliberately shadowed by ours.
+    return sorted((CAMPLY_PROVIDERS - {"GoingToCamp"}) | {"Mock"} | ra | gtc)
 
 
 __all__ = [
     "Provider", "SearchRequest", "Campsite", "Campground",
     "CamplyProvider", "MockProvider", "ReserveAmericaProvider",
+    "GoingToCampProvider", "GOINGTOCAMP_HOSTS",
     "build_provider", "known_providers", "CAMPLY_PROVIDERS",
     "RESERVEAMERICA_HOSTS",
     "STATUS_AVAILABLE", "STATUS_FULL", "STATUS_CLOSED", "STATUS_UNKNOWN", "STATUS_STALE",

@@ -1,3 +1,35 @@
+> **STATUS 2026-07-28: built and working.** `app/providers/goingtocamp.py`
+> talks to the API directly — not through camply, which is broken (see below).
+> Washington: 79 campable parks, 78 with coordinates. BC Parks: 114 campable,
+> but the platform publishes coordinates for only one of them.
+>
+> **The endpoints that matter**, all verified live:
+>
+> | Purpose | Call |
+> |---|---|
+> | Full directory for a rec area | `GET /api/resourceLocation` — one request, carries name, `gpsCoordinates`, `rootMapId`, `resourceCategoryIds` |
+> | Availability matrix | `GET /api/availability/map?mapId=…&getDailyAvailability=true` — every site x every night in one request |
+> | ~~Park detail lookup~~ | `GET /api/maps` — **don't**; returns 6 org-level maps with `resourceLocationId: null`. This is what breaks camply. |
+>
+> A park's **root map usually holds no sites** — only `mapLinkAvailabilities`,
+> the loops inside it, which must be followed. Alta Lake has four, so one park
+> costs ~5 requests per window.
+>
+> **Daily availability codes** (documented nowhere; derived by running both
+> query modes over one window and cross-tabulating):
+> `0` = open that night, `1` = taken, `4`/`5` = some other state seen on 2 of
+> 46 sites and never treated as open. A stay of N nights needs the first N
+> codes to be `0`; the entry after the last night is checkout day and is
+> ignored.
+>
+> Campable locations are those whose `resourceCategoryIds` include any of
+> `-2147483648` (camp site), `-2147483647` (overflow), `-2147483643` (group).
+> Washington lists 167 locations; only 79 pass that filter.
+>
+> Getting past the Azure WAF: see `docs/scraping-policy.md`.
+
+---
+
 # GoingToCamp (Tyler Technologies) — client systems
 
 Two sources: a research note supplied by Scott 2026-07-27, and camply 0.34.2's

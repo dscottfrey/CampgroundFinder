@@ -13,22 +13,24 @@ Section references below (§5, §8k, …) point into it.
 |---|---|---|
 | 1 | Scaffold, providers, `store.py`, core tests | **done** |
 | 2 | camply adapter | **done, verified live** against recreation.gov |
-| 3 | `catalog.py`, `scanner.py`, `notifier.py`, `config.py`, `manage.py` | **done**; 610 real campgrounds seeded |
+| 3 | `catalog.py`, `scanner.py`, `notifier.py`, `config.py`, `manage.py` | **done**; 803 real campgrounds seeded |
 | 4 | Enrichers (AQI, wildfire, water, weather) + three-state filters | not started |
 | 5 | FastAPI + Leaflet UI | **partial** — a stdlib server and list view exist; no map |
 | 6 | Docker + Tailscale + multi-user | not started |
 | 7 | PerfectMind provider | not started |
-| 8 | ReserveAmerica | **Oregon done**; GoingToCamp blocked, others not started |
+| 8 | ReserveAmerica | **Oregon done** |
+| 8 | GoingToCamp | **done** — WA state parks + BC Parks |
 | — | Pacing: shared rate limiter, round-robin, scanner status | **done** (`docs/scanning-design.md` steps 1–2) |
 
-**121 tests, standard library only, no network required.**
+**138 tests, standard library only, no network required.**
 
 ### What actually works
 
-- **610 real campgrounds** — 545 from recreation.gov's RIDB directory, plus all
-  **65 Oregon state parks** enumerated live from ReserveAmerica on 2026-07-28,
-  every one with coordinates. Reehers Camp Horse Camp is in there at
-  45.7067, -123.3381.
+- **803 real campgrounds**, all enumerated live, none hand-listed:
+  545 recreation.gov (RIDB), 65 Oregon state parks (ReserveAmerica),
+  79 Washington state parks and 114 BC Parks (GoingToCamp). 664 carry
+  coordinates; the other 139 show as "location unknown" rather than being
+  dropped or guessed. Reehers Camp Horse Camp is in there at 45.7067, -123.3381.
 - **recreation.gov availability**, through camply. Verified: Trillium
   (campground 232831) returns real openings with booking links.
 - **ReserveAmerica for Oregon** — all 65 state parks in the committed seed
@@ -51,11 +53,20 @@ Section references below (§5, §8k, …) point into it.
 
 ### Where we left off — read this first
 
-**Blocked: GoingToCamp.** This is the only route to Washington State Parks,
-BC Parks, and Parks Canada — ReserveAmerica cannot cover any of them. camply
-fails with `KeyError: -2147483647`, which is a *real park id* (Alta Lake State
-Park), not a bug sentinel. A direct-to-endpoint fallback is documented, taken
-from CampSage's page source. See `docs/reserveamerica-handoff.md`.
+**GoingToCamp is unblocked** (2026-07-28) — Washington State Parks and BC
+Parks are in. Two things were in the way:
+
+*The WAF.* Both hosts sit behind an Azure WAF that 403s anything not shaped
+like a browser — the honest User-Agent was the only thing being blocked. See
+`docs/scraping-policy.md`, which supersedes build plan §6c.
+
+*camply's bug.* `KeyError: -2147483647` is Alta Lake State Park, and the cause
+is now known exactly: camply builds a lookup from `/api/maps`, which returns
+six org-level maps whose `resourceLocationId` is `null`, so the dict is keyed
+entirely by `None` and every park misses. `going_to_camp_provider.py:427` is a
+bare subscript whose result is discarded — it exists only to raise. We don't
+use that endpoint; `rootMapId` is already on every directory record. So
+`app/providers/goingtocamp.py` talks to the API directly and skips camply.
 
 **Next build step, per `docs/scanning-design.md`:** step 3 — the background
 sweep with adaptive cadence, then step 4 (on-demand refresh, all four guards)
@@ -109,10 +120,11 @@ Two fixes, both in `app/providers/reserveamerica.py`:
 
 | File | What's in it |
 |---|---|
+| `docs/scraping-policy.md` | **How we behave toward platforms — supersedes §6c** |
 | `docs/scanning-design.md` | Two-tier scanning, pacing rules, on-demand guards |
 | `docs/reserveamerica-handoff.md` | RA endpoints (working), and the GoingToCamp blocker |
 | `docs/reserveamerica-clients.md` | Which agencies run on ReserveAmerica |
-| `docs/goingtocamp-clients.md` | GoingToCamp rec-area IDs, incl. BC and Parks Canada |
+| `docs/goingtocamp-clients.md` | GoingToCamp rec-area IDs, endpoints, availability codes |
 | `docs/usedirect-clients.md` | UseDirect leads, unverified |
 | `docs/campsage-ui-notes.md` | What to borrow from CampSage, and what to refuse |
 
@@ -133,7 +145,7 @@ Steps 1–3 run on the **standard library alone** — the tests need no
 dependencies at all:
 
 ```bash
-python3 -m unittest discover -s tests -t . -v     # 121 tests, no network
+python3 -m unittest discover -s tests -t . -v     # 138 tests, no network
 ```
 
 To see the whole pipeline with no deps and no network, point a config at the

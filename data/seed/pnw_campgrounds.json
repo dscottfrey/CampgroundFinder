@@ -1,9 +1,1939 @@
 {
   "_meta": {
-    "note": "recreation.gov via RIDB 2026-07-27; ReserveAmerica Oregon directory enumerated live 2026-07-28 (65 parks, all with coordinates)",
-    "count": 610
+    "note": "recreation.gov via RIDB 2026-07-27; ReserveAmerica Oregon 2026-07-28; GoingToCamp Washington + BC Parks 2026-07-28",
+    "count": 803
   },
   "campgrounds": [
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483486",
+      "name": "Steelhead Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483487",
+      "name": "Skihist Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483488",
+      "name": "Tribune Bay Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483492",
+      "name": "Wells Gray Provincial Park - Clearwater Lake & Falls Creek",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483493",
+      "name": "Beaver Creek Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": 49.06674,
+      "longitude": -117.60611,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483497",
+      "name": "Allison Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483498",
+      "name": "Gwillim Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483499",
+      "name": "Muncho Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483500",
+      "name": "Yahk Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483502",
+      "name": "Lockhart Beach Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483503",
+      "name": "Jimsmith Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483504",
+      "name": "Norbury Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483508",
+      "name": "Whiteswan Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483509",
+      "name": "Whiskers Point Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483512",
+      "name": "Wells Gray Provincial Park - Mahood Lake",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483513",
+      "name": "Wasa Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483515",
+      "name": "Tyhee Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483516",
+      "name": "Tweedsmuir Provincial Park \u2013 South",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483519",
+      "name": "Ten Mile Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483521",
+      "name": "Syringa Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483522",
+      "name": "sx\u030c\u02b7\u0259x\u030c\u02b7nitk\u02b7 Provincial Park (Okanagan Falls)",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483523",
+      "name": "s\u1e81i\u1e81s Provincial Park (Haynes Point)",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483524",
+      "name": "Swan Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483525",
+      "name": "Summit Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483527",
+      "name": "Strathcona Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483528",
+      "name": "Stemwinder Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483530",
+      "name": "Stamp River Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483531",
+      "name": "Sproat Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483532",
+      "name": "Sowchea Bay Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483533",
+      "name": "Smelt Bay Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483534",
+      "name": "Skagit Valley Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483535",
+      "name": "Silver Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483536",
+      "name": "Shuswap Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483539",
+      "name": "Sasquatch Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483540",
+      "name": "Saltery Bay Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483541",
+      "name": "Ruckle Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483542",
+      "name": "Rosebery Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483543",
+      "name": "Rolley Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483544",
+      "name": "Red Bluff Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483545",
+      "name": "Rathtrevor Beach Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483547",
+      "name": "Purden Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483548",
+      "name": "Prudhomme Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483549",
+      "name": "Premier Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483550",
+      "name": "Porteau Cove Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483551",
+      "name": "Porpoise Bay Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483557",
+      "name": "Paul Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483558",
+      "name": "Paarens Beach Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483559",
+      "name": "Otter Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483560",
+      "name": "Okanagan Lake South Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483561",
+      "name": "Okanagan Lake North Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483562",
+      "name": "North Thompson River Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483563",
+      "name": "Saysutshun (Newcastle Island Marine) Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483564",
+      "name": "Nairn Falls Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483565",
+      "name": "Moyie Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483567",
+      "name": "Mount Robson Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483568",
+      "name": "Mount Fernie Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483570",
+      "name": "Morton Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483571",
+      "name": "Montague Harbour Marine Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483572",
+      "name": "Monck Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483574",
+      "name": "Moberly Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483575",
+      "name": "Miracle Beach Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483576",
+      "name": "Meziadin Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483577",
+      "name": "McDonald Creek Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483578",
+      "name": "Martha Creek Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483580",
+      "name": "Mabel Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483581",
+      "name": "Loveland Bay Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483582",
+      "name": "Little Qualicum Falls Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483583",
+      "name": "Liard River Hot Springs Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483584",
+      "name": "Lakelse Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483585",
+      "name": "Lac Le Jeune Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483586",
+      "name": "Lac La Hache Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483587",
+      "name": "Kootenay Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483589",
+      "name": "Kokanee Creek Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483590",
+      "name": "Kleanza Creek Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483591",
+      "name": "Kikomun Creek Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483592",
+      "name": "Kettle River Recreation Area",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483593",
+      "name": "Kentucky-Alleyne Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483594",
+      "name": "Kekuli Bay Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483595",
+      "name": "Juniper Beach Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483596",
+      "name": "Juan de Fuca Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483599",
+      "name": "Inland Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483600",
+      "name": "Horsefly Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483601",
+      "name": "Herald Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483603",
+      "name": "Green Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483604",
+      "name": "Gordon Bay Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483605",
+      "name": "Goldstream Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483606",
+      "name": "Golden Ears Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483607",
+      "name": "Gladstone Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483610",
+      "name": "French Beach Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483612",
+      "name": "Fintry Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483613",
+      "name": "Fillongley Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483614",
+      "name": "Englishman River Falls Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483615",
+      "name": "Ellison Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483617",
+      "name": "Elk Falls Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483618",
+      "name": "E. C. Manning Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483619",
+      "name": "Dry Gulch Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483623",
+      "name": "Cultus Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483624",
+      "name": "Crooked River Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483625",
+      "name": "Cowichan River Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483627",
+      "name": "Sx\u0331\u00f3tsaqel / Chilliwack Lake Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483628",
+      "name": "Charlie Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483629",
+      "name": "Champion Lakes Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483632",
+      "name": "Carp Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483636",
+      "name": "Bromley Rock Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483637",
+      "name": "T\u0101 Ch'il\u0101 Park [a.k.a. Boya Lake Park]",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483638",
+      "name": "Bowron Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483639",
+      "name": "Blanket Creek Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483640",
+      "name": "Birkenhead Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483641",
+      "name": "Big Bar Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483643",
+      "name": "Beaumont Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483644",
+      "name": "Beatton Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483645",
+      "name": "Bear Creek Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483646",
+      "name": "Bamberton Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:BC",
+      "id": "-2147483647",
+      "name": "Alice Lake Provincial Park",
+      "rec_area": null,
+      "state": "BC",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483452",
+      "name": "Beebe Bridge Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.8078,
+      "longitude": -119.9733,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483476",
+      "name": "Posey Island Marine State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.61875,
+      "longitude": -123.1681,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483478",
+      "name": "Jones Island Marine State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.61757,
+      "longitude": -123.0483,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483504",
+      "name": "Obstruction Pass State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.609,
+      "longitude": -122.825,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483518",
+      "name": "Hope Island (Mason)",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.1835,
+      "longitude": -122.9316,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483528",
+      "name": "Sucia Island State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.76305,
+      "longitude": -122.9125,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483529",
+      "name": "Squilchuck State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.31454,
+      "longitude": -120.3713,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483533",
+      "name": "Riverside State Park - Lake Spokane",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.838518,
+      "longitude": -117.762392,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483538",
+      "name": "Camano Island State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.13122,
+      "longitude": -122.5028,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483540",
+      "name": "Yakima Sportsman State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.59188,
+      "longitude": -120.4529,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483543",
+      "name": "Wenatchee Confluence State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.46236,
+      "longitude": -120.3288,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483544",
+      "name": "Wanapum State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.90050163,
+      "longitude": -119.9929169,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483545",
+      "name": "Wallace Falls State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.86565,
+      "longitude": -121.68,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483547",
+      "name": "Twin Harbors State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.85614,
+      "longitude": -124.1082,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483548",
+      "name": "Twenty-Five Mile Creek State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.99218,
+      "longitude": -120.2595,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483549",
+      "name": "Twanoh State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.37754,
+      "longitude": -122.9746,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483551",
+      "name": "Sun Lakes State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": null,
+      "longitude": null,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483552",
+      "name": "Steamboat Rock State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.86843,
+      "longitude": -119.0924,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483554",
+      "name": "Spencer Spit State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.53236,
+      "longitude": -122.8662,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483557",
+      "name": "Sequim Bay State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.0407,
+      "longitude": -123.0308,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483558",
+      "name": "Seaquest State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.29573,
+      "longitude": -122.8176,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483559",
+      "name": "Schafer State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.09783,
+      "longitude": -123.4665,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483560",
+      "name": "Scenic Beach State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.64626,
+      "longitude": -122.8469,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483561",
+      "name": "Saltwater State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.37473,
+      "longitude": -122.321,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483565",
+      "name": "Riverside State Park - Bowl and Pitcher",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.69833066,
+      "longitude": -117.4945174,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483567",
+      "name": "Rasar State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.51847,
+      "longitude": -121.9033,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483568",
+      "name": "Rainbow Falls State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.63442,
+      "longitude": -123.2341,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483569",
+      "name": "Potlatch State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.36226,
+      "longitude": -123.1579,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483570",
+      "name": "Potholes State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.97079,
+      "longitude": -119.3486,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483572",
+      "name": "Penrose Point State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.25354,
+      "longitude": -122.7484,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483573",
+      "name": "Pearrygin Lake State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.4948,
+      "longitude": -120.156,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483576",
+      "name": "Paradise Point State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 45.86595,
+      "longitude": -122.7059,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483577",
+      "name": "Pacific Beach State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.20622,
+      "longitude": -124.2022,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483582",
+      "name": "Ocean City State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.03147,
+      "longitude": -124.1566,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483584",
+      "name": "Mount Spokane State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.91358147948196,
+      "longitude": -117.11202813805961,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483585",
+      "name": "Moran State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.65768,
+      "longitude": -122.8625,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483586",
+      "name": "Millersylvania State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.90971,
+      "longitude": -122.906,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483588",
+      "name": "Maryhill State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 45.68224,
+      "longitude": -120.8347,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483589",
+      "name": "Manchester State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.57732,
+      "longitude": -122.5563,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483590",
+      "name": "Lincoln Rock State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.53425,
+      "longitude": -120.2834,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483591",
+      "name": "Lewis and Clark Trail State Park (SE Washington)",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.28721553,
+      "longitude": -118.0719656,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483592",
+      "name": "Lewis and Clark State Park (SW Washington)",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.5225,
+      "longitude": -122.8133,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483593",
+      "name": "Larrabee State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.65313,
+      "longitude": -122.4901,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483594",
+      "name": "Lake Wenatchee State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.80696,
+      "longitude": -120.7134,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483595",
+      "name": "Lake Sylvia State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.9916,
+      "longitude": -123.6012,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483596",
+      "name": "Lake Sammamish State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.55292,
+      "longitude": -122.06753,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483598",
+      "name": "Lake Easton State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.2451,
+      "longitude": -121.1847,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483599",
+      "name": "Lake Chelan State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.87371,
+      "longitude": -120.2004,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483600",
+      "name": "Kitsap Memorial State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.81642,
+      "longitude": -122.6444,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483601",
+      "name": "Kanaskat-Palmer State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.31198,
+      "longitude": -121.8987,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483603",
+      "name": "Joemma Beach",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.22529925167554,
+      "longitude": -122.80576171163383,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483604",
+      "name": "Jarrell Cove State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.2858,
+      "longitude": -122.8811,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483607",
+      "name": "Illahee State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.59558,
+      "longitude": -122.5974,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483608",
+      "name": "Ike Kinswa State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.55534,
+      "longitude": -122.5298,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483610",
+      "name": "Grayland Beach State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.79419,
+      "longitude": -124.0915,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483612",
+      "name": "Fort Worden State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.13243,
+      "longitude": -122.769,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483613",
+      "name": "Fort Townsend State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.07805,
+      "longitude": -122.7945,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483615",
+      "name": "Fort Flagler State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.08586,
+      "longitude": -122.7016,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483616",
+      "name": "Fort Ebey State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.22462,
+      "longitude": -122.7584,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483617",
+      "name": "Fort Casey State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.16386,
+      "longitude": -122.6782,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483619",
+      "name": "Fields Spring State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.081627,
+      "longitude": -117.167431,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483622",
+      "name": "Dosewallips State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.68555,
+      "longitude": -122.9002,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483624",
+      "name": "Deception Pass State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.39753,
+      "longitude": -122.64588,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483625",
+      "name": "Dash Point State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.31779,
+      "longitude": -122.4071,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483626",
+      "name": "Daroga State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.70774,
+      "longitude": -120.1958,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483627",
+      "name": "Curlew Lake State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.72265,
+      "longitude": -118.6568,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483628",
+      "name": "Conconully State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.55716,
+      "longitude": -119.7512,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483630",
+      "name": "Columbia Hills State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 45.64902,
+      "longitude": -121.1239,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483633",
+      "name": "Cape Disappointment State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 46.29841,
+      "longitude": -124.0632,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483636",
+      "name": "Brooks Memorial State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 45.94976,
+      "longitude": -120.6656,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483638",
+      "name": "Bridgeport State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.00307,
+      "longitude": -119.6258,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483639",
+      "name": "Bogachiel State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.89481,
+      "longitude": -124.3643,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483640",
+      "name": "Blake Island State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.54247,
+      "longitude": -122.4834,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483641",
+      "name": "Birch Bay State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.90534,
+      "longitude": -122.7682,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483643",
+      "name": "Belfair State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 47.43167,
+      "longitude": -122.877,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483644",
+      "name": "Beacon Rock State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 45.62318,
+      "longitude": -122.0253,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483645",
+      "name": "Bay View State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.48806,
+      "longitude": -122.4805,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483646",
+      "name": "Battle Ground Lake State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 45.80295,
+      "longitude": -122.4867,
+      "reservation_type": "reservable"
+    },
+    {
+      "provider": "GoingToCamp:WA",
+      "id": "-2147483647",
+      "name": "Alta Lake State Park",
+      "rec_area": "Washington",
+      "state": "WA",
+      "latitude": 48.03218,
+      "longitude": -119.9347,
+      "reservation_type": "reservable"
+    },
     {
       "provider": "RecreationDotGov",
       "id": "10000447",

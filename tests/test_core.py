@@ -1515,9 +1515,15 @@ class TestSeedKeysMatchProviders(unittest.TestCase):
         self.seed = catalog.load_seed()
 
     def test_every_seed_provider_is_one_a_provider_would_emit(self):
+        # Derived from the registry, not a hand-kept list — a new provider
+        # whose seed key disagrees with its name must fail here on day one.
+        from app.providers import known_providers
         emitted = set()
-        for spec in ("RecreationDotGov", "ReserveAmerica:OR", "Mock"):
-            emitted.add(build_provider(spec, state="OR").name)
+        for spec in known_providers():
+            try:
+                emitted.add(build_provider(spec, state="OR").name)
+            except Exception:      # camply providers need camply installed
+                emitted.add(catalog.build_provider_name(spec))
         used = {c.provider for c in self.seed}
         self.assertTrue(used, "seed is empty")
         self.assertEqual(used - emitted, set(),
@@ -1599,6 +1605,210 @@ class TestScopeComesFromTheCatalog(DBTestCase):
             self.conn, source, provider, START, START + timedelta(days=3))
         self.assertEqual(len(units), 1)
         self.assertEqual(units[0].scope, [])
+
+
+# ------------------------------------------- GoingToCamp (WA + BC parks) ----
+
+class GTCTestCase(unittest.TestCase):
+    """Replays payloads captured live from Washington on 2026-07-28."""
+
+    def setUp(self):
+        from app.providers.goingtocamp import GoingToCampProvider
+        self.cls = GoingToCampProvider
+        self.locations = json.loads(
+            (FIXTURES / "gtc_wa_resourcelocation.json").read_text())
+        self.availability = json.loads(
+            (FIXTURES / "gtc_wa_availability.json").read_text())
+
+    def provider(self, availability=None, calls=None):
+        avail = self.availability if availability is None else availability
+        calls = calls if calls is not None else []
+
+        def fetcher(path, params):
+            calls.append((path, params))
+            if path == "/api/resourceLocation":
+                return self.locations
+            if path == "/api/availability/map":
+                got = avail(params) if callable(avail) else avail
+                return got
+            raise AssertionError(f"unexpected path {path}")
+
+        return self.cls("WA", "washington.goingtocamp.com", 3,
+                        state="WA", fetcher=fetcher), calls
+
+
+class TestGoingToCampCatalog(GTCTestCase):
+    def test_only_campable_locations_are_catalogued(self):
+        # The rec area lists day-use spots too; they are not campgrounds.
+        p, _ = self.provider()
+        names = {c.name for c in p.list_campgrounds()}
+        self.assertIn("Alta Lake State Park", names)
+        self.assertNotIn("Anderson Lake", names)      # no campable category
+        self.assertNotIn("Big Eddy", names)
+
+    def test_coordinates_are_parsed_from_the_gps_string(self):
+        p, _ = self.provider()
+        alta = [c for c in p.list_campgrounds() if c.name == "Alta Lake State Park"][0]
+        self.assertAlmostEqual(alta.latitude, 48.03218, places=5)
+        self.assertAlmostEqual(alta.longitude, -119.9347, places=4)
+
+    def test_a_park_without_coordinates_is_kept_not_dropped(self):
+        # Sun Lakes has no gpsCoordinates live. §13: show it as unlocated,
+        # never drop it and never invent a position. BC Parks is almost
+        # entirely in this state, so it is not an edge case.
+        p, _ = self.provider()
+        parks = p.list_campgrounds()
+        sun = [c for c in parks if c.name == "Sun Lakes State Park"]
+        self.assertEqual(len(sun), 1)
+        self.assertIsNone(sun[0].latitude)
+        self.assertFalse(sun[0].has_location)
+
+    def test_the_whole_catalog_costs_one_request(self):
+        p, calls = self.provider()
+        p.list_campgrounds()
+        self.assertEqual(len(calls), 1)
+        self.assertEqual(calls[0][0], "/api/resourceLocation")
+
+    def test_registry_builds_both_portals(self):
+        wa = build_provider("GoingToCamp:WA")
+        bc = build_provider("GoingToCamp:BC")
+        self.assertEqual(wa.name, "GoingToCamp:WA")
+        self.assertEqual(wa.host, "washington.goingtocamp.com")
+        self.assertEqual(bc.state, "BC")
+        self.assertEqual(bc.host, "camping.bcparks.ca")
+
+    def test_unknown_portal_refuses_rather_than_guessing_a_host(self):
+        with self.assertRaises(ValueError):
+            build_provider("GoingToCamp:Nowhere")
+
+
+class TestGoingToCampAvailabilityEncoding(GTCTestCase):
+    """The daily codes, derived by cross-tabulation — documented nowhere.
+
+    Verified live 2026-07-28 on one Alta Lake loop: every site bookable for a
+    2-night stay read (0,0,0) or (0,0,1), and no unbookable site had its first
+    two entries both 0. So 0 is open, the entry after the last night is
+    checkout day, and anything that is not 0 is not open.
+    """
+
+    def runs(self, codes, nights=2, start=None):
+        p, _ = self.provider()
+        req = SearchRequest(provider=p.name, start_date=start or START,
+                            end_date=(start or START) + timedelta(days=30),
+                            nights=nights, campground_ids=["-1"])
+        return list(p._runs(req, "-1", "site-1", codes))
+
+    def test_a_two_night_run_needs_two_open_nights(self):
+        self.assertEqual(len(self.runs([0, 0, 1])), 1)      # bookable
+        self.assertEqual(len(self.runs([1, 0, 0])), 1)      # bookable from night 2
+        self.assertEqual(len(self.runs([1, 1, 0])), 0)      # only one open night
+        self.assertEqual(len(self.runs([1, 0, 1])), 0)
+
+    def test_checkout_day_is_not_required_to_be_open(self):
+        # (0,0,1) was observed on 7 sites that were genuinely bookable.
+        run = self.runs([0, 0, 1])[0]
+        self.assertEqual(run.available_date, START)
+        self.assertEqual(run.nights, 2)
+
+    def test_unknown_codes_are_never_treated_as_available(self):
+        # Codes 4 and 5 appear on a couple of sites and mean something we have
+        # not identified. Unknown is not a green light (§13).
+        self.assertEqual(len(self.runs([4, 4, 4])), 0)
+        self.assertEqual(len(self.runs([5, 4, 5])), 0)
+        self.assertEqual(len(self.runs([0, 4])), 0)
+
+    def test_offsets_map_to_real_dates(self):
+        runs = self.runs([1, 1, 0, 0, 0], nights=2)
+        self.assertEqual([r.available_date for r in runs],
+                         [START + timedelta(days=2), START + timedelta(days=3)])
+
+    def test_the_captured_loop_reproduces_the_live_counts(self):
+        """Cross-checked against the platform's own stay-level answer.
+
+        The live run asked the API "is this site bookable for a 2-night stay
+        starting on day one" and got 25 of 46. Our run detection finds runs
+        starting on ANY night, so it legitimately finds more — the difference
+        must be exactly the sites whose codes are (1, 0, 0), bookable from
+        night two. That is the check worth making: not that the numbers match,
+        but that every extra one is explained.
+        """
+        p, _ = self.provider()
+        ra = self.availability["resourceAvailabilities"]
+        self.assertEqual(len(ra), 46)
+        req = SearchRequest(provider=p.name, start_date=START,
+                            end_date=START + timedelta(days=3), nights=2,
+                            campground_ids=["-1"])
+        codes = {rid: [d["availability"] for d in days] for rid, days in ra.items()}
+        runs = {rid: list(p._runs(req, "-1", rid, c)) for rid, c in codes.items()}
+
+        first_night = {rid for rid, rs in runs.items()
+                       if any(r.available_date == START for r in rs)}
+        self.assertEqual(len(first_night), 25, "matches the platform's own answer")
+
+        any_night = {rid for rid, rs in runs.items() if rs}
+        extra = any_night - first_night
+        self.assertEqual({tuple(codes[rid]) for rid in extra}, {(1, 0, 0)})
+        self.assertEqual(len(extra), 2)
+
+
+class TestGoingToCampSearch(GTCTestCase):
+    def test_unscoped_search_refuses_rather_than_crawling_everything(self):
+        p, _ = self.provider()
+        with self.assertRaises(ValueError):
+            p.search(SearchRequest(provider=p.name, start_date=START,
+                                   end_date=START + timedelta(days=3), nights=2))
+
+    def test_sub_maps_are_followed_or_the_park_reads_as_empty(self):
+        # A park's root map usually holds no sites — only links to its loops.
+        root = {"resourceAvailabilities": {},
+                "mapLinkAvailabilities": {"-500": {}, "-501": {}}}
+        loop = {"resourceAvailabilities": {"s1": [{"availability": 0},
+                                                  {"availability": 0}]},
+                "mapLinkAvailabilities": {}}
+        seen_maps = []
+
+        def avail(params):
+            seen_maps.append(str(params["mapId"]))
+            return root if str(params["mapId"]).startswith("-2147") else loop
+
+        p, calls = self.provider(availability=avail)
+        req = SearchRequest(provider=p.name, start_date=START,
+                            end_date=START + timedelta(days=2), nights=2,
+                            campground_ids=["-2147483647"])
+        sites = p.search(req)
+        self.assertIn("-500", seen_maps)
+        self.assertIn("-501", seen_maps)
+        self.assertTrue(sites, "sites live on the sub-maps, not the root")
+
+    def test_booking_url_deep_links_into_their_own_flow(self):
+        # §8j-B: we hand off, we never book.
+        p, _ = self.provider()
+        url = p.booking_url("-2147483647", START)
+        self.assertIn("washington.goingtocamp.com/create-booking/results", url)
+        self.assertIn("resourceLocationId=-2147483647", url)
+        self.assertIn(f"startDate={START.isoformat()}", url)
+
+    def test_scope_is_required_so_the_scanner_fills_it_from_the_catalog(self):
+        self.assertTrue(build_provider("GoingToCamp:WA").requires_scope)
+
+
+class TestGoingToCampSeeded(unittest.TestCase):
+    def setUp(self):
+        self.seed = catalog.load_seed()
+
+    def test_washington_state_parks_are_in_the_catalog(self):
+        wa = [c for c in self.seed if c.provider == "GoingToCamp:WA"]
+        self.assertGreaterEqual(len(wa), 79)
+        self.assertTrue(any("Alta Lake" in c.name for c in wa))
+        self.assertTrue(all(c.state == "WA" for c in wa))
+
+    def test_bc_parks_are_catalogued_even_though_they_lack_coordinates(self):
+        # The platform does not publish coordinates for BC. They are still the
+        # known universe (§8k) — searchable, listed, honestly unmappable.
+        bc = [c for c in self.seed if c.provider == "GoingToCamp:BC"]
+        self.assertGreaterEqual(len(bc), 100)
+        self.assertTrue(all(c.state == "BC" for c in bc))
+        self.assertTrue(any(not c.has_location for c in bc))
 
 
 if __name__ == "__main__":
