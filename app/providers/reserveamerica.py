@@ -105,34 +105,32 @@ def page_is_complete(page: str) -> bool:
 
 
 def _fetch_url(url: str) -> tuple[int, str]:
-    """GET a URL: httpx, else requests, else the standard library.
+    """GET a URL with `requests`, falling back to the standard library.
 
     This is one plain GET with no session state, so it does not need a
     particular client — but it does need a **tolerant** one. Measured against
     this host on 2026-07-28, fetching the same directory page:
 
-    | client                | result                                  |
-    |-----------------------|-----------------------------------------|
-    | `requests` (urllib3)  | 176 KB, complete                        |
-    | `urllib` (http.client)| 74 KB, cut off mid-`<head>`, every time  |
+    | client                 | result                                 |
+    |------------------------|----------------------------------------|
+    | `requests` (urllib3)   | 176 KB, complete                       |
+    | `urllib` (http.client) | 74 KB, cut off mid-`<head>`, every time |
 
     The server sends `Transfer-Encoding: chunked` and ends the body without its
     terminating chunk. urllib3 hands back what arrived; `http.client` raises
-    `IncompleteRead`, and the partial body it carries really is short. So the
-    stdlib path is a last resort that is known to fail on ReserveAmerica —
-    kept only so the module imports and runs somewhere with neither library.
-    Truncation is returned, never hidden: `page_is_complete` upstairs decides
-    whether to retry or refuse.
+    `IncompleteRead`, and the partial body it carries really is short.
+
+    **httpx is deliberately not used here**, though an earlier version tried it
+    first. It is built on `h11`, a strict spec-correct parser, and this host's
+    defining behaviour is a spec violation — so preferring it over a client
+    proven to work on this exact page was risk with no upside. It has been
+    dropped from requirements.txt rather than merely reordered.
+
+    The stdlib path is a last resort known to fail on ReserveAmerica, kept only
+    so the module runs somewhere without `requests`. Truncation is returned,
+    never hidden: `page_is_complete` upstairs decides whether to retry or refuse.
     """
     headers = {"User-Agent": USER_AGENT}
-
-    try:
-        import httpx
-    except ImportError:
-        pass
-    else:
-        response = httpx.get(url, headers=headers, follow_redirects=True, timeout=40.0)
-        return response.status_code, response.text
 
     try:
         import requests

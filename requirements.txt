@@ -4,7 +4,12 @@
 # 0.34.2 is the version in samples/camply-main that the adapter was verified against.
 camply==0.34.2
 PyYAML>=6.0
-httpx>=0.27
+# `requests` is used directly by the ReserveAmerica and GoingToCamp clients.
+# It arrives via camply too, but a direct dependency is declared directly.
+# NOT httpx: it is built on the strict h11 parser, and ReserveAmerica ends
+# chunked bodies without a terminator. urllib3 tolerates that; strict
+# parsers do not. See _fetch_url in app/providers/reserveamerica.py.
+requests>=2.31
 apprise>=1.8
 apscheduler>=3.10
 fastapi>=0.115

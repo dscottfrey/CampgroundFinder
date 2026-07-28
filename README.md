@@ -22,7 +22,7 @@ Section references below (§5, §8k, …) point into it.
 | 8 | GoingToCamp | **done** — WA state parks + BC Parks |
 | — | Pacing: shared rate limiter, round-robin, scanner status | **done** (`docs/scanning-design.md` steps 1–2) |
 
-**138 tests, standard library only, no network required.**
+**139 tests, standard library only, no network required.**
 
 ### What actually works
 
@@ -74,6 +74,11 @@ and step 5 (zoom-based queue priority). Steps 1 and 2 — the shared rate limite
 and the scanner status row — are done, so the pacing groundwork wider scanning
 needed is in place.
 
+**Known gap: BC parks have no coordinates.** 113 of 114 are catalogued but
+unmappable, because the platform doesn't publish them. Every one carries its
+authoritative `bcparks.ca` URL, so this is fixable — see `docs/bc-coordinates.md`
+for the design and the one thing needed to start.
+
 One caveat carried forward: camply owns its own HTTP, so its several internal
 requests per search can't be spaced individually. The adapter holds the shared
 request slot around the whole call, but camply's internal pacing is unverified —
@@ -121,6 +126,7 @@ Two fixes, both in `app/providers/reserveamerica.py`:
 | File | What's in it |
 |---|---|
 | `docs/scraping-policy.md` | **How we behave toward platforms — supersedes §6c** |
+| `docs/bc-coordinates.md` | Why BC parks have no coordinates, and how to fix it |
 | `docs/scanning-design.md` | Two-tier scanning, pacing rules, on-demand guards |
 | `docs/reserveamerica-handoff.md` | RA endpoints (working), and the GoingToCamp blocker |
 | `docs/reserveamerica-clients.md` | Which agencies run on ReserveAmerica |
@@ -145,7 +151,7 @@ Steps 1–3 run on the **standard library alone** — the tests need no
 dependencies at all:
 
 ```bash
-python3 -m unittest discover -s tests -t . -v     # 138 tests, no network
+python3 -m unittest discover -s tests -t . -v     # 139 tests, no network
 ```
 
 To see the whole pipeline with no deps and no network, point a config at the

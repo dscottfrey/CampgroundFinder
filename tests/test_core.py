@@ -11,6 +11,7 @@ Run:  python3 -m unittest discover -s tests -v
 from __future__ import annotations
 
 import json
+import pathlib
 import sys
 import tempfile
 import types
@@ -1492,11 +1493,35 @@ class TestReserveAmericaTruncatedPages(unittest.TestCase):
 
 
 class TestReserveAmericaTransport(unittest.TestCase):
-    def test_a_plain_get_does_not_hard_depend_on_httpx(self):
-        # httpx is in requirements.txt but is not installable everywhere, and
-        # this is one GET with no session state.
+    """httpx must not come back as the preferred client.
+
+    This host ends chunked bodies without a terminator. urllib3 tolerates
+    that; strict parsers (h11, http.client) do not — the stdlib truncated the
+    same page to 74 KB where requests got 176 KB, every time. Preferring an
+    unproven strict client over a proven tolerant one is risk with no upside,
+    so httpx is gone from both the code and requirements.txt.
+    """
+
+    ROOT = Path(__file__).resolve().parent.parent
+
+    def test_the_fetcher_does_not_reach_for_httpx(self):
+        import inspect
         import app.providers.reserveamerica as ra
-        self.assertTrue(callable(ra._fetch_url))
+        source = inspect.getsource(ra._fetch_url)
+        # Strip the docstring, which legitimately explains why httpx is absent.
+        code = source.split('"""')[2] if source.count('"""') >= 2 else source
+        self.assertNotIn("httpx", code)
+        self.assertIn("requests", code)
+
+    def test_httpx_is_not_a_declared_dependency(self):
+        # Comments may mention it; a requirement line may not.
+        lines = [
+            line.split("#")[0].strip()
+            for line in (self.ROOT / "requirements.txt").read_text().splitlines()
+        ]
+        declared = [line for line in lines if line]
+        self.assertTrue(any(d.startswith("requests") for d in declared), declared)
+        self.assertFalse([d for d in declared if "httpx" in d], declared)
 
 
 # ------------------------------- seed / provider key agreement (2026-07-28) ----
