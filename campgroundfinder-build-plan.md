@@ -173,12 +173,13 @@ of the system (storage, map, filters, watches, alerts) is source-agnostic.
   GoingToCamp list; if it is, add it like any other source. If BC Parks isn't
   pre-wired, camply's GoingToCamp client can usually be pointed at the site's own
   endpoints with a small subclass rather than a from-scratch provider.
-- **Parks Canada national parks** (`reservation.pc.gc.ca`): not in camply →
-  custom provider, same read-only pattern as PerfectMind (§7). Availability is
-  served by JSON XHR behind the booking site; inspect and replay the *read*
-  calls. Unofficial API write-ups exist (e.g. a Parse.bot marketplace listing)
-  as a reference for endpoint shape — use them to learn the shape, don't depend
-  on a third party at runtime.
+- **Parks Canada national parks** (`reservation.pc.gc.ca`): ~~not in camply →
+  custom provider~~ — **CORRECTED 2026-07-27: it IS in camply.**
+  `reservation.pc.gc.ca` is **GoingToCamp recreation area 14** in camply
+  0.34.2's `going_to_camp/rec_areas.py`. So Parks Canada is a **config entry,
+  not a custom provider** — the same conclusion as BC Parks (area 12). Both
+  Canadian sources come free once GoingToCamp enumeration works. Full client
+  table in `docs/goingtocamp-clients.md`.
 - **Campspot** (`campspot.com`): private-campground platform, not in camply →
   custom provider. Campspot's official booking API is partner/B2B-only, but each
   park's public booking page makes JSON availability calls you can replay for the
