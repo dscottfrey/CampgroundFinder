@@ -22,7 +22,7 @@ Section references below (§5, §8k, …) point into it.
 | 8 | GoingToCamp | **done** — WA state parks + BC Parks |
 | — | Pacing: shared rate limiter, round-robin, scanner status | **done** (`docs/scanning-design.md` steps 1–2) |
 
-**154 tests, standard library only, no network required.**
+**163 tests, standard library only, no network required.**
 
 ### What actually works
 
@@ -78,6 +78,23 @@ One caveat carried forward: camply owns its own HTTP, so its several internal
 requests per search can't be spaced individually. The adapter holds the shared
 request slot around the whole call, but camply's internal pacing is unverified —
 worth checking before recreation.gov carries on-demand traffic.
+
+### Two honesty bugs found by asking "what's actually in the catalog?"
+
+Both were the map asserting something it did not know — the Reehers failure
+inverted. Scott found them by asking whether the 803 figure included parks that
+can't be scanned.
+
+1. **206 first-come campgrounds were being marked `full`.** They have no
+   reservation feed, so a scan finding nothing there is exactly as informative
+   as not looking. "Full" would send someone driving past a campground with
+   space. They now read `unknown`, with the reason spelled out.
+2. **A rec-area-scoped source stamped the whole state.** Scanning Mt Hood
+   marked every Oregon recreation.gov campground `full`, coastal ones included,
+   though they were never queried. A scan now stamps only what it can speak
+   for. Where the covered set is genuinely unknowable — `Campground` doesn't
+   record which rec area it belongs to — it stamps only what came back and
+   leaves the rest alone. Silence beats a confident wrong answer.
 
 ### The bug the live run found (2026-07-28)
 
@@ -146,7 +163,7 @@ Steps 1–3 run on the **standard library alone** — the tests need no
 dependencies at all:
 
 ```bash
-python3 -m unittest discover -s tests -t . -v     # 154 tests, no network
+python3 -m unittest discover -s tests -t . -v     # 163 tests, no network
 ```
 
 To see the whole pipeline with no deps and no network, point a config at the

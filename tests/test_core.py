@@ -2036,5 +2036,149 @@ class TestSeedCarriesProvenance(unittest.TestCase):
         self.assertIn("BC Parks API", bc[0].coord_source)
 
 
+# ------------------------- first-come campgrounds are never called "full" ----
+
+class TestFirstComeIsNeverCalledFull(DBTestCase):
+    """206 of the 803 catalogued campgrounds are first-come, from RIDB's own
+    Reservable flag. They have no reservation feed, so a scan finding nothing
+    says *nothing* about whether sites are free — it is exactly as
+    uninformative as not looking.
+
+    Marking them "full" would send someone driving past a campground with
+    space: the Reehers failure inverted, with the map asserting what it does
+    not know.
+    """
+
+    def setUp(self):
+        super().setUp()
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="Mock", id="res", name="Reservable Camp",
+                       state="OR", reservation_type="reservable"),
+            Campground(provider="Mock", id="fcfs", name="First-Come Camp",
+                       state="OR", reservation_type="first_come"),
+        ], now=NOW)
+
+    def stamp(self, cg_id):
+        return store.stamp_status_from_availability(
+            self.conn, "Mock", cg_id, checked_ok=True, now=NOW)
+
+    def test_an_empty_scan_leaves_a_first_come_site_unknown_not_full(self):
+        self.assertEqual(self.stamp("fcfs"), STATUS_UNKNOWN)
+        cg = store.get_campground(self.conn, "Mock", "fcfs")
+        self.assertIn("first-come", cg.status_reason)
+
+    def test_a_reservable_site_with_nothing_open_is_still_full(self):
+        # The honest statement here: we checked a real feed and it was empty.
+        self.assertEqual(self.stamp("res"), STATUS_FULL)
+
+    def test_a_first_come_site_reporting_availability_is_shown_as_available(self):
+        # Some providers do publish first-come status; believe it when they do.
+        store.upsert_availability(self.conn, [a_site(
+            provider="Mock", campsite_id="f1", facility_id="fcfs",
+            reservation_type="first_come")], now=NOW)
+        self.assertEqual(self.stamp("fcfs"), STATUS_AVAILABLE)
+
+    def test_the_end_to_end_scan_does_not_call_them_full(self):
+        class Empty(MockProvider):
+            def search(self, req):
+                return []
+
+        config = parse_config({"round_pause_seconds": 0, "sources": [
+            {"label": "S", "provider": "Mock", "state": "OR"}]})
+        scan_once(self.conn, config, notifier=Notifier([]), start=START,
+                  window_days=3, now=NOW,
+                  provider_factory=lambda spec, state=None, **kw: Empty(state=state))
+        self.assertEqual(
+            store.get_campground(self.conn, "Mock", "fcfs").status, STATUS_UNKNOWN)
+        self.assertEqual(
+            store.get_campground(self.conn, "Mock", "res").status, STATUS_FULL)
+
+    def test_the_real_catalog_has_first_come_entries_to_protect(self):
+        seed = catalog.load_seed()
+        fcfs = [c for c in seed if c.reservation_type == "first_come"]
+        self.assertGreater(len(fcfs), 100,
+                           "RIDB flags a large minority as first-come")
+
+
+# ------------------- a scan only speaks for what it actually queried ----
+
+class TestScanDoesNotOverreach(DBTestCase):
+    """A rec-area-scoped source must not stamp the whole state.
+
+    Scanning Mt Hood used to mark every Oregon recreation.gov campground
+    `full`, including coastal ones hundreds of miles away that were never
+    queried — the map asserting knowledge it did not have.
+    """
+
+    def setUp(self):
+        super().setUp()
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="Mock", id="in-scope", name="Mt Hood site", state="OR"),
+            Campground(provider="Mock", id="far-away", name="Coast site", state="OR"),
+        ], now=NOW)
+
+    def scan(self, provider_cls, rec_areas=None):
+        source = {"label": "Mt Hood NF", "provider": "Mock", "state": "OR"}
+        if rec_areas:
+            source["rec_area_ids"] = rec_areas
+        config = parse_config({"round_pause_seconds": 0, "sources": [source]})
+        return scan_once(
+            self.conn, config, notifier=Notifier([]), start=START, window_days=3,
+            now=NOW, provider_factory=lambda spec, state=None, **kw: provider_cls(state=state))
+
+    def test_a_rec_area_scan_leaves_uncovered_campgrounds_alone(self):
+        class OnlyInScope(MockProvider):
+            def search(self, req):
+                return [a_site(provider="Mock", campsite_id="s1",
+                               facility_id="in-scope", state="OR")]
+
+        self.scan(OnlyInScope, rec_areas=["1106"])
+        self.assertEqual(
+            store.get_campground(self.conn, "Mock", "in-scope").status,
+            STATUS_AVAILABLE)
+        # Never queried, so it keeps whatever it had — it is NOT called full.
+        far = store.get_campground(self.conn, "Mock", "far-away")
+        self.assertEqual(far.status, STATUS_UNKNOWN)
+        self.assertNotEqual(far.status, STATUS_FULL)
+
+    def test_an_empty_rec_area_scan_stamps_nothing_at_all(self):
+        class Empty(MockProvider):
+            def search(self, req):
+                return []
+
+        self.scan(Empty, rec_areas=["1106"])
+        for cg_id in ("in-scope", "far-away"):
+            self.assertEqual(
+                store.get_campground(self.conn, "Mock", cg_id).status,
+                STATUS_UNKNOWN, f"{cg_id} must not be called full")
+
+    def test_an_unscoped_source_still_stamps_the_whole_provider(self):
+        # A source that genuinely covers everything keeps the old behaviour —
+        # this is about not claiming more than the scope supports.
+        class Empty(MockProvider):
+            def search(self, req):
+                return []
+
+        self.scan(Empty)                      # no rec_area_ids
+        self.assertEqual(
+            store.get_campground(self.conn, "Mock", "far-away").status, STATUS_FULL)
+
+    def test_a_per_campground_unit_stamps_only_its_own_park(self):
+        class Empty(MockProvider):
+            def search(self, req):
+                return []
+
+        config = parse_config({"round_pause_seconds": 0, "sources": [
+            {"label": "S", "provider": "Mock", "state": "OR",
+             "campground_ids": ["in-scope"]}]})
+        scan_once(self.conn, config, notifier=Notifier([]), start=START,
+                  window_days=3, now=NOW,
+                  provider_factory=lambda spec, state=None, **kw: Empty(state=state))
+        self.assertEqual(
+            store.get_campground(self.conn, "Mock", "in-scope").status, STATUS_FULL)
+        self.assertEqual(
+            store.get_campground(self.conn, "Mock", "far-away").status, STATUS_UNKNOWN)
+
+
 if __name__ == "__main__":
     unittest.main()

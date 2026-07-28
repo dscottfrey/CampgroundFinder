@@ -281,7 +281,8 @@ def run_unit(
     report.newly_available += len(new)
     report.scanned_units += 1
     _stamp_catalog_statuses(
-        conn, unit.provider.name, unit.source, unit.scope, report, now=now
+        conn, unit.provider.name, unit.source, unit.scope, report,
+        seen_ids={s.facility_id for s in sites if s.facility_id}, now=now,
     )
     return new
 
@@ -406,14 +407,43 @@ def _stamp_catalog_statuses(
     source: Source,
     scope: Iterable[str],
     report: ScanReport,
+    seen_ids: Optional[set[str]] = None,
     now: Optional[datetime] = None,
 ) -> None:
-    # Scope the stamp to what this unit actually covers, so a park the cycle
-    # hasn't reached yet isn't prematurely marked full.
+    """Stamp only the campgrounds this unit can honestly speak for.
+
+    "No availability rows" means "we looked and found nothing" — but only for
+    campgrounds we actually queried. A source scoped to one rec area used to
+    stamp **every** campground the provider has in that state, so scanning Mt
+    Hood marked coastal campgrounds hundreds of miles away as `full`. The map
+    was asserting knowledge it did not have, which is the same failure as
+    calling a first-come site full, at a larger scale.
+
+    Three cases:
+      * the unit named campgrounds  -> stamp exactly those;
+      * the source covers the whole provider+state -> stamp all of them;
+      * the source is rec-area-scoped and we cannot tell which campgrounds that
+        covers -> stamp only the ones that came back, and leave the rest alone.
+
+    The third case is a known limitation, not a design: `Campground` does not
+    record which rec area it belongs to, so the covered set is genuinely
+    unknown. Until it does, silence beats a confident wrong answer.
+    """
+    scoped = set(scope) or set(source.campground_ids)
+    indeterminate = not scoped and bool(source.rec_area_ids)
+    if indeterminate:
+        scoped = set(seen_ids or ())
+        if not scoped:
+            log.debug(
+                "%s: rec-area-scoped source %s returned nothing; not stamping "
+                "campgrounds it may never have queried",
+                provider_name, source.label,
+            )
+            return
+
     catalogued = store.list_campgrounds(
         conn, provider=provider_name, states=[source.state] if source.state else None
     )
-    scoped = set(scope) or set(source.campground_ids)
     for cg in catalogued:
         if scoped and cg.id not in scoped:
             continue

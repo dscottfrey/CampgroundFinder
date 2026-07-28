@@ -353,10 +353,33 @@ def stamp_status_from_availability(
         "SELECT COUNT(*) AS n FROM availability WHERE provider=? AND facility_id=?",
         (provider, cg_id),
     ).fetchone()["n"]
-    status = STATUS_AVAILABLE if count else STATUS_FULL
-    reason = None if count else "no open sites in the scanned window"
-    set_campground_status(conn, provider, cg_id, status, reason, now=now)
-    return status
+    if count:
+        set_campground_status(conn, provider, cg_id, STATUS_AVAILABLE, None, now=now)
+        return STATUS_AVAILABLE
+
+    # Nothing found. What that MEANS depends on whether the campground can be
+    # reserved at all (§4). For a first-come site there is no reservation feed,
+    # so an empty result says nothing about whether sites are free — it is
+    # exactly as uninformative as not looking. Calling it "full" would send
+    # someone driving past a campground with space, which is the Reehers
+    # failure inverted: the map asserting something it does not know.
+    row = conn.execute(
+        "SELECT reservation_type FROM campgrounds WHERE provider=? AND id=?",
+        (provider, cg_id),
+    ).fetchone()
+    if row and (row["reservation_type"] or "reservable") == "first_come":
+        set_campground_status(
+            conn, provider, cg_id, STATUS_UNKNOWN,
+            "first-come, first-served — availability can't be checked online",
+            now=now,
+        )
+        return STATUS_UNKNOWN
+
+    set_campground_status(
+        conn, provider, cg_id, STATUS_FULL,
+        "no open sites in the scanned window", now=now,
+    )
+    return STATUS_FULL
 
 
 def map_view(
