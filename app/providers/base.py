@@ -74,7 +74,16 @@ class Campground:
     state: Optional[str] = None
     latitude: Optional[float] = None   # None is legitimate — show "location unknown", don't drop (§13)
     longitude: Optional[float] = None
+    #: What the campground AS A WHOLE is: 'reservable' (it takes bookings) or
+    #: 'first_come' (it takes none at all). This is a different claim from the
+    #: one below, and conflating them is how you tell someone a bookable
+    #: campground has no walk-up sites when you never checked.
     reservation_type: str = "reservable"
+    #: Whether a *reservable* campground ALSO holds first-come sites.
+    #: Three-state (§8g): True = known to, False = known not to,
+    #: **None = we don't know**, which is the honest default almost everywhere.
+    #: Never inferred from `reservation_type` — the two are independent.
+    first_come_sites: Optional[bool] = None
     status: str = STATUS_UNKNOWN
     status_reason: Optional[str] = None
     closed_until: Optional[str] = None
@@ -90,6 +99,21 @@ class Campground:
     @property
     def has_location(self) -> bool:
         return self.latitude is not None and self.longitude is not None
+
+    @property
+    def booking_label(self) -> str:
+        """One honest sentence about how you get a site here.
+
+        Says nothing about walk-up sites when `first_come_sites` is None —
+        silence, not a cheerful "all sites reservable" we cannot support.
+        """
+        if self.reservation_type == "first_come":
+            return "First-come, first-served — no reservations"
+        if self.first_come_sites is True:
+            return "Reservable, and some sites are first-come"
+        if self.first_come_sites is False:
+            return "Reservable — every site is bookable"
+        return "Reservable"
 
 
 class Provider(ABC):

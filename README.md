@@ -22,7 +22,7 @@ Section references below (§5, §8k, …) point into it.
 | 8 | GoingToCamp | **done** — WA state parks + BC Parks |
 | — | Pacing: shared rate limiter, round-robin, scanner status | **done** (`docs/scanning-design.md` steps 1–2) |
 
-**163 tests, standard library only, no network required.**
+**171 tests, standard library only, no network required.**
 
 ### What actually works
 
@@ -96,6 +96,25 @@ can't be scanned.
    record which rec area it belongs to — it stamps only what came back and
    leaves the rest alone. Silence beats a confident wrong answer.
 
+### First-come: two separate claims
+
+"This campground takes no reservations" and "this bookable campground *also*
+has walk-up sites" are different facts, and we usually know only the first.
+They're modelled separately, three-state per §8g:
+
+| `reservation_type` | `first_come_sites` | shown as |
+|---|---|---|
+| `first_come` | — | First-come, first-served — no reservations |
+| `reservable` | `True` | Reservable, and some sites are first-come |
+| `reservable` | `False` | Reservable — every site is bookable |
+| `reservable` | `None` *(default)* | Reservable |
+
+The last row is the point: when we don't know, the label **says nothing** about
+walk-up sites rather than implying there are none. Nothing populates
+`first_come_sites` yet — RIDB's campsites endpoint carries a per-site
+`CampsiteReservable` flag and would be the source, as a backfill job like
+`backfill-coordinates`. Until then it stays honestly unknown.
+
 ### The bug the live run found (2026-07-28)
 
 Worth reading before trusting any pager in this codebase.
@@ -163,7 +182,7 @@ Steps 1–3 run on the **standard library alone** — the tests need no
 dependencies at all:
 
 ```bash
-python3 -m unittest discover -s tests -t . -v     # 163 tests, no network
+python3 -m unittest discover -s tests -t . -v     # 171 tests, no network
 ```
 
 To see the whole pipeline with no deps and no network, point a config at the

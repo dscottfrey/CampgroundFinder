@@ -170,7 +170,8 @@ def upsert_campgrounds(
                      name=?, rec_area=?, state=?, latitude=?, longitude=?,
                      reservation_type=?, status=?, status_reason=?, closed_until=?,
                      last_checked=?, seeded=?,
-                     coord_source=COALESCE(?, coord_source)
+                     coord_source=COALESCE(?, coord_source),
+                     first_come_sites=COALESCE(?, first_come_sites)
                    WHERE provider=? AND id=?""",
                 (
                     cg.name, cg.rec_area, cg.state, cg.latitude, cg.longitude,
@@ -179,6 +180,9 @@ def upsert_campgrounds(
                     # COALESCE, not a plain assignment: a routine enumeration
                     # carries no provenance and must not erase a recorded one.
                     cg.coord_source,
+                    # COALESCE again: an enumeration that cannot tell must not
+                    # flip a known answer back to "unknown".
+                    None if cg.first_come_sites is None else int(cg.first_come_sites),
                     cg.provider, cg.id,
                 ),
             )
@@ -188,13 +192,15 @@ def upsert_campgrounds(
                 """INSERT INTO campgrounds (
                      provider, id, name, rec_area, state, latitude, longitude,
                      reservation_type, status, status_reason, closed_until,
-                     first_cataloged, last_checked, seeded, coord_source)
-                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                     first_cataloged, last_checked, seeded, coord_source,
+                     first_come_sites)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     cg.provider, cg.id, cg.name, cg.rec_area, cg.state,
                     cg.latitude, cg.longitude, cg.reservation_type, cg.status,
                     cg.status_reason, cg.closed_until, stamp, stamp,
                     1 if seeded else 0, cg.coord_source,
+                    None if cg.first_come_sites is None else int(cg.first_come_sites),
                 ),
             )
             added += 1
@@ -216,6 +222,11 @@ def row_to_campground(row: sqlite3.Row) -> Campground:
         status_reason=row["status_reason"],
         closed_until=row["closed_until"],
         coord_source=row["coord_source"] if "coord_source" in row.keys() else None,
+        first_come_sites=(
+            None if "first_come_sites" not in row.keys()
+            or row["first_come_sites"] is None
+            else bool(row["first_come_sites"])
+        ),
     )
 
 
@@ -408,6 +419,11 @@ def map_view(
                 "status_reason": cg.status_reason,
                 "open_sites": open_sites,
                 "located": cg.has_location,
+                "reservation_type": cg.reservation_type,
+                # Three-state and deliberately nullable: the UI must be able to
+                # say nothing about walk-up sites when we don't know (§8g).
+                "first_come_sites": cg.first_come_sites,
+                "booking_label": cg.booking_label,
             }
         )
     return out

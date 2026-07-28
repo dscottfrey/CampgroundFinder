@@ -54,6 +54,7 @@ def load_seed(path: str | Path | None = None) -> list[Campground]:
             status=e.get("status", STATUS_UNKNOWN),
             status_reason=e.get("status_reason"),
             coord_source=e.get("coord_source"),
+            first_come_sites=e.get("first_come_sites"),
         )
         for e in entries
     ]
@@ -98,6 +99,7 @@ def write_seed(
                 # survives a database rebuild — otherwise the claim is only as
                 # durable as someone's local .db file.
                 "coord_source": c.coord_source,
+                "first_come_sites": c.first_come_sites,
             }
             for c in sorted(campgrounds, key=lambda c: (c.provider, c.id))
         ],

@@ -2180,5 +2180,102 @@ class TestScanDoesNotOverreach(DBTestCase):
             store.get_campground(self.conn, "Mock", "far-away").status, STATUS_UNKNOWN)
 
 
+# ------------- campground-level vs site-level first-come are different ----
+
+class TestFirstComeIsTwoSeparateClaims(DBTestCase):
+    """"This campground takes no reservations" and "this bookable campground
+    also has walk-up sites" are different facts, and we usually know only the
+    first. Three-state per §8g: yes / no / **unknown**, never inferred.
+    """
+
+    def test_the_two_fields_are_independent(self):
+        cg = Campground(provider="p", id="1", name="n",
+                        reservation_type="reservable", first_come_sites=True)
+        self.assertEqual(cg.reservation_type, "reservable")
+        self.assertIs(cg.first_come_sites, True)
+
+    def test_unknown_is_the_default_and_says_nothing(self):
+        cg = Campground(provider="p", id="1", name="n")
+        self.assertIsNone(cg.first_come_sites)
+        # Crucially it does NOT claim every site is bookable.
+        self.assertEqual(cg.booking_label, "Reservable")
+        self.assertNotIn("every site", cg.booking_label)
+
+    def test_labels_read_honestly_in_each_state(self):
+        def label(rt, fc):
+            return Campground(provider="p", id="1", name="n",
+                              reservation_type=rt, first_come_sites=fc).booking_label
+        self.assertIn("no reservations", label("first_come", None))
+        self.assertIn("some sites are first-come", label("reservable", True))
+        self.assertIn("every site is bookable", label("reservable", False))
+        self.assertEqual(label("reservable", None), "Reservable")
+
+    def test_it_round_trips_through_the_database(self):
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="Mock", id="mixed", name="Mixed", state="OR",
+                       reservation_type="reservable", first_come_sites=True),
+            Campground(provider="Mock", id="pure", name="Pure", state="OR",
+                       reservation_type="reservable", first_come_sites=False),
+            Campground(provider="Mock", id="dunno", name="Dunno", state="OR",
+                       reservation_type="reservable"),
+        ], now=NOW)
+        got = {c.id: c.first_come_sites
+               for c in store.list_campgrounds(self.conn, provider="Mock")}
+        self.assertIs(got["mixed"], True)
+        self.assertIs(got["pure"], False)
+        self.assertIsNone(got["dunno"])       # unknown survives as unknown
+
+    def test_an_enumeration_that_cannot_tell_does_not_erase_a_known_answer(self):
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="Mock", id="mixed", name="Mixed", state="OR",
+                       first_come_sites=True)], now=NOW)
+        # A later refresh from a source with no site-level data.
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="Mock", id="mixed", name="Mixed", state="OR")], now=NOW)
+        cg = store.get_campground(self.conn, "Mock", "mixed")
+        self.assertIs(cg.first_come_sites, True)
+
+    def test_the_map_payload_carries_both_and_a_ready_sentence(self):
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="Mock", id="fcfs", name="Walk-up only", state="OR",
+                       reservation_type="first_come")], now=NOW)
+        pin = store.map_view(self.conn)[0]
+        self.assertEqual(pin["reservation_type"], "first_come")
+        self.assertIsNone(pin["first_come_sites"])
+        self.assertIn("no reservations", pin["booking_label"])
+
+    def test_it_survives_the_seed_round_trip(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "seed.json"
+            catalog.write_seed([
+                Campground(provider="Mock", id="mixed", name="Mixed",
+                           first_come_sites=True),
+                Campground(provider="Mock", id="dunno", name="Dunno"),
+            ], path=path)
+            back = {c.id: c.first_come_sites for c in catalog.load_seed(path)}
+        self.assertIs(back["mixed"], True)
+        self.assertIsNone(back["dunno"])
+
+    def test_a_walk_up_site_inside_a_bookable_campground_is_coherent(self):
+        """The case the two fields exist for.
+
+        A reservable campground that also has walk-up sites: the campground
+        keeps its booking route, while an individual first-come site in it
+        still gets no booking link (§4). Neither fact overrides the other.
+        """
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="Mock", id="mixed", name="Mixed Camp", state="OR",
+                       reservation_type="reservable", first_come_sites=True)], now=NOW)
+        cg = store.get_campground(self.conn, "Mock", "mixed")
+        self.assertIn("some sites are first-come", cg.booking_label)
+
+        walk_up = a_site(facility_id="mixed", reservation_type="first_come",
+                         booking_url=None)
+        bookable = a_site(campsite_id="b1", facility_id="mixed")
+        self.assertNotIn("http", format_alert(walk_up))
+        self.assertIn("http", format_alert(bookable))
+
+
 if __name__ == "__main__":
     unittest.main()

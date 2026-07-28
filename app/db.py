@@ -22,6 +22,10 @@ CREATE TABLE IF NOT EXISTS campgrounds (
   -- and neither is a guess — which must never appear here at all.
   coord_source TEXT,
   coord_updated TEXT,
+  -- Does a reservable campground ALSO hold walk-up sites? Three-state (§8g):
+  -- 1 yes, 0 no, NULL unknown. Distinct from reservation_type, which says what
+  -- the campground as a whole is.
+  first_come_sites INTEGER,
   PRIMARY KEY (provider, id)
 );
 
@@ -104,6 +108,7 @@ def connect(path: str | os.PathLike | None = None) -> sqlite3.Connection:
 MIGRATIONS = [
     ("campgrounds", "coord_source", "TEXT"),
     ("campgrounds", "coord_updated", "TEXT"),
+    ("campgrounds", "first_come_sites", "INTEGER"),
 ]
 
 
