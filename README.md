@@ -7,6 +7,11 @@ catalog** (not just search hits), and alerts you when a spot you want opens up.
 Design and rationale live in [`campgroundfinder-build-plan.md`](campgroundfinder-build-plan.md).
 Section references below (§5, §8k, …) point into it.
 
+> **Picking this up again? Read
+> [`docs/handoff-2026-07-28.md`](docs/handoff-2026-07-28.md) first.** It has
+> the state of play, the next step, and the source-data rules that cost hours
+> to learn.
+
 ## Status — last updated 2026-07-28
 
 | Step | Scope | State |
@@ -75,11 +80,11 @@ bare subscript whose result is discarded — it exists only to raise. We don't
 use that endpoint; `rootMapId` is already on every directory record. So
 `app/providers/goingtocamp.py` talks to the API directly and skips camply.
 
-**Next build step, per `docs/scanning-design.md`:** step 3 — the background
-sweep with adaptive cadence, then step 4 (on-demand refresh, all four guards)
-and step 5 (zoom-based queue priority). Steps 1 and 2 — the shared rate limiter
-and the scanner status row — are done, so the pacing groundwork wider scanning
-needed is in place.
+**Next build step: the map.** A full scan now finds ~35,000 real openings and
+there is no way to look at them — `manage.py demo` serves a list only. Every
+honesty feature built so far (stale, unknown, first-come, unlocated, the
+driveway caveats) is display logic with nowhere to display, and scanning-design
+steps 4 and 5 both need a map to exist. See `docs/handoff-2026-07-28.md`.
 
 One caveat carried forward: camply owns its own HTTP, so its several internal
 requests per search can't be spaced individually. The adapter holds the shared
@@ -215,6 +220,7 @@ Two fixes, both in `app/providers/reserveamerica.py`:
 
 | File | What's in it |
 |---|---|
+| `docs/handoff-2026-07-28.md` | **Start here** — state, next step, hard-won rules |
 | `docs/terminology.md` | **first-come vs hike-in — two axes, never say "walk-up"** |
 | `docs/scraping-policy.md` | **How we behave toward platforms — supersedes §6c** |
 | `docs/bc-coordinates.md` | Why BC parks had no coordinates, and how it was fixed |
