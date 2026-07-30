@@ -13,6 +13,23 @@ from typing import Any, Optional
 
 DEFAULT_CONFIG_PATH = Path("config.yaml")
 
+#: The default basemap. **Not** plain OSM road tiles: the build plan (§8h) rules
+#: them out because they show no trail detail, which is most of the point of
+#: looking at a campground on a map. OpenTopoMap is topographic, free, and
+#: OSM-derived. Its tile server is a volunteer service — fine for a household,
+#: so the app must never scrape it in bulk or pre-cache regions.
+DEFAULT_TILES = {
+    "url": "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+    "attribution": (
+        "Map data © OpenStreetMap contributors, SRTM — "
+        "style © OpenTopoMap (CC-BY-SA)"
+    ),
+    "subdomains": "abc",
+    # OpenTopoMap stops rendering above 17; asking for 18 returns blank tiles
+    # rather than an error, which would read as "nothing is there".
+    "max_zoom": 17,
+}
+
 
 @dataclass
 class Source:
@@ -40,6 +57,10 @@ class Config:
     scan_regions: list[str] = field(default_factory=list)
     sources: list[Source] = field(default_factory=list)
     watches: list[dict] = field(default_factory=list)
+    #: Basemap settings. Deliberately a swappable config value (§8h) — the tile
+    #: source is not a code dependency, and changing it must never mean editing
+    #: JavaScript.
+    map: dict = field(default_factory=dict)
     raw: dict = field(default_factory=dict)
 
     @property
@@ -53,6 +74,22 @@ class Config:
     @property
     def default_notify_targets(self) -> list[str]:
         return list(self.notify.get("default_targets") or [])
+
+    @property
+    def map_settings(self) -> dict:
+        """What the browser needs to draw the basemap.
+
+        Merged over `DEFAULT_TILES` key by key, so a config that overrides only
+        `url` still gets a sane `max_zoom` rather than silently losing one.
+        """
+        tiles = dict(DEFAULT_TILES)
+        tiles.update(self.map.get("tiles") or {})
+        center = _as_point(self.map.get("center")) or self.home_point
+        return {
+            "tiles": tiles,
+            "center": list(center) if center else None,
+            "zoom": self.map.get("zoom", 7),
+        }
 
     def sources_for(self, states: Optional[list[str]] = None) -> list[Source]:
         if not states:
@@ -72,6 +109,26 @@ def _read_structured(path: Path) -> dict:
             ) from exc
         return yaml.safe_load(text) or {}
     return json.loads(text) or {}
+
+
+def _as_point(value: Any) -> Optional[tuple[float, float]]:
+    """Accept either `[lat, lon]` or `{latitude:, longitude:}`.
+
+    Returns None for anything incomplete rather than a half-point — a map
+    centred on (0, lon) is in the Gulf of Guinea, not a visible mistake.
+    """
+    if not value:
+        return None
+    if isinstance(value, dict):
+        lat, lon = value.get("latitude"), value.get("longitude")
+    else:
+        try:
+            lat, lon = value
+        except (TypeError, ValueError):
+            return None
+    if lat is None or lon is None:
+        return None
+    return (float(lat), float(lon))
 
 
 def _as_str_list(value: Any) -> list[str]:
@@ -114,6 +171,7 @@ def parse_config(data: dict) -> Config:
         access=data.get("access") or {},
         sources=sources,
         watches=data.get("watches") or [],
+        map=data.get("map") or {},
         raw=data,
     )
 

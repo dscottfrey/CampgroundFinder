@@ -6,7 +6,11 @@ import os
 import sqlite3
 from pathlib import Path
 
-DEFAULT_DB_PATH = Path("data/campgroundfinder.db")
+#: Anchored to the repo, not the current directory. A cwd-relative default
+#: meant that running from the wrong place created a second, empty database
+#: somewhere else and reported nothing wrong.
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DEFAULT_DB_PATH = REPO_ROOT / "data" / "campgroundfinder.db"
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS campgrounds (

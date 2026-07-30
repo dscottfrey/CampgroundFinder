@@ -28,6 +28,16 @@ nights_options: [2, 3, 4]
 scan_regions: [OR, WA]
 # Widen westward when wanted: [OR, WA, CA, ID, MT, NV, UT, AZ, CO, AK, BC]
 
+# Basemap. Topographic on purpose — plain OSM road tiles show no trails (§8h).
+# See config.example.yaml for Thunderforest and USGS alternatives.
+map:
+  zoom: 7
+  tiles:
+    url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+    attribution: "Map data © OpenStreetMap contributors, SRTM — style © OpenTopoMap (CC-BY-SA)"
+    subdomains: "abc"
+    max_zoom: 17
+
 notify:
   default_targets:
     - ntfy://ntfy.sh/change-me-campgroundfinder   # keep the topic secret — it is the auth

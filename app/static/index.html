@@ -4,6 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>CampgroundFinder</title>
+  <link rel="stylesheet" href="/static/vendor/leaflet.css">
+  <link rel="stylesheet" href="/static/vendor/MarkerCluster.css">
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
@@ -20,6 +22,10 @@
   <section class="controls">
     <input id="search" type="search" placeholder="Search by name…" autocomplete="off">
     <div id="regions" class="regions"></div>
+    <div class="views" role="group" aria-label="View">
+      <button id="view-map" class="view on" aria-pressed="true">Map</button>
+      <button id="view-list" class="view" aria-pressed="false">List</button>
+    </div>
   </section>
 
   <section id="legend" class="legend">
@@ -31,25 +37,41 @@
   </section>
 
   <main>
-    <table id="table">
-      <thead>
-        <tr>
-          <th>Campground</th><th>Where</th><th>Status</th><th>Open sites</th>
-        </tr>
-      </thead>
-      <tbody id="rows"></tbody>
-    </table>
-    <p id="empty" class="empty" hidden>Nothing matches that search.</p>
+    <div id="map-wrap">
+      <div id="map"></div>
+      <!-- Shown only if the tile server can't be reached. The pins still work
+           without tiles, so this explains the blank background rather than
+           letting it read as "no campgrounds here". -->
+      <p id="tile-warning" class="tile-warning" hidden>
+        Couldn't load the map background — check the internet connection.
+        The campground pins below are still accurate.
+      </p>
+      <p id="unlocated" class="unlocated" hidden></p>
+    </div>
+
+    <div id="list-wrap" hidden>
+      <table id="table">
+        <thead>
+          <tr>
+            <th>Campground</th><th>Where</th><th>Status</th><th>Open sites</th>
+          </tr>
+        </thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <p id="empty" class="empty" hidden>Nothing matches that search.</p>
+    </div>
   </main>
 
   <footer>
     <p id="foot"></p>
     <p class="note">
-      The map view needs an internet connection for its background imagery,
-      so it isn't switched on yet. This list shows the same campgrounds.
+      Names drawn on the map background are just part of the picture, not
+      campgrounds we track. Only the pins carry our data.
     </p>
   </footer>
 
+  <script src="/static/vendor/leaflet.js"></script>
+  <script src="/static/vendor/leaflet.markercluster.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>

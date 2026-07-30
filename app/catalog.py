@@ -22,19 +22,22 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Optional
 
-from . import store
+from . import db, store
 from .config import Config, Source
 from .providers import build_provider
 from .providers.base import STATUS_STALE, STATUS_UNKNOWN, Campground, Provider
 
 log = logging.getLogger(__name__)
 
-DEFAULT_SEED_PATH = Path("data/seed/pnw_campgrounds.json")
+#: Repo-anchored for the same reason as DEFAULT_DB_PATH: a missing seed file
+#: loads as an empty catalog, so a cwd-relative default turned "run from the
+#: wrong directory" into a silent zero-campground map.
+DEFAULT_SEED_PATH = db.REPO_ROOT / "data" / "seed" / "pnw_campgrounds.json"
 #: Per-site inventory, committed alongside the campground seed. It exists
 #: because measuring it costs hundreds of paced requests and the answer changes
 #: on the order of years — keeping it only in somebody's local database would
 #: mean re-fetching it on every fresh checkout.
-DEFAULT_CAMPSITE_SEED_PATH = Path("data/seed/campsites.json.gz")
+DEFAULT_CAMPSITE_SEED_PATH = db.REPO_ROOT / "data" / "seed" / "campsites.json.gz"
 
 #: Fields worth committing. The raw `attributes` blob is deliberately left out:
 #: it is large, mostly redundant with the normalized columns, and re-derivable.

@@ -3101,5 +3101,79 @@ class TestFailureDoesNotOverreach(DBTestCase):
 
 
 
+class TestBasemapConfig(unittest.TestCase):
+    """The tile source is config, not code (§8h).
+
+    The build plan rules out plain OSM road tiles because they show no trails,
+    so the default has to be topographic and swapping it must never mean
+    editing JavaScript.
+    """
+
+    def test_the_default_basemap_is_not_plain_osm_road_tiles(self):
+        tiles = parse_config({}).map_settings["tiles"]
+        self.assertIn("opentopomap", tiles["url"])
+        self.assertNotIn("tile.openstreetmap.org", tiles["url"])
+
+    def test_a_partial_override_keeps_the_rest_of_the_defaults(self):
+        # Overriding only the URL must not silently drop max_zoom — asking
+        # a server for a zoom it doesn't render returns blank tiles, which
+        # reads as "nothing is there".
+        cfg = parse_config({"map": {"tiles": {"url": "https://example/{z}.png"}}})
+        tiles = cfg.map_settings["tiles"]
+        self.assertEqual(tiles["url"], "https://example/{z}.png")
+        self.assertEqual(tiles["max_zoom"], 17)
+        self.assertTrue(tiles["attribution"])
+
+    def test_the_map_centres_on_home_when_not_told_otherwise(self):
+        cfg = parse_config({"home_base": {"latitude": 45.52, "longitude": -122.68}})
+        self.assertEqual(cfg.map_settings["center"], [45.52, -122.68])
+
+    def test_an_explicit_centre_wins_and_accepts_either_shape(self):
+        as_list = parse_config({"map": {"center": [44.0, -121.0]}})
+        as_dict = parse_config(
+            {"map": {"center": {"latitude": 44.0, "longitude": -121.0}}})
+        self.assertEqual(as_list.map_settings["center"], [44.0, -121.0])
+        self.assertEqual(as_dict.map_settings["center"], [44.0, -121.0])
+
+    def test_a_half_written_centre_is_no_centre_at_all(self):
+        # (0, -121) is in the Gulf of Guinea. Better to fall back than to
+        # silently point the map at the ocean.
+        cfg = parse_config({"map": {"center": {"longitude": -121.0}}})
+        self.assertIsNone(cfg.map_settings["center"])
+
+
+class TestMapPayload(DBTestCase):
+    """What `/api/state` hands the page."""
+
+    def test_it_carries_the_basemap_settings(self):
+        from app.web import build_state
+        state = build_state(self.conn, cfg=parse_config({}))
+        self.assertIn("opentopomap", state["map"]["tiles"]["url"])
+
+    def test_campgrounds_with_no_location_are_counted_not_dropped(self):
+        # The map can't draw them, so the page has to say so out loud rather
+        # than let them vanish between the catalog count and the pin count.
+        from app.web import build_state
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="Mock", id="here", name="Located",
+                       state="OR", latitude=45.0, longitude=-122.0),
+            Campground(provider="Mock", id="lost", name="Location unknown",
+                       state="OR"),
+        ], now=NOW)
+        state = build_state(self.conn)
+        self.assertEqual(state["total"], 2)
+        self.assertEqual(state["unlocated"], 1)
+        names = {c["name"] for c in state["campgrounds"]}
+        self.assertIn("Location unknown", names)
+
+    def test_it_still_works_with_no_config_file(self):
+        # `load_config` returns defaults when config.yaml is absent, and the
+        # page must render rather than 500 on a fresh checkout.
+        from app.web import build_state
+        state = build_state(self.conn)
+        self.assertTrue(state["map"]["tiles"]["url"])
+        self.assertEqual(state["unlocated"], 0)
+
+
 if __name__ == "__main__":
     unittest.main()

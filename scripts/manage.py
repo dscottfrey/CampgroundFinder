@@ -150,11 +150,17 @@ def cmd_search(args) -> int:
     return 0
 
 
-def cmd_serve(args) -> int:
+def cmd_serve(args, cfg=None) -> int:
     from app.web import serve
 
     db.open_db(args.db).close()          # make sure the schema exists first
-    serve(db_path=args.db, host=args.host, port=args.port)
+    # The page needs the config for its basemap settings (§8h), so honour
+    # --config here rather than letting serve() guess at the default path.
+    # `cfg` is passed in by the demo, which is deliberately self-contained and
+    # must keep working on a bare stdlib install with no config file at all.
+    if cfg is None:
+        cfg = load_config(args.config)
+    serve(db_path=args.db, host=args.host, port=args.port, cfg=cfg)
     return 0
 
 
@@ -180,7 +186,9 @@ def cmd_demo(args) -> int:
     print(f"demo data ready: {report.summary()}")
     conn.close()
     serve_args = argparse.Namespace(db=args.db, host=args.host, port=args.port)
-    return cmd_serve(serve_args)
+    # Defaults only — no config file read, so the demo still runs with nothing
+    # installed. It gets the default topographic basemap.
+    return cmd_serve(serve_args, cfg=parse_config({}))
 
 
 def cmd_add_watch(args) -> int:

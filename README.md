@@ -20,14 +20,14 @@ Section references below (§5, §8k, …) point into it.
 | 2 | camply adapter | **done, verified live** against recreation.gov |
 | 3 | `catalog.py`, `scanner.py`, `notifier.py`, `config.py`, `manage.py` | **done**; 803 real campgrounds seeded |
 | 4 | Enrichers (AQI, wildfire, water, weather) + three-state filters | not started |
-| 5 | FastAPI + Leaflet UI | **partial** — a stdlib server and list view exist; no map |
+| 5 | FastAPI + Leaflet UI | **partial** — stdlib server, topo map with clustered pins, and list view; no filters or date slider yet |
 | 6 | Docker + Tailscale + multi-user | not started |
 | 7 | PerfectMind provider | not started |
 | 8 | ReserveAmerica | **Oregon done** |
 | 8 | GoingToCamp | **done** — WA state parks + BC Parks |
 | — | Pacing: shared rate limiter, round-robin, scanner status | **done** (`docs/scanning-design.md` steps 1–2) |
 
-**171 tests, standard library only, no network required.**
+**246 tests, standard library only, no network required.**
 
 ### What actually works
 
@@ -50,8 +50,14 @@ Section references below (§5, §8k, …) point into it.
   loop, and access class — **165 hike-in sites** identified explicitly. The
   driveway data is graded per campground: **115 measured, 74 default, 150 too
   small to judge**.
-- **A web page** — `manage.py demo`, then http://127.0.0.1:8080. List view
-  only; the map is not built.
+- **A web page with a map** — `manage.py demo`, then http://127.0.0.1:8080.
+  Every catalogued campground is a clustered pin on a **topographic** basemap
+  (OpenTopoMap, so trails are visible — plain OSM road tiles are ruled out by
+  §8h), coloured by status and clickable for the reason. The tile source is a
+  config value, not code. The 29 campgrounds with no coordinates can't be
+  drawn, so the page says so and keeps them in the list view rather than
+  letting them vanish. Leaflet and markercluster are vendored in
+  `app/static/vendor/`.
 - **Pacing that can't be bypassed.** Every upstream request in the process goes
   through one rate limiter (`app/pacing.py`): one request at a time, 6s apart
   for ReserveAmerica and 2s for recreation.gov, spaced from when the last
@@ -80,11 +86,16 @@ bare subscript whose result is discarded — it exists only to raise. We don't
 use that endpoint; `rootMapId` is already on every directory record. So
 `app/providers/goingtocamp.py` talks to the API directly and skips camply.
 
-**Next build step: the map.** A full scan now finds ~35,000 real openings and
-there is no way to look at them — `manage.py demo` serves a list only. Every
-honesty feature built so far (stale, unknown, first-come, unlocated, the
-driveway caveats) is display logic with nowhere to display, and scanning-design
-steps 4 and 5 both need a map to exist. See `docs/handoff-2026-07-28.md`.
+**The map is in** (2026-07-29) — 774 pins on a topographic basemap, clustered,
+each explaining itself on click. That unblocks scanning-design steps 4 and 5,
+which both needed a viewport to exist. Not yet built on top of it: the date
+slider, the equipment filter (`app/equipment.py` works but nothing joins it to
+search results), and the right-click "add a campground here" gap-fill.
+
+**The map has not been looked at in a browser.** It was built and verified in a
+sandbox that cannot bind a port or load tiles, so the payload, the routes, and
+the JS syntax are checked but the rendering is not. First run deserves a real
+look. See `docs/handoff-2026-07-28.md`.
 
 One caveat carried forward: camply owns its own HTTP, so its several internal
 requests per search can't be spaced individually. The adapter holds the shared
@@ -249,7 +260,7 @@ Steps 1–3 run on the **standard library alone** — the tests need no
 dependencies at all:
 
 ```bash
-python3 -m unittest discover -s tests -t . -v     # 171 tests, no network
+python3 -m unittest discover -s tests -t . -v     # 246 tests, no network
 ```
 
 To see the whole pipeline with no deps and no network, point a config at the

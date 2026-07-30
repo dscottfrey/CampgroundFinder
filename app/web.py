@@ -17,6 +17,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+from . import config as config_mod
 from . import db, store
 from .util import iso
 
@@ -25,7 +26,7 @@ log = logging.getLogger(__name__)
 STATIC_DIR = Path(__file__).parent / "static"
 
 
-def build_state(conn, states=None) -> dict:
+def build_state(conn, states=None, cfg=None) -> dict:
     """Everything the page needs, in one payload."""
     pins = store.map_view(conn, states=states)
     counts: dict[str, int] = {}
@@ -35,10 +36,17 @@ def build_state(conn, states=None) -> dict:
         "SELECT MAX(last_checked) AS t FROM campgrounds"
     ).fetchone()
     all_states = sorted({p["state"] for p in pins if p["state"]})
+    cfg = cfg if cfg is not None else config_mod.Config()
+    # Counted here rather than in the browser so the number in "N not on the
+    # map" comes from the same pass that built the pins, and can't drift from
+    # them (§8k: never quietly drop a campground we can't place).
+    unlocated = sum(1 for p in pins if not p["located"])
     return {
         "campgrounds": pins,
         "counts": counts,
         "total": len(pins),
+        "unlocated": unlocated,
+        "map": cfg.map_settings,
         "states": all_states,
         "last_checked": row["t"] if row else None,
         # What the scanner is doing right now, in plain language. Shipped with
@@ -51,6 +59,7 @@ def build_state(conn, states=None) -> dict:
 
 class Handler(BaseHTTPRequestHandler):
     db_path = None
+    cfg = None
 
     def log_message(self, fmt, *args):        # quieter than the default
         log.debug(fmt, *args)
@@ -87,7 +96,7 @@ class Handler(BaseHTTPRequestHandler):
     def _api(self, route, query, conn):
         states = query.get("state")
         if route == "/api/state":
-            return self._json(build_state(conn, states))
+            return self._json(build_state(conn, states, self.cfg))
         if route == "/api/search":
             q = (query.get("q") or [""])[0]
             results = store.search_campgrounds(conn, q, states=states)
@@ -109,8 +118,11 @@ class Handler(BaseHTTPRequestHandler):
         return self._send(200, path.read_bytes(), ctype)
 
 
-def serve(db_path=None, host="127.0.0.1", port=8080):
+def serve(db_path=None, host="127.0.0.1", port=8080, cfg=None):
     Handler.db_path = db_path
+    # Read once at startup, not per request: the tile URL may carry an API key,
+    # and re-reading config on a hot path is a good way to leak file handles.
+    Handler.cfg = cfg if cfg is not None else config_mod.load_config()
     server = ThreadingHTTPServer((host, port), Handler)
     print(f"CampgroundFinder running at http://{host}:{port}  (Ctrl-C to stop)")
     try:

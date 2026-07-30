@@ -90,6 +90,52 @@ tbody tr:last-child td { border-bottom: none; }
 .badge.stale b     { background: var(--stale); }
 .badge.closed b    { background: var(--closed); }
 
+/* --- view toggle ------------------------------------------------------- */
+.views { display: flex; gap: 0; }
+.view {
+  padding: 0.4rem 0.9rem; font: inherit; font-size: 0.9rem; cursor: pointer;
+  background: var(--card); color: var(--muted);
+  border: 1px solid var(--line);
+}
+.view:first-child { border-radius: 999px 0 0 999px; }
+.view:last-child  { border-radius: 0 999px 999px 0; border-left: none; }
+.view.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* --- map --------------------------------------------------------------- */
+#map {
+  height: 32rem; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--card);
+}
+@media (max-width: 40rem) { #map { height: 24rem; } }
+
+/* Leaflet ships marker images we deliberately don't vendor, so every pin is
+   drawn in CSS. .pin-wrap clears Leaflet's own divIcon chrome. */
+.pin-wrap { background: none; border: none; }
+.pin {
+  display: block; border-radius: 50%;
+  /* The dark ring is the base layer: "this campground is in the catalog".
+     The fill is what we currently know about it. */
+  border: 2px solid #1b1a17;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7);
+}
+.pin-available { background: var(--available); }
+.pin-full      { background: var(--full); }
+.pin-unknown   { background: var(--unknown); }
+.pin-stale     { background: var(--stale); }
+.pin-closed    { background: var(--closed); }
+
+.popup strong { display: block; font-size: 1rem; }
+.popup-where { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.4rem; }
+.popup-note { color: var(--muted); font-size: 0.85rem; margin-top: 0.35rem; }
+.leaflet-popup-content { margin: 0.7rem 0.9rem; }
+
+.tile-warning {
+  margin: 0.6rem 0 0; padding: 0.6rem 0.8rem; font-size: 0.87rem;
+  background: #fdf7ea; border: 1px solid #e2c58a; border-radius: 8px;
+  color: #6b5320;
+}
+.unlocated { margin: 0.6rem 0 0; color: var(--muted); font-size: 0.87rem; }
+
 .empty { color: var(--muted); padding: 1.5rem 0; }
 footer { margin-top: 1.5rem; color: var(--muted); font-size: 0.87rem; }
 .note { font-size: 0.82rem; }

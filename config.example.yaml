@@ -28,6 +28,28 @@ nights_options: [2, 3, 4]
 scan_regions: [OR, WA]
 # Widen westward when wanted: [OR, WA, CA, ID, MT, NV, UT, AZ, CO, AK, BC]
 
+# The basemap (§8h). Plain OSM road tiles are deliberately NOT the default:
+# they show no trails, and trail detail is most of the reason to look at a
+# campground on a map. Swap the URL freely — no code depends on it.
+#
+#   OpenTopoMap    (default)  free, topographic, shows trails. Volunteer-run:
+#                             fine for a household, never bulk-fetch it.
+#   Thunderforest  best trail/path detail, needs a free API key:
+#     url: "https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png?apikey=YOUR_KEY"
+#   USGS topo      free, US only, no key:
+#     url: "https://basemap.nationalmap.gov/arcgis/rest/services/USGSTopo/MapServer/tile/{z}/{y}/{x}"
+#
+# Whatever the tiles paint is just pixels. A campground drawn on the basemap
+# that isn't in our catalog is a gap to fix, never a campground we know about.
+map:
+  zoom: 7
+  # center: [45.52, -122.68]   # defaults to home_base
+  tiles:
+    url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png"
+    attribution: "Map data © OpenStreetMap contributors, SRTM — style © OpenTopoMap (CC-BY-SA)"
+    subdomains: "abc"
+    max_zoom: 17
+
 notify:
   default_targets:
     - ntfy://ntfy.sh/change-me-campgroundfinder   # keep the topic secret — it is the auth
