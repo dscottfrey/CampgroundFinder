@@ -50,6 +50,18 @@ map:
     subdomains: "abc"
     max_zoom: 17
 
+  # The zoomed-out basemap. OpenTopoMap below about zoom 12 is a brown relief
+  # smear with almost no labels; street tiles carry names and roads at exactly
+  # the zooms where the topo carries nothing. The page's Auto mode shows these
+  # out wide and the topo from `topo_from_zoom` in, and the Topo / Streets
+  # buttons pin either one. The zoom level is printed beside those buttons,
+  # which is how to pick a different handover.
+  street_tiles:
+    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+    attribution: "Map data © OpenStreetMap contributors"
+    max_zoom: 19
+  topo_from_zoom: 12
+
 notify:
   default_targets:
     - ntfy://ntfy.sh/change-me-campgroundfinder   # keep the topic secret — it is the auth

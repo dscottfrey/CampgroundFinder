@@ -10,6 +10,7 @@ Run:  python3 -m unittest discover -s tests -v
 
 from __future__ import annotations
 
+import io
 import json
 import pathlib
 import sys
@@ -610,6 +611,30 @@ class TestReehersAcceptance(DBTestCase):
         pin = [p for p in store.map_view(self.conn) if p["id"] == "no-coords"][0]
         self.assertFalse(pin["located"])
         self.assertIsNone(pin["latitude"])
+
+    def test_a_state_park_pin_admits_it_locates_the_park(self):
+        # Seen on the map 2026-07-29: Cape Lookout's pin sits about a kilometre
+        # south of its campground, and Cape Disappointment's in the middle of
+        # the park. Both coordinates are the provider's own — CampSage draws the
+        # identical spot — so the pin stays and the claim gets qualified.
+        pin = [p for p in store.map_view(self.conn) if p["id"] == "412704"][0]
+        self.assertEqual(pin["coord_precision"], "park")
+
+    def test_a_federal_pin_is_the_campground_itself(self):
+        # RIDB has one facility record per campground, so there is no park-level
+        # slop to warn about — and warning anyway would train people to ignore it.
+        store.upsert_campgrounds(self.conn, [Campground(
+            provider="RecreationDotGov", id="232043", name="Some Forest CG",
+            state="OR", latitude=45.0, longitude=-122.0)], now=NOW)
+        pin = [p for p in store.map_view(self.conn) if p["id"] == "232043"][0]
+        self.assertEqual(pin["coord_precision"], "campground")
+
+    def test_an_unlocated_campground_claims_no_precision_at_all(self):
+        store.upsert_campgrounds(self.conn, [Campground(
+            provider="GoingToCamp:WA", id="nowhere", name="Unplaced Park",
+            state="WA")], now=NOW)
+        pin = [p for p in store.map_view(self.conn) if p["id"] == "nowhere"][0]
+        self.assertIsNone(pin["coord_precision"])
 
     def test_search_is_state_scoped(self):
         self.assertEqual(len(store.search_campgrounds(self.conn, "Reehers", states=["OR"])), 1)
@@ -3135,11 +3160,60 @@ class TestBasemapConfig(unittest.TestCase):
         self.assertEqual(as_list.map_settings["center"], [44.0, -121.0])
         self.assertEqual(as_dict.map_settings["center"], [44.0, -121.0])
 
+    def test_there_is_a_street_basemap_for_the_zooms_topo_cannot_carry(self):
+        # Zoomed out, OpenTopoMap is a brown relief smear with almost no
+        # labels — Crater Lake was unfindable until one zoom in (2026-07-29).
+        # Street tiles cover exactly those zooms, so both ship.
+        settings = parse_config({}).map_settings
+        self.assertIn("tile.openstreetmap.org", settings["street_tiles"]["url"])
+        self.assertIn("opentopomap", settings["tiles"]["url"])
+        self.assertEqual(settings["topo_from_zoom"], 12)
+
+    def test_the_handover_zoom_is_configurable(self):
+        # It is a judgement call about legibility, and judgement calls belong
+        # in config rather than in JavaScript.
+        cfg = parse_config({"map": {"topo_from_zoom": 14}})
+        self.assertEqual(cfg.map_settings["topo_from_zoom"], 14)
+
+    def test_a_street_tile_override_keeps_the_rest_of_its_defaults(self):
+        cfg = parse_config({"map": {"street_tiles": {"url": "https://x/{z}.png"}}})
+        street = cfg.map_settings["street_tiles"]
+        self.assertEqual(street["url"], "https://x/{z}.png")
+        self.assertEqual(street["max_zoom"], 19)
+        self.assertTrue(street["attribution"])
+
     def test_a_half_written_centre_is_no_centre_at_all(self):
         # (0, -121) is in the Gulf of Guinea. Better to fall back than to
         # silently point the map at the ocean.
         cfg = parse_config({"map": {"center": {"longitude": -121.0}}})
         self.assertIsNone(cfg.map_settings["center"])
+
+
+class TestResponseHeaders(unittest.TestCase):
+    """What the server promises about freshness.
+
+    No socket is opened: the handler's send path is driven directly, because
+    this sandbox cannot bind a port at all (`Operation not permitted`).
+    """
+
+    def _headers_for(self):
+        from app.web import Handler
+
+        handler = Handler.__new__(Handler)          # no socket, no __init__
+        sent: dict[str, str] = {}
+        handler.send_response = lambda code: None
+        handler.send_header = lambda k, v: sent.__setitem__(k, v)
+        handler.end_headers = lambda: None
+        handler.wfile = io.BytesIO()
+        handler._send(200, b"hello", "text/plain")
+        return sent
+
+    def test_nothing_the_server_sends_may_be_cached(self):
+        # Safari cached index.html when we sent no cache headers, so new
+        # markup arrived stripped of the new markup and read as a broken
+        # feature (2026-07-29). The same header protects the API, where a
+        # cached answer about what is open is a wrong answer about what is open.
+        self.assertIn("no-store", self._headers_for()["Cache-Control"])
 
 
 class TestMapPayload(DBTestCase):

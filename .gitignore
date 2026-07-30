@@ -220,3 +220,7 @@ __marimo__/
 # CampgroundFinder-specific
 samples/
 data/*.db
+
+# Standalone page snapshots written by scripts/snapshot.py — a build
+# artifact with frozen data in it, never a source of truth.
+data/snapshot*.html

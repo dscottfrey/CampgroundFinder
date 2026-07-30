@@ -30,6 +30,21 @@ DEFAULT_TILES = {
     "max_zoom": 17,
 }
 
+# The zoomed-out basemap. OpenTopoMap below about zoom 12 is a brown relief
+# smear with almost no labels — verified on screen 2026-07-29, where finding
+# Crater Lake took a zoom in. Street tiles carry names and roads at exactly the
+# zooms where the topo carries nothing, so the page uses them out wide and the
+# topo close in, where the trails are the whole reason to look.
+DEFAULT_STREET_TILES = {
+    "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    "attribution": "Map data © OpenStreetMap contributors",
+    "subdomains": "",
+    "max_zoom": 19,
+}
+
+# Where Auto hands over from street tiles to topographic ones.
+DEFAULT_TOPO_FROM_ZOOM = 12
+
 
 @dataclass
 class Source:
@@ -84,9 +99,14 @@ class Config:
         """
         tiles = dict(DEFAULT_TILES)
         tiles.update(self.map.get("tiles") or {})
+        street = dict(DEFAULT_STREET_TILES)
+        street.update(self.map.get("street_tiles") or {})
         center = _as_point(self.map.get("center")) or self.home_point
         return {
             "tiles": tiles,
+            "street_tiles": street,
+            "topo_from_zoom": self.map.get("topo_from_zoom",
+                                           DEFAULT_TOPO_FROM_ZOOM),
             "center": list(center) if center else None,
             "zoom": self.map.get("zoom", 7),
         }

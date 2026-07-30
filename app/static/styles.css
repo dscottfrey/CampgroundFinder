@@ -4,11 +4,22 @@
   --ink: #22201c;
   --muted: #6d6659;
   --line: #e5e0d6;
-  --available: #2e7d46;
-  --full: #b4682b;
-  --unknown: #8a8375;
-  --stale: #9a5b8d;
-  --closed: #98342f;
+
+  /* Status colours are a SECONDARY cue only — every status is carried by its
+     own shape as well (see .swatch / the SVG pins in app.js). Scott is
+     colourblind and reported 2026-07-29 that the original green / orange /
+     grey / purple / red legend read as five identical dots, which is exactly
+     as useless as leaving the status off the map.
+
+     Two things were changed. Green-orange-red, the classic confusion set, is
+     gone. And the five differ in LIGHTNESS as well as hue, so they stay
+     distinct in greyscale — a check anyone can run by desaturating a
+     screenshot. */
+  --available: #0b5cab;   /* dark blue    — filled circle */
+  --full:      #e08214;   /* bright amber — filled square */
+  --unknown:   #d6d1c6;   /* pale grey    — hollow circle */
+  --stale:     #7b52ab;   /* violet       — triangle */
+  --closed:    #1b1a17;   /* near-black   — cross */
 }
 
 * { box-sizing: border-box; }
@@ -51,6 +62,11 @@ h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.01em; }
   border: 1px solid var(--line); border-radius: 8px; background: var(--card);
   color: inherit;
 }
+.controls-map { align-items: center; margin-top: -0.25rem; }
+/* Carries the zoom level, which is here for diagnosis: "the tiles look wrong"
+   is unanswerable without knowing which zoom asked for them. */
+.basemap-note { color: var(--muted); font-size: 0.82rem; }
+
 .regions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
 .regions label {
   display: inline-flex; align-items: center; gap: 0.35rem;
@@ -63,12 +79,7 @@ h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.01em; }
 .legend { display: flex; flex-wrap: wrap; gap: 0.9rem; margin: 0 0 1rem; }
 .chip { display: inline-flex; align-items: center; gap: 0.4rem;
         font-size: 0.85rem; color: var(--muted); }
-.chip b { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
-.chip.available b { background: var(--available); }
-.chip.full b      { background: var(--full); }
-.chip.unknown b   { background: var(--unknown); }
-.chip.stale b     { background: var(--stale); }
-.chip.closed b    { background: var(--closed); }
+/* The swatch shapes live with the pins, below, so the two can't drift. */
 
 /* --- table ------------------------------------------------------------ */
 table { width: 100%; border-collapse: collapse; background: var(--card);
@@ -109,20 +120,42 @@ tbody tr:last-child td { border-bottom: none; }
 @media (max-width: 40rem) { #map { height: 24rem; } }
 
 /* Leaflet ships marker images we deliberately don't vendor, so every pin is
-   drawn in CSS. .pin-wrap clears Leaflet's own divIcon chrome. */
+   drawn by us — as an SVG shape per status (app.js), not a coloured dot.
+   .pin-wrap clears Leaflet's own divIcon chrome. */
 .pin-wrap { background: none; border: none; }
 .pin {
-  display: block; border-radius: 50%;
-  /* The dark ring is the base layer: "this campground is in the catalog".
-     The fill is what we currently know about it. */
-  border: 2px solid #1b1a17;
-  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.7);
+  display: block;
+  /* Reads on dark forest green and on pale rock alike. The dark outline is
+     the base layer: "this campground is in the catalog", drawn whatever we
+     do or don't know about it. */
+  filter: drop-shadow(0 0 1px rgba(255, 255, 255, 0.9));
 }
-.pin-available { background: var(--available); }
-.pin-full      { background: var(--full); }
-.pin-unknown   { background: var(--unknown); }
-.pin-stale     { background: var(--stale); }
-.pin-closed    { background: var(--closed); }
+
+/* Legend swatches are the SAME five shapes as the pins, at a fixed size. If
+   these two ever drift apart the legend stops explaining the map. */
+.swatch {
+  width: 18px; height: 18px; flex: none; display: inline-block;
+  border: 2px solid var(--ink);
+}
+.swatch.available { background: var(--available); border-radius: 50%; }
+.swatch.full      { background: var(--full); }
+.swatch.unknown   { background: var(--unknown); border-radius: 50%; }
+.swatch.stale {
+  /* Triangle: no box to give a border to, so the outline is a drop-shadow. */
+  width: 0; height: 0; border: none;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 17px solid var(--stale);
+  filter: drop-shadow(0 0 1.5px var(--ink));
+}
+.swatch.closed {
+  background: var(--closed); border-radius: 2px;
+  position: relative; color: var(--bg);
+}
+.swatch.closed::after {
+  content: "✕"; position: absolute; inset: 0;
+  font-size: 14px; line-height: 14px; text-align: center; font-weight: 700;
+}
 
 .popup strong { display: block; font-size: 1rem; }
 .popup-where { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.4rem; }

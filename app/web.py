@@ -68,6 +68,13 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Length", str(len(body)))
+        # Nothing here may be cached. We sent no cache headers at all until
+        # 2026-07-29, which left Safari to guess — and it held on to an old
+        # index.html, so a page with new markup in it came back without the
+        # markup and looked like a bug in the feature. Availability is the
+        # same argument for the API: a cached answer about what is open is a
+        # wrong answer about what is open.
+        self.send_header("Cache-Control", "no-store, must-revalidate")
         self.end_headers()
         self.wfile.write(body)
 

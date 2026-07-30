@@ -464,6 +464,34 @@ def set_length_quality(
     conn.commit()
 
 
+# Providers whose catalogue coordinate locates the PARK, not the campground
+# inside it. Verified on the map 2026-07-29: Cape Lookout State Park's pin sits
+# about a kilometre south of its campground, near the cape trailhead, and Cape
+# Disappointment's sits in the middle of the park with the campground well to
+# the south. Both are the coordinate the provider itself publishes — CampSage
+# draws Cape Disappointment on the identical spot — so this is the limit of the
+# data, not a bug to fix. What is ours to fix is saying so.
+#
+# RecreationDotGov is deliberately absent: RIDB gives one facility record per
+# campground, so its coordinate is the campground.
+_PARK_LEVEL_PROVIDER_PREFIXES = ("ReserveAmerica", "GoingToCamp")
+
+
+def coordinate_precision(provider: str, coord_source: Optional[str] = None) -> Optional[str]:
+    """What a pin actually locates: 'campground', 'park', or None for unknown.
+
+    Derived from the provider rather than stored per row, because the committed
+    seed predates this distinction and re-enumerating 803 campgrounds to write
+    one string into each would mean a live walk of every provider (§13). A
+    `coord_source` that names a park-level lookup still wins where present.
+    """
+    if coord_source and "park" in coord_source.lower():
+        return "park"
+    if provider.split(":", 1)[0] in _PARK_LEVEL_PROVIDER_PREFIXES:
+        return "park"
+    return "campground"
+
+
 def coordinate_provenance(conn: sqlite3.Connection) -> dict[str, int]:
     """How many catalogue coordinates came from where — including unlocated."""
     counts: dict[str, int] = {}
@@ -560,6 +588,13 @@ def map_view(
                 "sites_not_bookable": cg.sites_not_bookable,
                 "booking_label": cg.booking_label,
                 "length_data_quality": cg.length_data_quality,
+                # What the pin locates. A park-level coordinate can be a mile
+                # from the sites, and a map that doesn't say so is quietly
+                # precise about something it doesn't know.
+                "coord_precision": (
+                    coordinate_precision(cg.provider, cg.coord_source)
+                    if cg.has_location else None
+                ),
             }
         )
     return out

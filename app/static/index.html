@@ -28,20 +28,38 @@
     </div>
   </section>
 
+  <!-- Basemap choice. Auto is the default and swaps at a configured zoom:
+       street tiles are legible zoomed out where the topo is a brown smear,
+       and the topo earns its place close in, where the trails are. -->
+  <section class="controls controls-map">
+    <div class="views" role="group" aria-label="Background map">
+      <button id="base-auto" class="view on" aria-pressed="true">Auto</button>
+      <button id="base-topo" class="view" aria-pressed="false">Topo</button>
+      <button id="base-street" class="view" aria-pressed="false">Streets</button>
+    </div>
+    <span id="basemap-note" class="basemap-note"></span>
+  </section>
+
+  <!-- Each swatch is the same SHAPE as the pin it explains, not just the same
+       colour: the five statuses have to be told apart without relying on hue
+       (see the note at the top of styles.css). -->
   <section id="legend" class="legend">
-    <span class="chip available"><b></b>Open now</span>
-    <span class="chip full"><b></b>Full — set a watch</span>
-    <span class="chip unknown"><b></b>Not checked yet</span>
-    <span class="chip stale"><b></b>Couldn't reach the website</span>
-    <span class="chip closed"><b></b>Closed</span>
+    <span class="chip"><b class="swatch available"></b>Open now — filled circle</span>
+    <span class="chip"><b class="swatch full"></b>Full, set a watch — square</span>
+    <span class="chip"><b class="swatch unknown"></b>Not checked yet — hollow circle</span>
+    <span class="chip"><b class="swatch stale"></b>Couldn't reach the website — triangle</span>
+    <span class="chip"><b class="swatch closed"></b>Closed — cross</span>
   </section>
 
   <main>
     <div id="map-wrap">
       <div id="map"></div>
-      <!-- Shown only if the tile server can't be reached. The pins still work
-           without tiles, so this explains the blank background rather than
-           letting it read as "no campgrounds here". -->
+      <!-- Shown whenever any background tile is missing from the current view,
+           not only when the first one fails: OpenTopoMap dropped half a view's
+           tiles on 2026-07-29 and the page said nothing. The pins still work
+           without tiles, so this explains the blank squares rather than letting
+           them read as "no campgrounds here". app.js writes the exact wording;
+           this text is what a no-JS reader would get. -->
       <p id="tile-warning" class="tile-warning" hidden>
         Couldn't load the map background — check the internet connection.
         The campground pins below are still accurate.
