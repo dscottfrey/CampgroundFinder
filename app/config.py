@@ -45,6 +45,13 @@ DEFAULT_STREET_TILES = {
 # Where Auto hands over from street tiles to topographic ones.
 DEFAULT_TOPO_FROM_ZOOM = 12
 
+# From which zoom every visible pin carries its name. OpenTopoMap labels no
+# campgrounds at all and the street tiles label some of them in small type, so
+# the only way to read a name off this map is for us to paint it — which is
+# also the honest arrangement, since the names we have are the names we hold
+# data for. Held back at wide zooms because 774 labels at once is a smear.
+DEFAULT_LABELS_FROM_ZOOM = 11
+
 
 @dataclass
 class Source:
@@ -107,6 +114,8 @@ class Config:
             "street_tiles": street,
             "topo_from_zoom": self.map.get("topo_from_zoom",
                                            DEFAULT_TOPO_FROM_ZOOM),
+            "labels_from_zoom": self.map.get("labels_from_zoom",
+                                             DEFAULT_LABELS_FROM_ZOOM),
             "center": list(center) if center else None,
             "zoom": self.map.get("zoom", 7),
         }

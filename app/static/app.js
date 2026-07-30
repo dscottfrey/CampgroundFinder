@@ -45,6 +45,7 @@ const basemaps = { topo: null, street: null };
 let basemapMode = "auto";
 let shownBasemap = null;
 let topoFromZoom = 12;
+let labelsFromZoom = 11;
 
 function tileKey(c) {
   return `${c.z}/${c.x}/${c.y}`;
@@ -155,10 +156,13 @@ function applyBasemap() {
     tileTries.clear();
     updateTileWarning();
   }
+  updateLabelVisibility();
+  const zoom = map.getZoom();
   document.getElementById("basemap-note").textContent =
-    `zoom ${map.getZoom()} · ` +
+    `zoom ${zoom} · ` +
     `${shownBasemap === "topo" ? "topographic" : "street"} tiles` +
-    (basemapMode === "auto" ? ` · topo from zoom ${topoFromZoom}` : " · pinned");
+    (basemapMode === "auto" ? ` · topo from zoom ${topoFromZoom}` : " · pinned") +
+    (zoom < labelsFromZoom ? ` · names from zoom ${labelsFromZoom}` : " · names on");
 }
 
 function setBasemapMode(mode) {
@@ -186,6 +190,7 @@ function initMap() {
   }
 
   topoFromZoom = settings.topo_from_zoom || 12;
+  labelsFromZoom = settings.labels_from_zoom || 11;
   basemaps.topo = makeBasemap(settings.tiles || {});
   // Falls back to the topo layer's own settings rather than to nothing: a
   // config without street tiles should lose the swap, not the background.
@@ -337,16 +342,55 @@ function popupFor(c) {
   return box;
 }
 
+/* The name, painted by us, beside the pin.
+
+   Neither basemap can be relied on for this: OpenTopoMap labels no campgrounds
+   at all, and the street tiles label only some, in small type. That is also
+   the right division of labour — a name on the basemap is a name somebody else
+   holds data for, while these are ours, spelled the way the provider spells
+   them.
+
+   Built with textContent because campground names come from scrapes; passing a
+   string to bindTooltip would hand a scraped name to an HTML parser. */
+function labelFor(c, size) {
+  const el = document.createElement("span");
+  el.textContent = c.name;
+  return L.tooltip({
+    permanent: true,
+    direction: "right",
+    offset: [size / 2 + 3, 0],
+    className: "pin-label",
+    opacity: 1,
+    // Names are long and pins are dense; a label must never swallow the click
+    // that opens the thing it names.
+    interactive: false,
+  }).setContent(el);
+}
+
+/* Labels are hidden wholesale by a class on the map container rather than by
+   unbinding them: 774 tooltips torn down and rebuilt on every zoom is a lot of
+   churn for something CSS does in one line. Clustered pins take their labels
+   with them automatically, because a clustered marker isn't on the map. */
+function updateLabelVisibility() {
+  if (!map) return;
+  map.getContainer().classList.toggle(
+    "labels-off", map.getZoom() < labelsFromZoom
+  );
+}
+
 function renderMap() {
   if (!map) return;
   const located = visible().filter((c) => c.located && c.latitude != null);
   cluster.clearLayers();
   cluster.addLayers(
-    located.map((c) =>
-      L.marker([c.latitude, c.longitude], { icon: pinIcon(c), title: c.name })
-        .bindPopup(() => popupFor(c))
-    )
+    located.map((c) => {
+      const icon = pinIcon(c);
+      return L.marker([c.latitude, c.longitude], { icon, title: c.name })
+        .bindTooltip(labelFor(c, icon.options.iconSize[0]))
+        .bindPopup(() => popupFor(c));
+    })
   );
+  updateLabelVisibility();
 
   // Frame the catalog once, on first draw only — refitting on every keystroke
   // would yank the map around while someone is typing.

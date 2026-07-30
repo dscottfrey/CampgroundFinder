@@ -3169,6 +3169,14 @@ class TestBasemapConfig(unittest.TestCase):
         self.assertIn("opentopomap", settings["tiles"]["url"])
         self.assertEqual(settings["topo_from_zoom"], 12)
 
+    def test_the_page_paints_its_own_campground_names(self):
+        # Neither basemap can be relied on for them: OpenTopoMap labels no
+        # campgrounds at all and the street tiles label only some (2026-07-29).
+        # Held back at wide zooms, where 774 names would be a smear.
+        self.assertEqual(parse_config({}).map_settings["labels_from_zoom"], 11)
+        cfg = parse_config({"map": {"labels_from_zoom": 13}})
+        self.assertEqual(cfg.map_settings["labels_from_zoom"], 13)
+
     def test_the_handover_zoom_is_configurable(self):
         # It is a judgement call about legibility, and judgement calls belong
         # in config rather than in JavaScript.

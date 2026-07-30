@@ -62,6 +62,12 @@ map:
     max_zoom: 19
   topo_from_zoom: 12
 
+  # From which zoom every visible pin carries its name. We paint these
+  # ourselves: OpenTopoMap labels no campgrounds at all, and the street tiles
+  # label only some, in small type. Held back at wide zooms because 774 names
+  # at once is a smear — raise it if the labels crowd each other.
+  labels_from_zoom: 11
+
 notify:
   default_targets:
     - ntfy://ntfy.sh/change-me-campgroundfinder   # keep the topic secret — it is the auth

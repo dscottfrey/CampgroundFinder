@@ -157,6 +157,27 @@ tbody tr:last-child td { border-bottom: none; }
   font-size: 14px; line-height: 14px; text-align: center; font-weight: 700;
 }
 
+/* Our own campground names, painted beside the pins because neither basemap
+   labels them usefully. Deliberately NOT theme-aware: these sit on map tiles,
+   which stay light whatever the page does, so dark text in a white halo is
+   right in both themes. The halo is what makes them legible over contour lines
+   and forest green alike. */
+.leaflet-tooltip.pin-label {
+  background: none; border: none; box-shadow: none; padding: 0;
+  color: #16150f; font: 700 12px/1.15 ui-sans-serif, -apple-system, sans-serif;
+  white-space: nowrap;
+  text-shadow:
+     1px  1px 0 #fff, -1px  1px 0 #fff,
+     1px -1px 0 #fff, -1px -1px 0 #fff,
+     0 2px 3px rgba(255, 255, 255, 0.9);
+}
+/* Leaflet's tooltips come with a little pointer triangle; ours is a bare word. */
+.leaflet-tooltip.pin-label::before { display: none; }
+
+/* One class on the container hides the lot at wide zooms, where 774 names
+   would be a smear rather than a map. */
+.labels-off .leaflet-tooltip.pin-label { display: none; }
+
 .popup strong { display: block; font-size: 1rem; }
 .popup-where { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.4rem; }
 .popup-note { color: var(--muted); font-size: 0.85rem; margin-top: 0.35rem; }
