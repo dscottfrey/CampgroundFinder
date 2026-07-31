@@ -87,6 +87,74 @@ def cmd_backfill_site_inventory(args) -> int:
     return 0
 
 
+def cmd_backfill_facility_details(args) -> int:
+    """Activities, photo and description — one request each, three answers.
+
+    Also derives `water_nearby`, because nobody publishes it: ReserveAmerica's
+    own `Near Water` field is `no` on all 5,313 Oregon sites (app/water.py).
+    """
+    conn = db.open_db(args.db)
+    done = inventory.backfill_facility_details(
+        conn, provider=args.provider, states=args.state, limit=args.limit)
+    print(f"visited={done['visited']} recorded={done['recorded']} "
+          f"photos={done['photos']} water-yes={done['water_yes']} "
+          f"errors={len(done['errors'])}")
+    return 0
+
+
+def cmd_backfill_gtc_parks(args) -> int:
+    """Park amenities, photo, description and water — two requests per portal."""
+    conn = db.open_db(args.db)
+    done = inventory.backfill_goingtocamp_parks(
+        conn, provider=args.provider, limit=args.limit)
+    print(f"visited={done['visited']} recorded={done['recorded']} "
+          f"photos={done['photos']} water-yes={done['water_yes']} "
+          f"errors={len(done['errors'])}")
+    return 0
+
+
+def cmd_water_derive(args) -> int:
+    """Re-run the water derivation over stored data. No network.
+
+    Run this after editing `data/seed/curated_water.json` — it is how a hand
+    verdict takes effect.
+    """
+    from app import water
+
+    conn = db.open_db(args.db)
+    counts = water.rederive_all(conn, provider=args.provider)
+    print(f"yes={counts.get('yes', 0)} no={counts.get('no', 0)} "
+          f"unknown={counts.get('unknown', 0)} changed={counts['changed']}")
+    return 0
+
+
+def cmd_water_review(args) -> int:
+    """The list of campgrounds a person has to look at to settle the water question.
+
+    Largest first, because Scott's time is the scarce input, not the
+    campgrounds. Paste a `map_url` into a browser, decide, and record the
+    answer in `data/seed/curated_water.json` — which outranks everything
+    derived.
+    """
+    from app import water
+
+    conn = db.open_db(args.db)
+    queue = water.review_list(
+        store.list_campgrounds(conn, provider=args.provider, states=args.state))
+    if args.json:
+        Path(args.json).write_text(json.dumps(queue, indent=1))
+        print(f"wrote {len(queue)} to {args.json}")
+        return 0
+    print(f"{len(queue)} campgrounds still unknown\n")
+    for row in queue[:args.limit or 40]:
+        sites = row["sites_total"] or "?"
+        print(f"{sites:>5} sites  {row['name'][:44]:46} {row['state'] or '--'}  "
+              f"{row['map_url'] or 'NO COORDINATE — needs the operator page'}")
+    if len(queue) > (args.limit or 40):
+        print(f"\n... and {len(queue) - (args.limit or 40)} more; --json to write them all")
+    return 0
+
+
 def cmd_list_providers(args) -> int:
     for name in known_providers():
         print(name)
@@ -262,6 +330,32 @@ def main(argv=None) -> int:
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--write-seed", action="store_true")
     p.set_defaults(func=cmd_backfill_site_inventory)
+
+    p = sub.add_parser("backfill-facility-details",
+                       help="activities, photo, description + derived water flag")
+    p.add_argument("--provider", default="RecreationDotGov")
+    p.add_argument("--state", action="append")
+    p.add_argument("--limit", type=int, default=None)
+    p.set_defaults(func=cmd_backfill_facility_details)
+
+    p = sub.add_parser("backfill-gtc-parks",
+                       help="GoingToCamp park amenities, photo, description, water")
+    p.add_argument("--provider", default="GoingToCamp:WA")
+    p.add_argument("--limit", type=int, default=None)
+    p.set_defaults(func=cmd_backfill_gtc_parks)
+
+    p = sub.add_parser("water-derive",
+                       help="re-derive water from stored data; run after editing curated_water.json")
+    p.add_argument("--provider", default=None)
+    p.set_defaults(func=cmd_water_derive)
+
+    p = sub.add_parser("water-review",
+                       help="campgrounds whose water question needs a human")
+    p.add_argument("--provider", default=None)
+    p.add_argument("--state", action="append")
+    p.add_argument("--limit", type=int, default=None)
+    p.add_argument("--json", default=None, help="write the full queue to a file")
+    p.set_defaults(func=cmd_water_review)
 
     p = sub.add_parser("scan-once")
     p.add_argument("--nights", type=int, default=1)

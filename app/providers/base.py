@@ -101,6 +101,16 @@ class Campground:
     #: provider's own enumeration (see app/coordinates.py). None means the
     #: provider supplied it, or there is no coordinate at all.
     coord_source: Optional[str] = None
+    #: Operator-listed activities, e.g. ["BOATING", "FISHING", "SWIMMING"].
+    activities: Optional[list] = None
+    #: Is there water here? 'yes' | 'unknown' — and 'no' only from a human
+    #: verdict, because nobody publishes this usefully (app/water.py).
+    water_nearby: Optional[str] = None
+    #: Why `water_nearby` says what it says, in readable words.
+    water_evidence: Optional[str] = None
+    photo_url: Optional[str] = None
+    photo_credit: Optional[str] = None
+    description: Optional[str] = None
 
     @property
     def key(self) -> tuple[str, str]:

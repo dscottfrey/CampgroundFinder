@@ -172,12 +172,15 @@ def page_is_complete(page: str) -> bool:
     return tail.endswith("</html>") or "</table>" in page
 
 
-def _fetch_url(url: str) -> tuple[int, str]:
-    """GET a URL with `requests`, falling back to the standard library.
+class MissingHttpClient(RuntimeError):
+    """`requests` isn't installed, and nothing else works against this host."""
 
-    This is one plain GET with no session state, so it does not need a
-    particular client — but it does need a **tolerant** one. Measured against
-    this host on 2026-07-28, fetching the same directory page:
+
+def _fetch_url(url: str, session=None) -> tuple[int, str]:
+    """GET a URL with `requests`. There is no fallback, deliberately.
+
+    This host needs a **tolerant** client. Measured against it on 2026-07-28,
+    fetching the same directory page:
 
     | client                 | result                                 |
     |------------------------|----------------------------------------|
@@ -194,34 +197,37 @@ def _fetch_url(url: str) -> tuple[int, str]:
     proven to work on this exact page was risk with no upside. It has been
     dropped from requirements.txt rather than merely reordered.
 
-    The stdlib path is a last resort known to fail on ReserveAmerica, kept only
-    so the module runs somewhere without `requests`. Truncation is returned,
-    never hidden: `page_is_complete` upstairs decides whether to retry or refuse.
-    """
-    headers = {"User-Agent": USER_AGENT}
+    ## Why the stdlib fallback was removed (Scott, 2026-07-31)
 
+    There used to be a `urllib` path here "so the module runs somewhere without
+    `requests`". It was chosen automatically and silently, and it is **known**
+    to truncate against this host — so its whole contribution was to turn a
+    clear ImportError into short pages that look like real ones. It bit
+    immediately: the site-inventory backfill run under the system `python3`
+    instead of `.venv/bin/python` fetched half-parks, and only the
+    stated-total guard turned that into a refusal rather than 65 quietly
+    halved parks.
+
+    Running is not better than not running when the output is wrong. Missing
+    `requests` now raises and names the fix.
+
+    A cookie jar is the second reason: site-list paging keeps its cursor
+    against the session (`list_sites`), and the stdlib path had none, so it
+    returned page one forever regardless of truncation.
+    """
     try:
         import requests
-    except ImportError:
-        pass
-    else:
-        response = requests.get(url, headers=headers, timeout=40)
-        return response.status_code, response.text
+    except ImportError as exc:  # pragma: no cover - environment, not logic
+        raise MissingHttpClient(
+            "ReserveAmerica needs the `requests` package — the standard "
+            "library truncates this host's pages and carries no session "
+            "cookie. Run with the project venv: "
+            "`.venv/bin/python scripts/manage.py ...`"
+        ) from exc
 
-    import urllib.error
-    import urllib.request
-    from http.client import IncompleteRead
-
-    request = urllib.request.Request(url, headers=headers)
-    try:
-        with urllib.request.urlopen(request, timeout=40) as response:
-            try:
-                raw = response.read()
-            except IncompleteRead as exc:
-                raw = exc.partial
-            return response.status, raw.decode("utf-8", "replace")
-    except urllib.error.HTTPError as exc:
-        return exc.code, exc.read().decode("utf-8", "replace")
+    response = (session or requests).get(
+        url, headers={"User-Agent": USER_AGENT}, timeout=40)
+    return response.status_code, response.text
 
 
 class ReserveAmericaProvider(Provider):
@@ -262,10 +268,10 @@ class ReserveAmericaProvider(Provider):
 
     # -- transport ---------------------------------------------------------
 
-    def _http_get(self, path: str, params: dict) -> str:
+    def _http_get(self, path: str, params: dict, session=None) -> str:
         url = f"https://{self.host}/{path}?{urlencode(params)}"
         with self.limiter.slot(self.host, label=self.name):
-            status, text = _fetch_url(url)
+            status, text = _fetch_url(url, session=session)
         if status in (403, 429):
             # Back off hard and stop; never retry into a block (§13). Latching
             # it on the shared limiter stops every *other* caller too — an
@@ -276,6 +282,20 @@ class ReserveAmericaProvider(Provider):
         if status >= 400:
             raise RuntimeError(f"{self.name}: HTTP {status} for {path}")
         return text
+
+    def _session_fetcher(self):
+        """A `fetch(path, params)` whose requests share one cookie jar.
+
+        Only the real HTTP path gets a session. A test fetcher injected via
+        `fetcher=` replays saved pages and takes two arguments, so handing it a
+        session would break it — and it has no server keeping a cursor anyway.
+        """
+        if self._fetch is not self._http_get:
+            return self._fetch
+        import requests  # `_fetch_url` explains why there is no fallback
+
+        session = requests.Session()
+        return lambda path, params: self._http_get(path, params, session=session)
 
     # -- catalog -----------------------------------------------------------
 
@@ -366,13 +386,25 @@ class ReserveAmericaProvider(Provider):
 
             executePaging("/campsitePaging.do?contractCode=OR&parkId=N&startIdx=25")
 
+        **That endpoint needs the session cookie too**, and this is the second
+        way the same bug bites. Measured live against Ainsworth State Park on
+        2026-07-31: fetched statelessly, `campsitePaging.do?startIdx=25`
+        returns the *same* 25 sites as page one — a park of 50 looks like a
+        park of 25, in exactly the shape that made Beverly Beach look like 27.
+        Fetched inside a session carrying `JSESSIONID`, it returns the next 25
+        with **zero overlap**. `startIdx` is a hint; the server keeps the real
+        cursor against the session (build plan §6c).
+
         The walk is checked against the park's own "N site(s) found", because a
         short site list is the same silent failure as a short directory (§8k).
+        That guard is what caught this, and it is why the failure surfaced as a
+        refusal rather than 65 quietly halved parks.
 
         Returns raw dicts rather than `Campsite`, because this is inventory
         (what exists), not availability (what's open on a date).
         """
-        first = self._fetch(
+        fetch = self._session_fetcher()
+        first = fetch(
             "campgroundDetails.do",
             {"contractCode": self.contract_code, "parkId": park_id},
         )
@@ -382,7 +414,7 @@ class ReserveAmericaProvider(Provider):
         sites: dict[str, dict] = {s["site_id"]: s for s in self.parse_sites(first)}
         offset = len(sites)
         while expected is None or len(sites) < expected:
-            page = self._fetch(
+            page = fetch(
                 "campsitePaging.do",
                 {
                     "contractCode": self.contract_code,

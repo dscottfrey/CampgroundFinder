@@ -47,6 +47,26 @@ CREATE TABLE IF NOT EXISTS campgrounds (
   length_data_quality TEXT,
   inventory_source TEXT,
   inventory_updated TEXT,
+  -- Is there water here? DERIVED, because nobody states it: ReserveAmerica's
+  -- own `Near Water` field is `no` on all 5,313 Oregon sites that carry it
+  -- (app/water.py). Two states only, 'yes' | 'unknown' — never 'no', because
+  -- a lakeside campground with a dull name is unknown, not dry. The one
+  -- exception is a human verdict in the curated file, which may say 'no'
+  -- because a person looking at a map is real evidence.
+  water_nearby TEXT,
+  -- Why `water_nearby` says what it says, in words a camper could read:
+  -- "named for Diamond Lake", "the operator lists Boating, Swimming",
+  -- "checked on a map by Scott". A derived flag that can't say why it fired
+  -- is the confident guess this project keeps getting punished for.
+  water_evidence TEXT,
+  -- Operator-listed activities, JSON array. Fetched with the facility record,
+  -- so the water question never costs its own pass.
+  activities TEXT,
+  -- A photo of the campground and the operator's own description. Both come
+  -- from the same request as the activities.
+  photo_url TEXT,
+  photo_credit TEXT,
+  description TEXT,
   PRIMARY KEY (provider, id)
 );
 
@@ -161,6 +181,12 @@ MIGRATIONS = [
     ("campsites", "access_class", "TEXT"),
     ("campgrounds", "inventory_source", "TEXT"),
     ("campgrounds", "inventory_updated", "TEXT"),
+    ("campgrounds", "water_nearby", "TEXT"),
+    ("campgrounds", "water_evidence", "TEXT"),
+    ("campgrounds", "activities", "TEXT"),
+    ("campgrounds", "photo_url", "TEXT"),
+    ("campgrounds", "photo_credit", "TEXT"),
+    ("campgrounds", "description", "TEXT"),
 ]
 
 

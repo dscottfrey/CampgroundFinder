@@ -93,6 +93,8 @@ class GoingToCampProvider(Provider):
         self._fetch = fetcher or self._http_get_json
         self.limiter = limiter or shared_limiter()
         self._map_ids: Optional[dict[str, int]] = None
+        #: 62 attribute definitions for the whole portal, fetched once.
+        self._attribute_defs: Optional[dict] = None
 
     # -- transport ---------------------------------------------------------
 
@@ -171,6 +173,73 @@ class GoingToCampProvider(Provider):
             )
         log.info("%s: %d campable locations", self.name, len(out))
         return out
+
+    # -- attributes: the vocabulary this platform publishes -----------------
+
+    def attribute_definitions(self) -> dict:
+        """`{definitionId: {"name": str, "values": {enumValue: displayName}}}`.
+
+        **One request for the whole portal** — 62 definitions for Washington —
+        and it is what turns the opaque numbers in a location or site record
+        into words. Without it, `attributes` reads
+        `{"attributeDefinitionId": -32706, "values": [0, 1, 2, …]}` and means
+        nothing.
+
+        Decoded by **`enumValue`, never by position in the list.** The values
+        arrive ordered by an `order` field that is not the enum, so indexing
+        the array would relabel every amenity silently — "Boat Launch" landing
+        on whatever happens to sit at that offset. Checked live 2026-07-31.
+        """
+        if self._attribute_defs is None:
+            payload = self._fetch("/api/attribute/filterable", {})
+            defs = {}
+            for key, definition in (payload or {}).items():
+                values = {}
+                for item in definition.get("values") or []:
+                    enum = item.get("enumValue")
+                    if enum is None:
+                        continue
+                    values[enum] = _display_name(item)
+                defs[str(key)] = {
+                    "name": _display_name(definition),
+                    "values": values,
+                    "min": definition.get("minValue"),
+                    "max": definition.get("maxValue"),
+                }
+            self._attribute_defs = defs
+        return self._attribute_defs
+
+    def decode_attributes(self, attributes: Optional[list]) -> dict:
+        """A record's raw `attributes` list, as `{name: value or [values]}`.
+
+        A definition carries either a scalar `value` or a `values` list of enum
+        keys. Both shapes appear on the same platform, so both are handled and
+        neither is assumed.
+        """
+        defs = self.attribute_definitions()
+        out: dict = {}
+        for attribute in attributes or []:
+            definition = defs.get(str(attribute.get("attributeDefinitionId")))
+            if not definition or not definition["name"]:
+                continue
+            enums = attribute.get("values")
+            if enums:
+                named = [definition["values"].get(e) for e in enums]
+                out[definition["name"]] = [n for n in named if n]
+            elif attribute.get("value") is not None:
+                raw = attribute["value"]
+                out[definition["name"]] = definition["values"].get(raw, raw)
+        return out
+
+    def location_details(self) -> list[dict]:
+        """Every location's raw record — attributes, photos, description.
+
+        The same single `/api/resourceLocation` call the catalog already
+        makes, returned unreduced. Worth knowing: on this platform the park
+        photo and description cost **nothing extra**, unlike RIDB where each
+        facility is its own request.
+        """
+        return list(self._fetch("/api/resourceLocation", {}) or [])
 
     def map_id_for(self, campground_id: str) -> Optional[int]:
         """The park's root map, needed by every availability call.
@@ -299,6 +368,37 @@ def _name_of(entry: dict) -> Optional[str]:
         name = localized.get("fullName") or localized.get("shortName")
         if name:
             return name.strip()
+    return None
+
+
+def _display_name(entry: dict) -> Optional[str]:
+    """The English display name off any record carrying `localizedValues`."""
+    for localized in entry.get("localizedValues") or []:
+        name = localized.get("displayName")
+        if name:
+            return name.strip()
+    return None
+
+
+def _description_of(entry: dict) -> Optional[str]:
+    for localized in entry.get("localizedValues") or []:
+        text = localized.get("description")
+        if text:
+            return text.strip()
+    return None
+
+
+def _photo_of(entry: dict) -> Optional[str]:
+    """A plain `.jpg` URL, not the `.avif` beside it.
+
+    The platform offers both. AVIF is smaller but not universally decodable in
+    every context this might land in, and the jpg is the safe one to store.
+    """
+    for photo in entry.get("photos") or []:
+        result = photo.get("photoUrlResult") or {}
+        url = result.get("url") or result.get("avifUrl")
+        if url:
+            return url
     return None
 
 

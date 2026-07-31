@@ -62,9 +62,13 @@ sources:
   - { label: "Oregon State Parks",     provider: "ReserveAmerica:OR", state: OR, campground_ids: [] }
   - { label: "Washington State Parks", provider: "GoingToCamp:WA",    state: WA, campground_ids: [] }
 
-  # BC Parks works the same way (114 parks in the seed), but the platform
-  # publishes no coordinates for them — they show as "location unknown" rather
-  # than appearing on the map. Enable if you want them searchable.
+  # BC Parks works the same way (114 parks in the seed). An earlier version of
+  # this comment said the platform publishes no coordinates for them; that is
+  # no longer true — 111 of the 114 now carry one, and 109 carry a photo. Only
+  # the two Wells Gray entries and Saysutshun still show "location unknown".
+  # What BC does NOT publish is the amenity attribute list Washington has, so
+  # its water/boat-launch answers come from names alone (docs/goingtocamp-clients.md).
+  # Enable if you want them searchable.
   # - { label: "BC Provincial Parks", provider: "GoingToCamp:BC", state: BC, campground_ids: [] }
 
   # Offline demo source — no network, no deps. Handy for `scan-once` smoke tests.

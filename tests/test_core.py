@@ -970,6 +970,34 @@ class TestReserveAmericaHonesty(unittest.TestCase):
         self.assertEqual(p.host, "a1.reserveamerica.com")
         self.assertEqual(p.contract_code, "GA")
 
+    def test_a_missing_http_client_refuses_instead_of_fetching_badly(self):
+        """There is no stdlib fallback, on purpose (2026-07-31).
+
+        `urllib` truncates this host's chunked responses and carries no
+        session cookie, so falling back to it turns a clear ImportError into
+        short pages that look real. The backfill run under the system
+        `python3` did exactly that and fetched half-parks. Running is not
+        better than not running when the output is wrong.
+        """
+        import builtins
+        from app.providers import reserveamerica as ra
+
+        real_import = builtins.__import__
+
+        def no_requests(name, *args, **kwargs):
+            if name == "requests":
+                raise ImportError("no requests here")
+            return real_import(name, *args, **kwargs)
+
+        builtins.__import__ = no_requests
+        try:
+            with self.assertRaises(ra.MissingHttpClient) as ctx:
+                ra._fetch_url("https://example.invalid/x")
+        finally:
+            builtins.__import__ = real_import
+        # The message has to name the fix, not just the problem.
+        self.assertIn(".venv/bin/python", str(ctx.exception))
+
 
 class TestReserveAmericaAvailability(unittest.TestCase):
     """The two-week per-site grid — the call that finally works."""
@@ -2982,6 +3010,223 @@ class TestPerSiteInventory(DBTestCase):
         report = inventory.backfill_site_inventory(
             self.conn, states=["OR"], fetcher=self.fetcher(), now=NOW)
         self.assertEqual(report.recorded, 2, "the counts-only campground is redone")
+
+# ------------- ReserveAmerica per-site inventory (2026-07-31) -------------------
+
+class TestReserveAmericaInventory(DBTestCase):
+    """Oregon's state parks get the same per-site treatment as the federal ones.
+
+    Everything in docs/terminology.md — the driveway floor, `WALK TO` as
+    access mode, the lying icon, host pitches named rather than typed — was
+    learned from these parks, and until this backfill ran it all applied to
+    zero stored rows.
+    """
+
+    PROVIDER = "ReserveAmerica:OR"
+
+    def setUp(self):
+        super().setUp()
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider=self.PROVIDER, id="412704", name="Reehers",
+                       state="OR"),
+            Campground(provider=self.PROVIDER, id="stub", name="Stub Stewart",
+                       state="OR"),
+        ], now=NOW)
+        self.pages = {
+            "412704": (FIXTURES / "ra_park_412704.html").read_text(),
+            "stub": (FIXTURES / "ra_stub_stewart_sites.html").read_text(),
+        }
+
+    def fetcher(self):
+        from app.providers.reserveamerica import ReserveAmericaProvider
+
+        return lambda cg: ReserveAmericaProvider.parse_sites(self.pages[cg.id])
+
+    def run_backfill(self):
+        return inventory.backfill_site_inventory(
+            self.conn, provider=self.PROVIDER, fetcher=self.fetcher(), now=NOW)
+
+    def test_site_rows_are_written_for_an_ra_park(self):
+        report = self.run_backfill()
+        self.assertEqual(report.recorded, 2)
+        rows = store.list_campsites(self.conn, self.PROVIDER, "412704")
+        self.assertTrue(rows, "ReserveAmerica parks must get per-site rows")
+
+    def test_the_host_pitch_is_excluded_even_though_it_is_typed_horse_site(self):
+        """Reehers names its host site `Host` and types it `HORSE SITE`.
+
+        A type-only exclusion — the shape that works for RIDB's MANAGEMENT —
+        walks straight past it and offers a camper somebody's job.
+        """
+        self.run_backfill()
+        rows = store.list_campsites(self.conn, self.PROVIDER, "412704")
+        self.assertEqual(len(rows), 16, "17 sites minus the host pitch")
+        self.assertNotIn("Host", [r["name"] for r in rows])
+
+    def test_walk_to_becomes_hike_in_and_carries_no_driveway(self):
+        self.run_backfill()
+        rows = store.list_campsites(self.conn, self.PROVIDER, "stub")
+        walk = [r for r in rows if r["site_type"] == "WALK TO"]
+        self.assertEqual(len(walk), 21)
+        self.assertTrue(all(r["access_class"] == "hike_in" for r in walk))
+        # The second, independent signal: no driveway at all.
+        self.assertTrue(all(r["driveway_entry"] is None for r in walk))
+
+    def test_the_type_icon_is_stored_but_never_as_access(self):
+        """Those WALK TO sites carry an `rv` icon. Believing it would be wrong."""
+        self.run_backfill()
+        rows = store.list_campsites(self.conn, self.PROVIDER, "stub")
+        walk = next(r for r in rows if r["site_type"] == "WALK TO")
+        attrs = json.loads(walk["attributes"])
+        self.assertEqual(attrs["untrusted_type_icon"], "rv")
+        self.assertEqual(walk["access_class"], "hike_in")
+
+    def test_a_bare_manoeuvre_means_driveway_yes_length_unknown(self):
+        """Reehers reads `Back-In` with no number — that is not zero feet."""
+        self.run_backfill()
+        rows = store.list_campsites(self.conn, self.PROVIDER, "412704")
+        horse = next(r for r in rows if r["name"] == "A-01")
+        self.assertEqual(horse["driveway_entry"], "Back-In")
+        self.assertIsNone(horse["max_vehicle_length"])
+
+    def test_absent_hookups_are_not_read_as_present(self):
+        """`Electric Hookup - no` beside `... available: 30 amp`.
+
+        A contains-check for "hookup" marks every unserviced site as serviced.
+        """
+        self.run_backfill()
+        rows = store.list_campsites(self.conn, self.PROVIDER, "412704")
+        attrs = json.loads(rows[0]["attributes"])
+        self.assertEqual(attrs["Electric Hookup"], "no")
+
+    def test_the_available_suffix_does_not_split_a_feature_in_two(self):
+        """`Full Hookup available` and `Full Hookup - no` are one feature.
+
+        Found by surveying all 64 Oregon parks (2026-07-31): the same hookup
+        answered `no` under "Full Hookup" and `yes` under "Full Hookup
+        available", so a filter reading either key got half the truth.
+        """
+        parsed = inventory.parse_ra_amenities([
+            "Full Hookup available",
+            "Electric Hookup available: 30 amp",
+            "Near Water - no",
+            "Water Hookup",
+        ])
+        self.assertEqual(parsed["Full Hookup"], "yes")
+        self.assertNotIn("Full Hookup available", parsed)
+        self.assertEqual(parsed["Electric Hookup"], "30 amp")
+        self.assertEqual(parsed["Near Water"], "no")
+        self.assertEqual(parsed["Water Hookup"], "yes")
+
+    def test_bookability_stays_unknown_rather_than_zero(self):
+        """The park page has no such column — its last cell reads "Enter Date".
+
+        Recording 0 would assert every site is bookable online, which nobody
+        measured. `first_come_sites` must stay NULL, not become False.
+        """
+        self.run_backfill()
+        cg = store.get_campground(self.conn, self.PROVIDER, "412704")
+        self.assertEqual(cg.sites_total, 16)
+        self.assertIsNone(cg.sites_not_bookable)
+        self.assertIsNone(cg.first_come_sites)
+
+    def test_rerunning_skips_parks_already_held(self):
+        """65 parks at 6s a request — a stopped run must resume, not restart."""
+        self.run_backfill()
+        second = self.run_backfill()
+        self.assertEqual(second.visited, 0)
+
+    def test_an_unimplemented_provider_refuses_rather_than_guessing(self):
+        with self.assertRaises(ValueError):
+            inventory.backfill_site_inventory(self.conn, provider="GoingToCamp:WA")
+
+
+# ------------- GoingToCamp publishes the vocabulary (2026-07-31) ----------------
+
+GTC_ATTR_DEFS = {
+    "-32706": {
+        "attributeDefinitionId": -32706,
+        "localizedValues": [{"cultureName": "en-US", "displayName": "Park Amenities"}],
+        # Deliberately NOT in enumValue order, and with a gap — this is the
+        # shape that makes index-based decoding wrong.
+        "values": [
+            {"enumValue": 12, "order": 1,
+             "localizedValues": [{"displayName": "Boat Launch"}]},
+            {"enumValue": 0, "order": 2,
+             "localizedValues": [{"displayName": "Wifi"}]},
+            {"enumValue": 25, "order": 3,
+             "localizedValues": [{"displayName": "Lakes/Rivers/Beach"}]},
+        ],
+    },
+}
+
+
+class TestGoingToCampAttributes(unittest.TestCase):
+    """The platform states in words what the others make us infer."""
+
+    def provider(self):
+        from app.providers.goingtocamp import GoingToCampProvider
+
+        p = GoingToCampProvider("WA", "example.invalid", 3, state="WA",
+                                fetcher=lambda path, params: GTC_ATTR_DEFS)
+        return p
+
+    def test_values_decode_by_enum_not_by_position(self):
+        """`enumValue`, never the index.
+
+        The values arrive ordered by an `order` field that is not the enum, so
+        indexing the array relabels every amenity silently — "Boat Launch"
+        landing on whatever sits at that offset.
+        """
+        p = self.provider()
+        decoded = p.decode_attributes(
+            [{"attributeDefinitionId": -32706, "values": [12, 25]}])
+        self.assertEqual(decoded["Park Amenities"], ["Boat Launch", "Lakes/Rivers/Beach"])
+
+    def test_an_unknown_definition_is_dropped_not_guessed(self):
+        p = self.provider()
+        decoded = p.decode_attributes(
+            [{"attributeDefinitionId": -99999, "values": [1]}])
+        self.assertEqual(decoded, {})
+
+
+class TestWaterDerivation(unittest.TestCase):
+    """`yes` or `unknown` — and `no` only from a person who looked."""
+
+    def test_operator_amenities_beat_a_silent_name(self):
+        from app import water
+        status, evidence = water.derive(
+            "Battle Ground", None, ["Boat Launch", "Swimming"])
+        self.assertEqual(status, "yes")
+        self.assertIn("the operator lists", evidence)
+
+    def test_moorage_counts_as_water(self):
+        """GoingToCamp's word, not RIDB's. A marker set tuned to one provider
+        silently drops the next one's terms."""
+        from app import water
+        self.assertEqual(water.derive("Somewhere", None, ["Moorage"])[0], "yes")
+
+    def test_a_dry_campground_is_unknown_never_no(self):
+        from app import water
+        status, evidence = water.derive("Ridge Camp", None, ["HIKING"])
+        self.assertEqual(status, "unknown")
+        self.assertIsNone(evidence)
+
+    def test_only_a_human_verdict_may_say_no(self):
+        from app import water
+        status, evidence = water.derive(
+            "Lake Something", None, ["Swimming"],
+            curated={"water": "no", "note": "the lake is 3 miles away by road"},
+        )
+        self.assertEqual(status, "no")
+        self.assertIn("3 miles", evidence)
+
+    def test_the_curated_verdict_also_overrides_a_yes_name(self):
+        from app import water
+        self.assertEqual(
+            water.derive("Beach Camp", None, None, curated={"water": "no"})[0],
+            "no")
+
 
 # ------------- normalized access, and per-site data that survives (2026-07-28) ----
 

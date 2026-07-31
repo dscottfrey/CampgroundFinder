@@ -240,7 +240,22 @@ def row_to_campground(row: sqlite3.Row) -> Campground:
         length_data_quality=(
             row["length_data_quality"] if "length_data_quality" in row.keys() else None
         ),
+        **_optional_columns(row),
     )
+
+
+#: Columns added late enough that a database may predate them. Read defensively
+#: so an un-migrated file degrades to None rather than raising on every query.
+_LATE_COLUMNS = ("water_nearby", "water_evidence", "photo_url", "photo_credit",
+                 "description")
+
+
+def _optional_columns(row: sqlite3.Row) -> dict:
+    keys = row.keys()
+    out = {name: (row[name] if name in keys else None) for name in _LATE_COLUMNS}
+    raw = row["activities"] if "activities" in keys else None
+    out["activities"] = loads(raw) if raw else None
+    return out
 
 
 def get_campground(
@@ -349,7 +364,7 @@ def set_site_inventory(
     provider: str,
     cg_id: str,
     sites_total: int,
-    sites_not_bookable: int,
+    sites_not_bookable: Optional[int],
     source: str,
     site_types: Optional[dict] = None,
     now: Optional[datetime] = None,
@@ -360,15 +375,25 @@ def set_site_inventory(
     maintenance backfill and then left alone — it is never part of a scan.
     `first_come_sites` is derived here rather than stored independently, so the
     flag and the counts can never disagree.
+
+    `sites_not_bookable` may be **None**, and that is not the same as 0. RIDB
+    states `CampsiteReservable` per site; ReserveAmerica's park page does not —
+    its last column reads "Enter Date", which is a prompt, not a flag. So for
+    an RA park we know how many sites exist and nothing about how many are
+    bookable, and `first_come_sites` stays NULL rather than being written as
+    "none, definitely" (§8g: unknown is a third state, not a synonym for no).
     """
     if not source:
         raise ValueError("site counts must record where they came from")
+    first_come = (
+        None if sites_not_bookable is None else int(sites_not_bookable > 0)
+    )
     cur = conn.execute(
         """UPDATE campgrounds
              SET sites_total=?, sites_not_bookable=?, first_come_sites=?,
                  site_types=?, inventory_source=?, inventory_updated=?
            WHERE provider=? AND id=?""",
-        (sites_total, sites_not_bookable, 1 if sites_not_bookable > 0 else 0,
+        (sites_total, sites_not_bookable, first_come,
          dumps(site_types) if site_types else None,
          source, iso(now), provider, cg_id),
     )
@@ -426,6 +451,61 @@ def upsert_campsites(
         n += 1
     conn.commit()
     return n
+
+
+def set_facility_detail(
+    conn: sqlite3.Connection,
+    provider: str,
+    cg_id: str,
+    activities: Optional[list] = None,
+    photo_url: Optional[str] = None,
+    photo_credit: Optional[str] = None,
+    description: Optional[str] = None,
+    water_nearby: Optional[str] = None,
+    water_evidence: Optional[str] = None,
+    now: Optional[datetime] = None,
+) -> bool:
+    """Activities, a photo, a description, and the derived water verdict.
+
+    All from one facility request (`inventory.fetch_facility_detail`). The
+    water verdict is stored **beside** whatever the provider said, never over
+    it: ReserveAmerica's own `Near Water` stays exactly as published, wrong
+    and empty as it is, because overwriting a source's claim with our
+    inference makes the two indistinguishable later.
+    """
+    cur = conn.execute(
+        """UPDATE campgrounds
+             SET activities=?, photo_url=?, photo_credit=?, description=?,
+                 water_nearby=?, water_evidence=?
+           WHERE provider=? AND id=?""",
+        (dumps(activities) if activities else None, photo_url, photo_credit,
+         description, water_nearby, water_evidence, provider, cg_id),
+    )
+    conn.commit()
+    return cur.rowcount > 0
+
+
+def set_water(
+    conn: sqlite3.Connection,
+    provider: str,
+    cg_id: str,
+    water_nearby: Optional[str],
+    water_evidence: Optional[str],
+    now: Optional[datetime] = None,
+) -> bool:
+    """Just the water verdict, without disturbing the photo or description.
+
+    Separate from `set_facility_detail` because re-deriving must never blank
+    fields it wasn't asked about — the re-derive runs offline and knows
+    nothing about photos.
+    """
+    cur = conn.execute(
+        "UPDATE campgrounds SET water_nearby=?, water_evidence=? "
+        "WHERE provider=? AND id=?",
+        (water_nearby, water_evidence, provider, cg_id),
+    )
+    conn.commit()
+    return cur.rowcount > 0
 
 
 def has_campsites(conn: sqlite3.Connection, provider: str, campground_id: str) -> bool:

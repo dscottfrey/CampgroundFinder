@@ -220,6 +220,10 @@ __marimo__/
 # CampgroundFinder-specific
 samples/
 data/*.db
+# SQLite's write-ahead log and shared-memory files. They appear beside every
+# open database in WAL mode and are worthless without it.
+data/*.db-wal
+data/*.db-shm
 
 # Standalone page snapshots written by scripts/snapshot.py — a build
 # artifact with frozen data in it, never a source of truth.
