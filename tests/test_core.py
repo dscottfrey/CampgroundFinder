@@ -3141,6 +3141,101 @@ class TestReserveAmericaInventory(DBTestCase):
             inventory.backfill_site_inventory(self.conn, provider="GoingToCamp:WA")
 
 
+# ------------- burn bans and closures (2026-07-31) ------------------------------
+
+class TestParkAlerts(DBTestCase):
+    """parks.wa.gov publishes every park's burn ban on one server-rendered page."""
+
+    def fixture(self):
+        return (FIXTURES / "wa_park_alerts.html").read_text()
+
+    def test_alerts_are_parsed_with_their_park_level_and_date(self):
+        from app import alerts
+        got = alerts.parse_alerts(self.fixture())
+        alta = next(a for a in got if a.park_name.startswith("Alta Lake"))
+        self.assertEqual(alta.alert_type, "Burn Ban")
+        self.assertEqual(alta.level, "3")
+        self.assertTrue(alta.posted.startswith("2026-07-07"))
+        self.assertIn("No charcoal or wood fires", alta.text)
+
+    def test_a_standing_no_fires_rule_is_not_a_level(self):
+        """Many marine parks carry this year-round, dated 2024 — not an emergency."""
+        from app import alerts
+        got = alerts.parse_alerts(self.fixture())
+        anderson = next(a for a in got
+                        if a.park_name.startswith("Anderson") and a.is_burn_ban)
+        self.assertEqual(anderson.level, "no fires at any time")
+
+    def test_every_alert_belongs_to_its_own_park(self):
+        """Parsed by walking each park's block, not by hunting headings.
+
+        A regex that found alerts first would attribute one to whichever park
+        name it happened to see last — wrong in a way that looks fine until
+        somebody drives somewhere.
+        """
+        from app import alerts
+        by_park = {}
+        for a in alerts.parse_alerts(self.fixture()):
+            by_park.setdefault(a.park_name, []).append(a.alert_type)
+        self.assertIn("Water Closure", by_park["Anderson Lake State Park"])
+        self.assertNotIn("Water Closure", by_park["Alta Lake State Park"])
+
+    def test_one_park_alert_reaches_all_that_parks_campgrounds(self):
+        """Riverside posts one ban; we hold two of its campgrounds.
+
+        Picking one would leave the other silently unwarned.
+        """
+        from app import alerts
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="GoingToCamp:WA", id="1",
+                       name="Riverside State Park - Bowl and Pitcher", state="WA"),
+            Campground(provider="GoingToCamp:WA", id="2",
+                       name="Riverside State Park - Lake Spokane", state="WA"),
+        ], now=NOW)
+        one = alerts.Alert(park_slug="riverside", park_name="Riverside State Park",
+                           alert_type="Burn Ban", level="3", posted=None, text="x")
+        matched, unmatched = alerts.match_to_catalog(self.conn, [one])
+        self.assertEqual(sorted(matched), ["1", "2"])
+        self.assertEqual(unmatched, [])
+
+    def test_two_similar_parks_are_not_merged(self):
+        """Lewis and Clark, and Lewis and Clark Trail, are different parks."""
+        from app import alerts
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="GoingToCamp:WA", id="a",
+                       name="Lewis and Clark State Park (SW Washington)", state="WA"),
+            Campground(provider="GoingToCamp:WA", id="b",
+                       name="Lewis and Clark Trail State Park (SE Washington)",
+                       state="WA"),
+        ], now=NOW)
+        trail = alerts.Alert(park_slug="t", park_name="Lewis and Clark Trail",
+                             alert_type="Burn Ban", level="4", posted=None, text="x")
+        matched, _ = alerts.match_to_catalog(self.conn, [trail])
+        self.assertEqual(list(matched), ["b"], "the ban must not land on both")
+
+    def test_unmatched_park_names_are_returned_not_swallowed(self):
+        """An unmatched park is a park whose burn ban we are not showing."""
+        from app import alerts
+        stray = alerts.Alert(park_slug="x", park_name="Nowhere State Park",
+                             alert_type="Burn Ban", level="2", posted=None, text="x")
+        matched, unmatched = alerts.match_to_catalog(self.conn, [stray])
+        self.assertEqual(matched, {})
+        self.assertEqual(unmatched, ["Nowhere State Park"])
+
+    def test_a_lifted_ban_disappears_on_refresh(self):
+        """Alerts are the one thing here allowed to be deleted.
+
+        A ban that has been lifted is taken off the operator's page; merging
+        would leave it on our map telling somebody they can't light a fire
+        that is now legal.
+        """
+        store.replace_park_alerts(self.conn, "GoingToCamp:WA",
+                                  [("1", "Burn Ban", "4", None, "old", "2026-07-31")])
+        self.assertEqual(len(store.alerts_for(self.conn, "GoingToCamp:WA", "1")), 1)
+        store.replace_park_alerts(self.conn, "GoingToCamp:WA", [])
+        self.assertEqual(store.alerts_for(self.conn, "GoingToCamp:WA", "1"), [])
+
+
 # ------------- openings joined to what the site actually is (2026-07-31) --------
 
 class TestOpeningsJoin(DBTestCase):

@@ -113,6 +113,29 @@ def cmd_backfill_gtc_parks(args) -> int:
     return 0
 
 
+def cmd_refresh_alerts(args) -> int:
+    """Burn bans and closures from the operator's own notice page.
+
+    One request covers Washington, so this is a daily job, not a scan.
+    """
+    from app import alerts
+
+    conn = db.open_db(args.db)
+    report = alerts.refresh_alerts(conn, provider=args.provider)
+    print(f"{report['alerts']} alerts · {report['burn_bans']} burn bans · "
+          f"{report['closures']} closures · {report['parks_matched']} parks matched")
+    if report["unmatched"]:
+        # Printed, never swallowed: an unmatched park is a park whose burn ban
+        # we are not showing.
+        print(f"\n{len(report['unmatched'])} park names did not match the catalog "
+              f"— their alerts are NOT being shown:")
+        for name in report["unmatched"][:20]:
+            print(f"  {name}")
+        if len(report["unmatched"]) > 20:
+            print(f"  ... and {len(report['unmatched']) - 20} more")
+    return 0
+
+
 def cmd_water_derive(args) -> int:
     """Re-run the water derivation over stored data. No network.
 
@@ -343,6 +366,11 @@ def main(argv=None) -> int:
     p.add_argument("--provider", default="GoingToCamp:WA")
     p.add_argument("--limit", type=int, default=None)
     p.set_defaults(func=cmd_backfill_gtc_parks)
+
+    p = sub.add_parser("refresh-alerts",
+                       help="burn bans and closures from parks.wa.gov (daily)")
+    p.add_argument("--provider", default="GoingToCamp:WA")
+    p.set_defaults(func=cmd_refresh_alerts)
 
     p = sub.add_parser("water-derive",
                        help="re-derive water from stored data; run after editing curated_water.json")

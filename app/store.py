@@ -599,6 +599,46 @@ def set_facility_detail(
     return cur.rowcount > 0
 
 
+def replace_park_alerts(
+    conn: sqlite3.Connection,
+    provider: str,
+    rows: Iterable[tuple],
+) -> int:
+    """Swap in a provider's alerts wholesale. Deletes first, on purpose.
+
+    Alerts are the one thing here that must be allowed to *disappear*. A burn
+    ban that has been lifted is taken off the operator's page, and merging
+    would leave it on our map for good — telling somebody they can't light a
+    fire that is now perfectly legal. That is the mirror image of the usual
+    rule (never delete a campground, §8k) and the difference is the point: a
+    campground is a fact about the world, an alert is a claim with an expiry.
+    """
+    rows = list(rows)
+    conn.execute("DELETE FROM park_alerts WHERE provider=?", (provider,))
+    conn.executemany(
+        """INSERT INTO park_alerts
+             (provider, campground_id, alert_type, level, posted, text, updated)
+           VALUES (?,?,?,?,?,?,?)""",
+        [(provider, *row) for row in rows],
+    )
+    conn.commit()
+    return len(rows)
+
+
+def alerts_for(conn: sqlite3.Connection, provider: str, cg_id: str) -> list[dict]:
+    return [dict(r) for r in conn.execute(
+        "SELECT * FROM park_alerts WHERE provider=? AND campground_id=? "
+        "ORDER BY alert_type, posted DESC", (provider, cg_id))]
+
+
+def alerts_by_campground(conn: sqlite3.Connection) -> dict:
+    """`{(provider, id): [alert dicts]}` — one query for the whole map."""
+    out: dict = {}
+    for row in conn.execute("SELECT * FROM park_alerts ORDER BY alert_type"):
+        out.setdefault((row["provider"], row["campground_id"]), []).append(dict(row))
+    return out
+
+
 def set_water(
     conn: sqlite3.Connection,
     provider: str,

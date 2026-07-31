@@ -29,6 +29,11 @@ STATIC_DIR = Path(__file__).parent / "static"
 def build_state(conn, states=None, cfg=None) -> dict:
     """Everything the page needs, in one payload."""
     pins = store.map_view(conn, states=states)
+    # Burn bans and closures, attached to the campgrounds they belong to.
+    # One query for the map rather than one per pin.
+    alerts = store.alerts_by_campground(conn)
+    for pin in pins:
+        pin["alerts"] = alerts.get((pin["provider"], pin["id"]), [])
     counts: dict[str, int] = {}
     for pin in pins:
         counts[pin["status"]] = counts.get(pin["status"], 0) + 1

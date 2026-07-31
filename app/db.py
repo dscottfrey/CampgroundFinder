@@ -70,6 +70,22 @@ CREATE TABLE IF NOT EXISTS campgrounds (
   PRIMARY KEY (provider, id)
 );
 
+-- Operator notices: burn bans, closures, water quality (app/alerts.py).
+-- Refreshed daily and REPLACED wholesale per provider, because an alert that
+-- has been taken down is an alert that no longer applies — merging would
+-- leave a lifted burn ban on the map forever.
+CREATE TABLE IF NOT EXISTS park_alerts (
+  provider TEXT, campground_id TEXT,
+  alert_type TEXT,               -- 'Burn Ban' | 'Park is Completely Closed' | …
+  level TEXT,                    -- burn bans only: '1'..'4' | 'no fires at any time'
+  posted TEXT,                   -- when the operator posted it; a 2024 date is
+                                 -- a standing rule, not a current emergency
+  text TEXT,                     -- the operator's own words, shown verbatim
+  updated TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_alerts_campground
+  ON park_alerts (provider, campground_id);
+
 -- Per-site inventory: what EXISTS at a campground, as opposed to what is open
 -- on a date. Measured once by a backfill and then left alone — a campground's
 -- sites change on the order of years (app/inventory.py).

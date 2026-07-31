@@ -356,6 +356,26 @@ function popupFor(c) {
   if (c.water_nearby === "yes" && c.water_evidence) {
     lines.push("Water: " + c.water_evidence);
   }
+
+  // Burn bans and closures, in the operator's own words.
+  const alerts = c.alerts || [];
+  const ban = alerts.find((a) => a.alert_type === "Burn Ban");
+  if (ban) {
+    const level = ban.level ? ("Level " + ban.level).replace(/^Level no /, "No ") : "";
+    lines.push(`Campfires — ${level || ban.alert_type}: ${ban.text}`);
+  } else if (c.provider === "GoingToCamp:WA") {
+    // Washington posts a ban for every park that has one, and states that a
+    // ban is in effect at ALL its parks at all times. So no row here means we
+    // weren't told the level — NOT that fires are allowed. Saying "no
+    // restrictions" would be inventing permission to light a fire.
+    lines.push("Campfires — no restriction listed for this park. A burn ban " +
+               "is in effect at all Washington state parks year-round; check " +
+               "before you light anything.");
+  }
+  for (const a of alerts) {
+    if (a.alert_type === "Burn Ban") continue;
+    lines.push(`${a.alert_type}: ${a.text}`);
+  }
   // Straight from the server, which is where the honest phrasing lives.
   if (c.booking_label) lines.push(c.booking_label);
   // State-park providers publish one coordinate for the whole park. Cape
