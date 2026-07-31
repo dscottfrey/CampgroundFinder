@@ -31,7 +31,7 @@ let OPENINGS = null;
 let COVERAGE = {};
 
 let map = null;
-let cluster = null;
+let markers = null;
 let tilesEverLoaded = false;
 let needsFit = false;
 
@@ -203,12 +203,21 @@ function initMap() {
   applyBasemap();
   map.on("zoomend", applyBasemap);
 
-  cluster = L.markerClusterGroup({
-    // 774 pins at low zoom is a wall of dots; cluster until it means something.
-    maxClusterRadius: 45,
-    showCoverageOnHover: false,
-  });
-  map.addLayer(cluster);
+  /* A plain layer group, NOT a cluster.
+
+     Clustering was here and had to go (Scott, 2026-07-31). He zoomed out one
+     step and the open campgrounds **vanished entirely** — swallowed into
+     numbered cluster bubbles, so a map whose whole job is "where can I camp
+     this weekend" stopped showing the three places you could. The bubbles
+     also read as bare unlabelled numbers, which say nothing about status.
+
+     His rule: **always show a dot for every campground, and let them overlap
+     if they must.** Overlapping dots still convey density and still let you
+     navigate; a cluster replaces the answer with a count. The wall-of-dots
+     worry the clustering was added for is real but is the lesser problem —
+     and it is what the zoom-based label hiding already handles. */
+  markers = L.layerGroup();
+  map.addLayer(markers);
 }
 
 /* Says out loud what the blank squares are. Two different messages, because
@@ -456,8 +465,12 @@ function labelFor(c, size) {
 
 /* Labels are hidden wholesale by a class on the map container rather than by
    unbinding them: 774 tooltips torn down and rebuilt on every zoom is a lot of
-   churn for something CSS does in one line. Clustered pins take their labels
-   with them automatically, because a clustered marker isn't on the map. */
+   churn for something CSS does in one line.
+
+   This is now the ONLY decluttering the map does. Clustering used to hide
+   pins as well and was removed on 2026-07-31 — hiding a *name* at low zoom
+   costs a reader nothing, because the dot is still there to click; hiding the
+   *dot* removed the answer. Names and dots are not the same decision. */
 function updateLabelVisibility() {
   if (!map) return;
   map.getContainer().classList.toggle(
@@ -486,28 +499,33 @@ function matchState(c) {
 function renderMap() {
   if (!map) return;
   const located = visible().filter((c) => c.located && c.latitude != null);
-  cluster.clearLayers();
-  cluster.addLayers(
-    located.map((c) => {
-      const icon = pinIcon(c);
-      const marker = L.marker([c.latitude, c.longitude], { icon, title: c.name })
-        .bindTooltip(labelFor(c, icon.options.iconSize[0]))
-        .bindPopup(() => popupFor(c));
-      // 50% is Scott's starting value, to be looked at rather than trusted.
-      // NOT cumulative by design: failing four filters looks like failing
-      // one, because dimness answers "does this match?", not "how badly?".
-      const state = matchState(c);
-      if (state !== "match") marker.setOpacity(0.5);
-      return marker;
-    })
+  markers.clearLayers();
+  // Matching campgrounds are added LAST so they sit on top of the dimmed
+  // ones. With overlap allowed and no clustering, draw order is the only
+  // thing deciding which dot wins a collision — and the one you can book
+  // should never be the one underneath.
+  const ordered = [...located].sort(
+    (a, b) => (matchState(a) === "match" ? 1 : 0) - (matchState(b) === "match" ? 1 : 0)
   );
+  for (const c of ordered) {
+    const icon = pinIcon(c);
+    const marker = L.marker([c.latitude, c.longitude], { icon, title: c.name })
+      .bindTooltip(labelFor(c, icon.options.iconSize[0]))
+      .bindPopup(() => popupFor(c));
+    // 50% is Scott's starting value, to be looked at rather than trusted.
+    // NOT cumulative by design: failing four filters looks like failing
+    // one, because dimness answers "does this match?", not "how badly?".
+    if (matchState(c) !== "match") marker.setOpacity(0.5);
+    marker.addTo(markers);
+  }
   updateLabelVisibility();
 
   // Frame the catalog once, on first draw only — refitting on every keystroke
   // would yank the map around while someone is typing.
   if (needsFit && located.length) {
     needsFit = false;
-    map.fitBounds(cluster.getBounds(), { padding: [20, 20] });
+    const bounds = L.latLngBounds(located.map((c) => [c.latitude, c.longitude]));
+    map.fitBounds(bounds, { padding: [20, 20] });
   }
 
   // Unlocated campgrounds cannot be drawn, so they get said out loud instead

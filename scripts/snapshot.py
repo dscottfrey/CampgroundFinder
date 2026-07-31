@@ -44,19 +44,28 @@ STATIC = ROOT / "app" / "static"
 # explicit list rather than a regex over the HTML: if someone adds an asset and
 # forgets this file, the snapshot should fail loudly on the leftover tag rather
 # than silently render a page missing a stylesheet.
-CSS = ["vendor/leaflet.css", "vendor/MarkerCluster.css", "styles.css"]
-JS = ["vendor/leaflet.js", "vendor/leaflet.markercluster.js", "app.js"]
+CSS = ["vendor/leaflet.css", "styles.css"]
+JS = ["vendor/leaflet.js", "app.js"]
 
-# Answers app.js's `fetch("/api/state")` from the frozen payload. Anything else
-# raises rather than quietly resolving, so a snapshot can never appear to have
-# reached a network it has no access to.
+# Answers app.js's fetches from frozen payloads. Anything else raises rather
+# than quietly resolving, so a snapshot can never appear to have reached a
+# network it has no access to.
+#
+# `/api/openings` is frozen too, and has to be: without it the page falls back
+# to "we couldn't load what's open", which is the honest message for a real
+# failure and a misleading one for a snapshot that simply forgot the endpoint.
 SHIM = """
 const __SNAPSHOT__ = %s;
+const __OPENINGS__ = %s;
 window.fetch = async function (url) {
-  if (String(url).indexOf("/api/state") !== -1) {
+  const u = String(url);
+  if (u.indexOf("/api/openings") !== -1) {
+    return { ok: true, statusText: "OK", json: async () => __OPENINGS__ };
+  }
+  if (u.indexOf("/api/state") !== -1) {
     return { ok: true, statusText: "OK", json: async () => __SNAPSHOT__ };
   }
-  throw new Error("this is a snapshot — there is no server behind it: " + url);
+  throw new Error("this is a snapshot — there is no server behind it: " + u);
 };
 """
 
@@ -88,7 +97,7 @@ def demo_state():
     report = scan_once(conn, config, notifier=Notifier([]), window_days=5)
     print(f"demo data ready: {report.summary()}")
     try:
-        return web.build_state(conn, cfg=parse_config({}))
+        return web.build_state(conn, cfg=parse_config({})), web.build_openings(conn)
     finally:
         conn.close()
 
@@ -96,12 +105,13 @@ def demo_state():
 def live_state(db_path, config_path):
     conn = db.open_db(db_path)
     try:
-        return web.build_state(conn, cfg=load_config(config_path))
+        return (web.build_state(conn, cfg=load_config(config_path)),
+                web.build_openings(conn))
     finally:
         conn.close()
 
 
-def build_html(state: dict) -> str:
+def build_html(state: dict, openings: dict) -> str:
     html = (STATIC / "index.html").read_text()
 
     for name in CSS:
@@ -113,6 +123,7 @@ def build_html(state: dict) -> str:
         html = html.replace(tag, f"<style>\n{css}\n</style>")
 
     payload = json.dumps(state, default=str)
+    openings_payload = json.dumps(openings, default=str)
     for name in JS:
         tag = f'<script src="/static/{name}"></script>'
         if tag not in html:
@@ -122,7 +133,7 @@ def build_html(state: dict) -> str:
         # The shim has to be in place before app.js runs, and app.js is the
         # last script, so it rides in just ahead of it.
         if name == "app.js":
-            body = (SHIM % payload) + "\n" + body
+            body = (SHIM % (payload, openings_payload)) + "\n" + body
         html = html.replace(tag, f"<script>\n{body}\n</script>")
 
     if "/static/" in html:
@@ -141,12 +152,13 @@ def main() -> int:
                     help="open it in the default browser when it's written")
     args = ap.parse_args()
 
-    state = live_state(args.db, args.config) if args.db else demo_state()
+    state, openings = (
+        live_state(args.db, args.config) if args.db else demo_state())
 
     out = Path(args.out) if args.out else (
         Path(os.environ.get("TMPDIR", "/tmp")) / "campgroundfinder-snapshot.html"
     )
-    html = build_html(state)
+    html = build_html(state, openings)
     out.write_text(html)
 
     counts = ", ".join(f"{n} {k}" for k, n in sorted(state["counts"].items()))
