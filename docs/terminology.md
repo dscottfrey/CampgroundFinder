@@ -167,3 +167,33 @@ checking before you count on it."*
 Note also that ReserveAmerica states amenity **absence** explicitly
 (`Electric Hookup - no`), so a naive contains-check for "hookup" marks every
 unserviced site as serviced.
+
+## "Hookup" is four different questions, and "full hookup" is not one of them
+
+Scott, 2026-07-31: **"full hookup" is different from "hookup" in many cases** —
+the real axes are electricity (and how much), water, and sewer. A single
+"has hookups" filter answers none of them, and a camper who needs 50 amp is
+not served by a site with a water spigot.
+
+What ReserveAmerica actually states per site, counted across the 5,413 Oregon
+sites backfilled on 2026-07-31:
+
+| flag             | values seen                                    |
+|------------------|------------------------------------------------|
+| `Electric Hookup`| `50 amp` 2141 · `no` 2081 · `30 amp` 931 · `20 amp` 159 · `15 amp` 1 |
+| `Water Hookup`   | `yes` 1989 (absence not stated)                |
+| `Full Hookup`    | `yes` 1275 · `no` 2049                         |
+
+So:
+
+* **Amperage is stated and must be kept.** It is the difference between
+  running an air conditioner and not. Never flatten it to a boolean.
+* **`Full Hookup` means electric + water + sewer**, and is the *only* place
+  sewer appears — there is no sewer flag of its own. A site can hold
+  `Water Hookup: yes` with `Full Hookup: no`, and 1,989 do.
+* **Absence is stated for some flags and not others.** `Electric Hookup - no`
+  is a measurement; a missing `Water Hookup` is silence, not a denial. The
+  first may exclude, the second may not (§8g).
+
+A filter should therefore offer the axes separately — *electric (with a
+minimum amperage), water, sewer* — rather than one "hookups" switch.

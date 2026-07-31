@@ -62,6 +62,63 @@ enumeration call.
 | `maitlandvalley.goingtocamp.com` | Maitland Valley | 4 | ON |
 | `saugeen.goingtocamp.com` | Saugeen Valley | 5 | ON |
 
+## The bigger find: GoingToCamp publishes the richest data we have (2026-07-31)
+
+Read live off `washington.goingtocamp.com`. Two endpoints, from camply's own
+map, that we were not using:
+
+* `/api/attribute/filterable` — **62 named attribute definitions, one request
+  for the whole portal.** Turns the opaque numeric ids into display names.
+* `/api/resource/details` — per-site detail.
+
+And `/api/resourceLocation`, which we already call, carries **`photos`,
+`attributes` and a full description** for all 167 Washington locations in a
+single request — so photos and descriptions cost nothing extra here, unlike
+RIDB's one-request-per-facility.
+
+### It answers questions the other two providers cannot
+
+Scott guessed that "near water", "beach" and "boat launch" are probably
+standard flags. On ReserveAmerica they are not — `Near Water` is `no` on all
+5,313 Oregon sites and beach and launch do not exist. **On GoingToCamp they
+all exist, and better than asked for:**
+
+| what | where | values |
+|---|---|---|
+| water, park level | `Park Amenities` | Swimming · **Boat Launch** · **Moorage** · Fishing/Shellfishing · **Lakes/Rivers/Beach** · Waterfalls |
+| water, site level | `Adjacent To` | **Beach** · **Body of Water** · Wetland/Marsh |
+| water, measured | `Distance To Beach` | a number, 0–8000 |
+
+**Boat Launch and Moorage are separate values**, which is exactly the
+distinction Scott called out as missing from CampSage's Cove Palisades popup.
+
+### And it answers the hookup question in his own terms
+
+He said "full hookup is different from hookup — electricity (and how much),
+water and sewer". `Service Type` is precisely that ladder:
+
+    Primitive Hiker/Biker · Primitive Walk-in · Primitive With Vehicle ·
+    Standard - No Hook-ups · Electric Hook-ups · Electrical Water Hook-up ·
+    Electrical Water Sewer Hook-up
+
+with `Electrical Service` giving the amperage (15/20/30/50 Amps).
+
+### Two things it states that we currently infer
+
+* **`Walk In` — Yes/No, and filterable.** The access axis, stated outright. No
+  reading it off a site-type column, and no `rv` icon lying about it.
+* **`Campground Host Site` — Yes/No.** Stated, not guessed. Compare
+  ReserveAmerica, where the host pitch at Reehers is typed `HORSE SITE` and
+  only *named* "Host", so we exclude it by name-matching.
+
+Also present and measured rather than form-defaulted: `Pad Length` (0–200),
+`Site Length`, `Pad Width`, `Pad Maneuverability`, `Pad Surface`, `Pad Slope`,
+`Motorhomes/Trailers Allowed`, `Slideouts`, `Tents Allowed`.
+
+**Consequence for the plan:** Washington is not the poor relation that needs
+catching up — it is the reference. Where its vocabulary and ours disagree,
+suspect ours.
+
 ## The big find: Parks Canada needs no custom provider
 
 Build plan §4d says Parks Canada is *"not in camply → custom provider"*. **That

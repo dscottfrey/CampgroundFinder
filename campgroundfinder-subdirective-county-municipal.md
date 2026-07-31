@@ -98,14 +98,70 @@ step — most will land on the §1 platforms.*
 
 ---
 
+## 3b. PacifiCorp is on CampLife (Scott, 2026-07-31)
+
+A real reason to move CampLife up from "build on demand". **PacifiCorp** — the
+utility — runs campgrounds in our region and books them through CampLife:
+
+    https://www.camplife.com/1011/reservation/step1
+
+`1011` looks like an org id in the path, which would make other operators
+`/<orgId>/…` on the same platform — the same leverage shape as GoingToCamp's
+rec-area numbers.
+
+**Status: lead, not a finding.** The URL serves a JavaScript app shell, so
+nothing can be learned by fetching the HTML — no endpoints, no park list, no
+identifiers. It needs the §5.1 treatment: **open it and watch the booking
+network calls.** Two ways to get there:
+
+* Scott opens devtools, books nothing, and pastes the XHR/fetch URLs; or
+* `camplife.com` goes on the network allowlist and the calls get probed here.
+
+Until one of those happens, nothing about this platform should be written down
+as fact — including whether `1011` means what it looks like.
+
+**First look, 2026-07-31** (host allowlisted by Scott): the page returns 200
+and is a webpack app — `clientApp/main.js`, `1865.js`, `2404.js` — so the API
+is discoverable by reading those bundles.
+
+**But it is behind an AWS WAF challenge**
+(`…sdk.awswaf.com/…/challenge.js` loads before anything else). That is
+bot-protection, and it changes the risk calculus rather than merely the
+difficulty. Under [[campgroundfinder-scraping-policy]] the rule is *don't get
+banned*, and a WAF is the operator saying plainly that automated clients are
+unwelcome — solving its challenge would be evasion, not politeness, which is a
+line this project has not crossed for any other source.
+
+**So before any code is written here, the question for Scott is a policy one,
+not a technical one:** is a WAF-protected platform in scope at all? Options, in
+increasing order of nerve:
+
+1. **Catalog only, no availability.** Enumerate PacifiCorp's parks once, by
+   hand or from a public list, and show them with `unknown` status and a
+   deep link. Nothing automated ever touches CampLife. This alone beats
+   CampSage, which shows nothing at all (docs/campsage-ui-notes.md).
+2. **Ask PacifiCorp.** A utility running public campgrounds may simply say
+   yes, which no amount of clever fetching can substitute for.
+3. **Read the JSON API directly** if the challenge turns out not to gate it.
+   Worth *testing* to know, but only acting on with Scott's explicit call.
+
 ## 4. Priority order
 
-1. **Reuse what's built.** ReserveAmerica and Campspot are already planned — any
+**Revised 2026-07-31: CampLife moved from last to first in this group.** The
+original ordering ranked platforms by how many *agencies* they serve. Scott's
+correction is that PacifiCorp on CampLife is **a large number of highly
+desired Washington sites** — and desirability is the thing worth optimising,
+not agency count. A platform serving twenty agencies nobody wants to camp at
+loses to one serving the reservoirs people actually book.
+
+1. **CampLife** — PacifiCorp's Washington campgrounds (§3b). Top of this group
+   on desirability, not breadth. Needs the network-call inspection first.
+2. **Reuse what's built.** ReserveAmerica and Campspot are already planned — any
    OR/WA county or private park on those is *free coverage*; just catalog it.
-2. **ActiveNet** — highest leverage for county/municipal coverage (many agencies).
-3. **RoverPass** — decent county/RV coverage.
-4. **Firefly / CampLife** — build on demand, when a specific park you want is on one.
-5. **Bespoke county systems** — only if a county portal turns out to use no shared
+3. **ActiveNet** — highest leverage by agency count for county/municipal.
+4. **RoverPass** — decent county/RV coverage.
+5. **Firefly** — build on demand, when a specific park you want is on one.
+6. **Bespoke county systems** — only if a county portal turns out to use no shared
    platform at all.
 
 ---
