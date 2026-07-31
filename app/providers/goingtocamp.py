@@ -231,6 +231,36 @@ class GoingToCampProvider(Provider):
                 out[definition["name"]] = definition["values"].get(raw, raw)
         return out
 
+    def list_sites(self, campground_id: str) -> list[dict]:
+        """Every site in one park, with its attributes — in ONE request.
+
+        Found by Scott on 2026-07-31, reading the booking page's own network
+        calls after camply's documented `/api/resource/details?resourceId=`
+        came back 404 on every id:
+
+            GET /api/resourcelocation/resources?resourceLocationId=<park>
+
+        The difference is not cosmetic. Alta Lake alone has 131 sites, so
+        per-site fetching would have made Washington roughly **8,000
+        requests**; this makes it **79**, one per park. Worth the detour that
+        found it.
+
+        Each record carries `definedAttributes` (decoded here into words),
+        the site's name and description, photos, allowed equipment and
+        capacity — everything the equipment and access filters need.
+        """
+        payload = self._fetch(
+            "/api/resourcelocation/resources",
+            {"resourceLocationId": str(campground_id)},
+        )
+        records = list(payload.values()) if isinstance(payload, dict) else list(payload or [])
+        for record in records:
+            # Decoded here rather than by the caller: the definitions are
+            # cached on this instance, so a whole state costs one extra call.
+            record["_attributes"] = self.decode_attributes(
+                record.get("definedAttributes"))
+        return records
+
     def location_details(self) -> list[dict]:
         """Every location's raw record — attributes, photos, description.
 

@@ -318,6 +318,153 @@ def parse_ra_site(record: dict) -> dict:
     }
 
 
+GTC_SOURCE = "GoingToCamp resourcelocation/resources"
+
+#: Site types nobody sleeps in. Found by Scott on 2026-07-31: Fort Stevens
+#: showed as "Open now — Shelter A, Shelter C", which are **day-use picnic
+#: shelters**. ReserveAmerica's park matrix carries no site type at all, so a
+#: shelter's availability is indistinguishable from a campsite's until it is
+#: joined back to the inventory — which is why this leaked.
+#:
+#: Counted across Oregon's 5,413 stored sites: 53 GROUP DAY USE, 35 PICNIC
+#: SHELTER, 10 MEETING HALL, 4 BARBEQUE, 1 PAVILIONS, 1 AMPHITHEATER.
+#:
+#: They are still STORED — they exist, and the catalog's job is to know what
+#: exists (§8k). They are simply never offered as somewhere to spend a night.
+DAY_USE_TYPES = frozenset({
+    "GROUP DAY USE", "PICNIC SHELTER", "MEETING HALL", "BARBEQUE",
+    "PAVILIONS", "PAVILION", "AMPHITHEATER", "AMPHITHEATRE", "DAY USE",
+})
+
+#: Deliberately NOT excluded, and each for a reason:
+#:
+#: * `MOORING` (149) — a boat moorage is a real overnight stay; people sleep
+#:   aboard. Not a campsite for a car camper, which is a filtering question,
+#:   not a correctness one.
+#: * `CABIN`, `YURT`, `LODGE`, `TOTEM CABIN` — roofed accommodation, but you
+#:   sleep there, which is the test being applied.
+#:
+#: Recorded so the next person doesn't have to re-derive why the list stops
+#: where it does.
+
+
+def is_overnight_type(site_type: Optional[str]) -> bool:
+    """Can somebody spend the night here?
+
+    Unknown types return **True**: a site whose type we were never told is
+    not thereby a picnic shelter, and excluding it would hide real campsites
+    on the strength of missing data (§8g). Only the explicitly day-use ones
+    are dropped.
+    """
+    if not site_type:
+        return True
+    return site_type.strip().upper() not in DAY_USE_TYPES
+
+
+def _first(value):
+    """GoingToCamp gives enum attributes as a list even when there's one."""
+    if isinstance(value, list):
+        return value[0] if value else None
+    return value
+
+
+def parse_gtc_site(record: dict) -> dict:
+    """One GoingToCamp resource, normalized to the campsites schema.
+
+    This platform states outright what the other two make us infer
+    (docs/goingtocamp-clients.md):
+
+    * **`Walk In`** is the access axis, published as Yes/No — no reading it
+      off a site-type column, and no `rv` icon lying about it.
+    * **`Service Type`** is the hookup ladder Scott asked for: Primitive
+      Hiker/Biker · Primitive Walk-in · Primitive With Vehicle · Standard No
+      Hook-ups · Electric · Electrical Water · Electrical Water Sewer. Kept as
+      the site type because it is the most useful single description of what a
+      site *is* here.
+    * **`Site Length`** is measured rather than entered on a setup form — Alta
+      Lake's sites read 45, 30, 22 and so on, not one number repeated.
+      `equipment.grade_lengths` still judges each campground on its own
+      spread, because that is a property of the campground and never of the
+      platform.
+    """
+    attrs = record.get("_attributes") or {}
+    localized = (record.get("localizedValues") or [{}])[0]
+
+    def number(name):
+        value = attrs.get(name)
+        if isinstance(value, list):
+            value = value[0] if value else None
+        try:
+            return int(float(value))
+        except (TypeError, ValueError):
+            return None
+
+    walk_in = _first(attrs.get("Walk In"))
+    service_type = _first(attrs.get("Service Type"))
+    # Site Length is the site; Pad Length is the vehicle pad. Prefer the pad
+    # where both exist, because that is what a rig has to fit on.
+    length = number("Pad Length") or number("Site Length")
+
+    return {
+        "site_id": str(record.get("resourceId")),
+        "name": localized.get("name") or str(record.get("resourceId")),
+        "loop": None,                     # lives on the map, not the resource
+        "site_type": service_type,
+        "type_of_use": None,
+        # Every site in this payload is in the booking system; whether it is
+        # bookable on a date is availability, not inventory.
+        "reservable": None,
+        "max_vehicle_length": length,
+        "site_access": walk_in and f"Walk In: {walk_in}",
+        "access_class": (
+            ACCESS_HIKE_IN if walk_in == "Yes"
+            else ACCESS_DRIVE_IN if walk_in == "No" else None
+        ),
+        "driveway_entry": _first(attrs.get("Pad Location")),
+        "max_people": record.get("maxCapacity") or number("Maximum Tents"),
+        "accessible": (
+            True if _first(attrs.get("ADA Accessible")) == "Yes"
+            else False if _first(attrs.get("ADA Accessible")) == "No" else None
+        ),
+        "latitude": None,
+        "longitude": None,
+        "permitted_equipment": record.get("allowedEquipment") or None,
+        "attributes": attrs or None,
+    }
+
+
+def is_gtc_host_site(record: dict) -> bool:
+    """`Campground Host Site: Yes` — stated outright, for once.
+
+    Compare ReserveAmerica, where the host pitch at Reehers is typed
+    `HORSE SITE` and only *named* "Host", so we have to catch it by name.
+    """
+    attrs = record.get("_attributes") or {}
+    return _first(attrs.get("Campground Host Site")) == "Yes"
+
+
+def classify_gtc_sites(records: Iterable[dict]) -> SiteCounts:
+    """Count a GoingToCamp park's sites, excluding host pitches.
+
+    `not_bookable` is None, not 0: this payload lists what exists, and says
+    nothing about which sites take online bookings.
+    """
+    total = management = 0
+    types: dict = {}
+    for record in records:
+        if is_gtc_host_site(record):
+            management += 1
+            continue
+        total += 1
+        site_type = _first((record.get("_attributes") or {}).get("Service Type")) \
+            or "UNKNOWN"
+        bucket = types.setdefault(
+            site_type, {"bookable": 0, "not_bookable": 0, "unknown": 0})
+        bucket["unknown"] += 1
+    return SiteCounts(total, bookable=None, not_bookable=None,
+                      management=management, types=types)
+
+
 def classify_ra_sites(records: Iterable[dict]) -> SiteCounts:
     """Count an RA park's sites. Host pitches are excluded, as MANAGEMENT is.
 
@@ -455,15 +602,33 @@ def _reserveamerica_source(provider: str, fetcher=None) -> _Source:
     )
 
 
+def _goingtocamp_source(provider: str, fetcher=None) -> _Source:
+    """GoingToCamp: every site in a park, with attributes, in one request."""
+    if fetcher is None:
+        from .providers import build_provider
+
+        client = build_provider(provider)
+        fetcher = lambda cg: client.list_sites(cg.id)  # noqa: E731
+    return _Source(
+        fetch=fetcher,
+        parse=parse_gtc_site,
+        classify=classify_gtc_sites,
+        exclude=is_gtc_host_site,
+        label=GTC_SOURCE,
+    )
+
+
 def _source_for(provider: str, fetcher=None) -> _Source:
     family = provider.partition(":")[0]
     if family == "ReserveAmerica":
         return _reserveamerica_source(provider, fetcher=fetcher)
+    if family == "GoingToCamp":
+        return _goingtocamp_source(provider, fetcher=fetcher)
     if family == "RecreationDotGov":
         return _ridb_source(fetcher=fetcher)
     raise ValueError(
         f"no site-inventory source for provider {provider!r} — "
-        f"RecreationDotGov and ReserveAmerica:* are implemented"
+        f"RecreationDotGov, ReserveAmerica:* and GoingToCamp:* are implemented"
     )
 
 

@@ -24,6 +24,7 @@ let STATE = {
 let activeStates = new Set();
 let query = "";
 let view = "map";
+let openOnly = false;   // dev aid; see index.html
 /* "provider|facility_id" -> openings. **null means we don't know**, an empty
    array means we looked and found none. The two must never be conflated:
    one is a gap in our knowledge, the other is a fact about the campground. */
@@ -82,6 +83,10 @@ function visible() {
   return STATE.campgrounds.filter((c) => {
     if (activeStates.size && !activeStates.has(c.state)) return false;
     if (q && !(c.name || "").toLowerCase().includes(q)) return false;
+    // The one place this file hides anything, and it is a dev aid the user
+    // has to switch on deliberately. Everything else here shows unknown,
+    // stale, closed and unlocated campgrounds on purpose (§8k).
+    if (openOnly && c.status !== "available") return false;
     return true;
   });
 }
@@ -202,6 +207,9 @@ function initMap() {
   basemaps.street = makeBasemap(settings.street_tiles || settings.tiles || {});
   applyBasemap();
   map.on("zoomend", applyBasemap);
+  // Redraw the pins for the new viewport after a pan or zoom settles.
+  // `moveend` fires once when the gesture finishes, not per frame.
+  map.on("moveend", renderMap);
 
   /* A plain layer group, NOT a cluster.
 
@@ -258,9 +266,17 @@ const PIN_SHAPE = {
   // one thing someone is actually looking for.
   available: (s, f) =>
     `<circle cx="${s / 2}" cy="${s / 2}" r="${s / 2 - 2}" fill="${f}"/>`,
-  // Full — solid, but square: same visual weight, unmistakably not a circle.
-  full: (s, f) =>
-    `<rect x="2" y="2" width="${s - 4}" height="${s - 4}" fill="${f}"/>`,
+  // Full — a stop-sign octagon. Same visual weight as the open disc and
+  // unmistakably not a circle, but now the shape carries the meaning on its
+  // own: everyone reads an octagon as "stop" before they read its colour.
+  full: (s, f) => {
+    const r = s / 2 - 2, c = s / 2;
+    const pts = Array.from({length: 8}, (_, i) => {
+      const a = (Math.PI / 4) * i + Math.PI / 8;
+      return `${(c + r * Math.cos(a)).toFixed(1)},${(c + r * Math.sin(a)).toFixed(1)}`;
+    }).join(" ");
+    return `<polygon points="${pts}" fill="${f}"/>`;
+  },
   // Not checked yet — hollow. Emptiness is the point: we have nothing to say.
   unknown: (s, f) =>
     `<circle cx="${s / 2}" cy="${s / 2}" r="${s / 2 - 2.5}" fill="${f}"
@@ -277,22 +293,64 @@ const PIN_SHAPE = {
     `stroke="#fbfaf7" stroke-width="2" stroke-linecap="round" fill="none"/>`,
 };
 
+/* Scott, 2026-07-31: bright yellow for open, red for full.
+
+   Both are off the basemap's own palette, which is the rule that matters —
+   topo tiles spend green, blue, tan and white, and for Scott brown collapses
+   into green and purple into blue. Saturated yellow and red are what's left.
+
+   The colour is never doing the work alone: open is a disc, full is a
+   stop-sign octagon, and the shapes read the same desaturated. That matters
+   here because red is exactly the channel Scott's vision reduces. */
 const PIN_FILL = {
-  available: "#0b5cab",
-  full: "#e08214",
+  available: "#ffd400",
+  full: "#c62222",
   unknown: "#d6d1c6",
   stale: "#7b52ab",
   closed: "#1b1a17",
 };
 
+/* The dim level, read from --dim-opacity in styles.css.
+
+   Kept in CSS rather than here so there is exactly one number to tune, and so
+   the legend's dimmed-versus-undimmed comparison can never drift from what
+   the map actually draws. Falls back to 0.35 if the variable is missing. */
+function dimOpacity() {
+  const raw = getComputedStyle(document.documentElement)
+    .getPropertyValue("--dim-opacity");
+  const value = parseFloat(raw);
+  return isFinite(value) && value > 0 ? value : 0.35;
+}
+
+/* Pin diameters in px. Two numbers, deliberately — see below.
+
+   Shrunk on 2026-07-31. Scott: "the dots are about twice as big as they need
+   to be — more to the point, the yellow dots are." So it is the OPEN pins
+   that were oversized, not the map generally.
+
+   They had been enlarged back when the palette was dark blue and amber and a
+   12px dot vanished into topo green. Bright yellow with a dark outline reads
+   at half that, so the reason for the bulk left with the old colours. The
+   rest are nudged down only enough to keep open the larger of the two.
+
+   Tune here and reload. */
+const PIN_SIZE = { open: 13, other: 11 };
+
 function pinIcon(c) {
-  const open = c.open_sites || 0;
-  // Bigger than the first cut across the board — 12px dots were hard to pick
-  // out of a topo background. Open campgrounds still grow with how much is
-  // open, so the map's loudest marks are its most useful ones.
-  const size = c.status === "available"
-    ? (open > 20 ? 28 : open > 5 ? 24 : 20)
-    : 18;
+  /* One size for open, one for everything else.
+
+     Pins used to grow with how many sites were free — 28px above twenty, 24
+     above five. Scott killed that on 2026-07-31: **the only number that
+     matters is one or more.** A campground with forty openings is not more
+     bookable than one with three; you need a site, not a surplus. The
+     exception is wanting two or three *together*, and that is a filter — a
+     question about whether a set of adjacent sites exists — not something a
+     dot diameter can answer.
+
+     So size now carries exactly one claim, "there is something here", which
+     is a claim it can actually support. Open pins stay larger than the rest
+     because 12px dots were hard to pick out of a topo background. */
+  const size = c.status === "available" ? PIN_SIZE.open : PIN_SIZE.other;
   // An unrecognised status must still draw something: a pin that vanishes
   // because we added a status and forgot the map is exactly the silent
   // disappearance this project keeps banning (§8k).
@@ -498,27 +556,57 @@ function updateLabelVisibility() {
   );
 }
 
-/* Does this campground answer the filters, or is it merely still on the map?
+/* Is this campground excluded by a filter the user set?
 
-   Returns 'match' | 'dim' | 'unknown'. Scott's rule (2026-07-31): **filters
-   dim, they never hide.** Every campground keeps its dot at every zoom and
-   under every filter — hiding them is the CampSage behaviour he most
-   dislikes, and a map that quietly drops rows is lying about how much exists.
+   Scott's rule (2026-07-31): **filters dim, they never hide.** But dimming
+   means exactly one thing, and an earlier version of this got it wrong by
+   dimming campgrounds with no openings:
 
-   `unknown` dims too, but for a different reason, and the popup says which:
-   "nothing open this weekend" and "we haven't checked yet" are different
-   sentences and a camper needs to be able to tell them apart. */
+     * **"full" is a STATUS.** It means nothing is open on your dates. The map
+       already says that with a red octagon, and saying it twice — octagon
+       *and* faded — is not more honest, just noisier.
+     * **Dimmed is about FILTERS.** One or more of the conditions you set
+       (AQI, temperature, rain, a missing amenity) rules this campground out.
+
+   There are no filters yet, so nothing dims yet. That is the correct
+   behaviour, not a gap: a map that fades things for reasons the user never
+   asked for is worse than one that fades nothing.
+
+   Not cumulative, by design: failing four filters looks like failing one,
+   because dimness answers "does this match?", not "how badly?". */
+const ACTIVE_FILTERS = [];   // each: (campground) => true when it passes
+
 function matchState(c) {
-  const openings = openingsFor(c);
-  if (openings === null) return "unknown";   // availability never loaded
-  if (openings.length) return "match";
-  if (c.status === "unknown" || c.status === "stale") return "unknown";
-  return "dim";
+  for (const passes of ACTIVE_FILTERS) {
+    if (!passes(c)) return "dim";
+  }
+  return "match";
+}
+
+/* Only the campgrounds actually on screen get built into the DOM.
+
+   This is NOT clustering and hides nothing: every campground in view keeps
+   its own dot, overlapping where it must. What it drops is the 700-odd
+   markers you cannot see because they are off the edge of the map.
+
+   It exists because removing clustering left 776 divIcon markers and 776
+   permanent tooltips live at once. Scott, 2026-07-31: switching to topo
+   produced "a HUGE lag ... instead of zooming, my page scrolls" — the main
+   thread was blocked long enough that the wheel event fell through to the
+   document. Labels turn on at zoom 11 and topo at zoom 12, so both costs
+   landed together.
+
+   Bounds are padded so a small pan doesn't pop markers in at the edge. */
+function inViewport(campgrounds) {
+  if (!map) return campgrounds;
+  const bounds = map.getBounds().pad(0.25);
+  return campgrounds.filter((c) => bounds.contains([c.latitude, c.longitude]));
 }
 
 function renderMap() {
   if (!map) return;
-  const located = visible().filter((c) => c.located && c.latitude != null);
+  const all = visible().filter((c) => c.located && c.latitude != null);
+  const located = inViewport(all);
   markers.clearLayers();
   // Matching campgrounds are added LAST so they sit on top of the dimmed
   // ones. With overlap allowed and no clustering, draw order is the only
@@ -532,25 +620,31 @@ function renderMap() {
     const marker = L.marker([c.latitude, c.longitude], { icon, title: c.name })
       .bindTooltip(labelFor(c, icon.options.iconSize[0]))
       .bindPopup(() => popupFor(c));
-    // 50% is Scott's starting value, to be looked at rather than trusted.
+    // Read from --dim-opacity in styles.css so the map and the legend's
+    // side-by-side comparison can never disagree about what dimmed means.
     // NOT cumulative by design: failing four filters looks like failing
     // one, because dimness answers "does this match?", not "how badly?".
-    if (matchState(c) !== "match") marker.setOpacity(0.5);
+    if (matchState(c) !== "match") marker.setOpacity(dimOpacity());
     marker.addTo(markers);
   }
   updateLabelVisibility();
 
   // Frame the catalog once, on first draw only — refitting on every keystroke
   // would yank the map around while someone is typing.
-  if (needsFit && located.length) {
+  // `all`, not the culled set — fitting to what is already in view would be
+  // circular and would never widen to frame the catalog.
+  if (needsFit && all.length) {
     needsFit = false;
-    const bounds = L.latLngBounds(located.map((c) => [c.latitude, c.longitude]));
+    const bounds = L.latLngBounds(all.map((c) => [c.latitude, c.longitude]));
     map.fitBounds(bounds, { padding: [20, 20] });
   }
 
   // Unlocated campgrounds cannot be drawn, so they get said out loud instead
   // of quietly vanishing between the catalog count and the map.
-  const hidden = visible().length - located.length;
+  // Measured against `all`, never the culled set: a campground off the edge
+  // of the screen has a location and is one pan away, and reporting it as
+  // "no location" would be a lie that grows every time you zoom in.
+  const hidden = visible().length - all.length;
   const el = document.getElementById("unlocated");
   el.hidden = hidden === 0;
   el.textContent = hidden
@@ -706,6 +800,10 @@ async function load() {
 
 document.getElementById("search").addEventListener("input", (e) => {
   query = e.target.value;
+  render();
+});
+document.getElementById("open-only").addEventListener("change", (e) => {
+  openOnly = e.target.checked;
   render();
 });
 document.getElementById("view-map").addEventListener("click", () => setView("map"));

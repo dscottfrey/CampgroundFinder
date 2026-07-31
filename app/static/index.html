@@ -21,6 +21,13 @@
   <section class="controls">
     <input id="search" type="search" placeholder="Search by name…" autocomplete="off">
     <div id="regions" class="regions"></div>
+    <!-- A development aid, and knowingly at odds with "filters dim, they
+         never hide" (Scott, 2026-07-31): interrogating the open campgrounds
+         is far easier when the other 700 are not drawn. Off by default, so
+         the map's normal behaviour is unchanged. -->
+    <label class="regions" title="Development aid — hides everything else">
+      <input type="checkbox" id="open-only"> Open only
+    </label>
     <div class="views" role="group" aria-label="View">
       <button id="view-map" class="view on" aria-pressed="true">Map</button>
       <button id="view-list" class="view" aria-pressed="false">List</button>
@@ -44,10 +51,22 @@
        (see the note at the top of styles.css). -->
   <section id="legend" class="legend">
     <span class="chip"><b class="swatch available"></b>Open now — filled circle</span>
-    <span class="chip"><b class="swatch full"></b>Full, set a watch — square</span>
+    <span class="chip"><b class="swatch full"></b>Full, set a watch — octagon</span>
     <span class="chip"><b class="swatch unknown"></b>Not checked yet — hollow circle</span>
     <span class="chip"><b class="swatch stale"></b>Couldn't reach the website — triangle</span>
     <span class="chip"><b class="swatch closed"></b>Closed — cross</span>
+  </section>
+
+  <!-- The dim state, next to the same shapes undimmed, because that is the
+       only way to judge it. Scott, 2026-07-31: "50% is too subtle, but
+       without a comparison to a non-dimmed one with the same status I can't
+       tell." On the map itself two campgrounds of the same status rarely sit
+       side by side, so the comparison has to be made here. -->
+  <section id="legend-dim" class="legend legend-dim">
+    <span class="chip">Dimmed — ruled out by a filter you set (no filters yet):</span>
+    <span class="chip"><b class="swatch available"></b><b class="swatch available dim"></b>Open</span>
+    <span class="chip"><b class="swatch full"></b><b class="swatch full dim"></b>Full</span>
+    <span class="chip"><b class="swatch unknown"></b><b class="swatch unknown dim"></b>Unchecked</span>
   </section>
 
   <main>

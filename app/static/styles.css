@@ -15,8 +15,12 @@
      gone. And the five differ in LIGHTNESS as well as hue, so they stay
      distinct in greyscale — a check anyone can run by desaturating a
      screenshot. */
-  --available: #0b5cab;   /* dark blue    — filled circle */
-  --full:      #e08214;   /* bright amber — filled square */
+  /* Scott, 2026-07-31. Both sit off the basemap's own palette — topo tiles
+     spend green, blue, tan and white, and for him brown collapses into green
+     and purple into blue, so saturated yellow and red are what remain.
+     Neither carries meaning alone: open is a disc, full is a stop octagon. */
+  --available: #ffd400;   /* bright yellow — filled circle */
+  --full:      #c62222;   /* red           — stop-sign octagon */
   --unknown:   #d6d1c6;   /* pale grey    — hollow circle */
   --stale:     #7b52ab;   /* violet       — triangle */
   --closed:    #1b1a17;   /* near-black   — cross */
@@ -133,12 +137,30 @@ tbody tr:last-child td { border-bottom: none; }
 
 /* Legend swatches are the SAME five shapes as the pins, at a fixed size. If
    these two ever drift apart the legend stops explaining the map. */
+/* How far a non-matching campground fades. ONE place, used by both the map
+   pins (app.js reads it) and the legend comparison, so tuning it can never
+   leave the two disagreeing about what "dimmed" looks like.
+
+   0.5 was the first guess; Scott judged it too subtle on 2026-07-31. Change
+   it here and reload — nothing else needs touching. */
+:root { --dim-opacity: 0.35; }
+
+.swatch.dim { opacity: var(--dim-opacity); margin-left: -0.15rem; }
+.legend-dim { margin-top: -0.6rem; }
+
 .swatch {
   width: 18px; height: 18px; flex: none; display: inline-block;
   border: 2px solid var(--ink);
 }
 .swatch.available { background: var(--available); border-radius: 50%; }
-.swatch.full      { background: var(--full); }
+/* Octagon, matching the pin. clip-path rather than a border trick so the
+   legend and the SVG on the map are the same shape, not two approximations. */
+.swatch.full {
+  background: var(--full);
+  clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%,
+                     70% 100%, 30% 100%, 0% 70%, 0% 30%);
+  border: none;
+}
 .swatch.unknown   { background: var(--unknown); border-radius: 50%; }
 .swatch.stale {
   /* Triangle: no box to give a border to, so the outline is a drop-shadow. */

@@ -3137,8 +3137,44 @@ class TestReserveAmericaInventory(DBTestCase):
         self.assertEqual(second.visited, 0)
 
     def test_an_unimplemented_provider_refuses_rather_than_guessing(self):
+        # GoingToCamp used to be the example here and is now implemented.
+        # PerfectMind is the next one that isn't.
         with self.assertRaises(ValueError):
-            inventory.backfill_site_inventory(self.conn, provider="GoingToCamp:WA")
+            inventory.backfill_site_inventory(
+                self.conn, provider="PerfectMind:SanJuanCoWA")
+
+
+class TestCatalogRefreshDoesNotUnknowAnything(DBTestCase):
+    """A catalog refresh knows a campground EXISTS, not whether it is open.
+
+    Caught live on 2026-07-31: `catalog-refresh` turned 106 available
+    campgrounds into 2 while 1,702 openings sat untouched in the availability
+    table. Enumeration arrives carrying the default status 'unknown', and that
+    was being written straight over a status the scanner had derived from real
+    availability.
+    """
+
+    def test_enumeration_does_not_overwrite_a_scanned_status(self):
+        cg = Campground(provider="Mock", id="1", name="Camp", state="OR")
+        store.upsert_campgrounds(self.conn, [cg], now=NOW)
+        store.set_campground_status(self.conn, "Mock", "1", "available", now=NOW)
+
+        # A refresh: same campground, freshly enumerated, status 'unknown'.
+        store.upsert_campgrounds(self.conn, [cg], now=NOW)
+        self.assertEqual(
+            store.get_campground(self.conn, "Mock", "1").status, "available",
+            "a refresh must not un-know what the scanner found")
+
+    def test_a_real_status_still_writes_through(self):
+        """The guard must not freeze the status against genuine updates."""
+        cg = Campground(provider="Mock", id="2", name="Camp", state="OR")
+        store.upsert_campgrounds(self.conn, [cg], now=NOW)
+        store.set_campground_status(self.conn, "Mock", "2", "available", now=NOW)
+        closed = Campground(provider="Mock", id="2", name="Camp", state="OR",
+                            status="closed")
+        store.upsert_campgrounds(self.conn, [closed], now=NOW)
+        self.assertEqual(
+            store.get_campground(self.conn, "Mock", "2").status, "closed")
 
 
 # ------------- burn bans and closures (2026-07-31) ------------------------------

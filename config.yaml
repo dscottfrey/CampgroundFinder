@@ -54,7 +54,11 @@ sources:
   # Both spellings are accepted and normalized, so either works here.
   - { label: "Mt Hood NF",         provider: RecreationDotGov, state: OR, rec_area_ids: ["1106"] }
   - { label: "Deschutes NF",       provider: RecreationDotGov, state: OR, rec_area_ids: ["1113"] }
-  - { label: "Gifford Pinchot NF", provider: RecreationDotGov, state: WA, rec_area_ids: ["1131"] }
+  # 1117, NOT 1131. The build plan said 1131, which is a real rec area —
+  # Foss Reservoir — with zero facilities, so the scan failed with "No
+  # campgrounds found" for months. Verified against RIDB 2026-07-31: 1117
+  # is Gifford Pinchot National Forest, 117 facilities.
+  - { label: "Gifford Pinchot NF", provider: RecreationDotGov, state: WA, rec_area_ids: ["1117"] }
 
   # State parks. An empty `campground_ids` means "every park in the catalog" —
   # the scanner fills the scope in and scans one park per request, so these

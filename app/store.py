@@ -280,9 +280,19 @@ def upsert_campgrounds(
         ).fetchone()
         if existing:
             conn.execute(
+                # `status` is COALESCEd against 'unknown' rather than written
+                # flat. A catalog refresh knows a campground EXISTS; it does
+                # not know whether it is open, and it arrives carrying the
+                # default 'unknown'. Writing that over a status the scanner
+                # derived from real availability is exactly what happened on
+                # 2026-07-31: a refresh turned 106 available campgrounds into
+                # 2 while 1,702 openings sat untouched in the availability
+                # table. Enumeration must never un-know something.
                 """UPDATE campgrounds SET
                      name=?, rec_area=?, state=?, latitude=?, longitude=?,
-                     reservation_type=?, status=?, status_reason=?, closed_until=?,
+                     reservation_type=?,
+                     status=CASE WHEN ?='unknown' THEN status ELSE ? END,
+                     status_reason=?, closed_until=?,
                      last_checked=?, seeded=?,
                      coord_source=COALESCE(?, coord_source),
                      first_come_sites=COALESCE(?, first_come_sites),
@@ -292,7 +302,10 @@ def upsert_campgrounds(
                    WHERE provider=? AND id=?""",
                 (
                     cg.name, cg.rec_area, cg.state, cg.latitude, cg.longitude,
-                    cg.reservation_type, cg.status, cg.status_reason, cg.closed_until,
+                    # cg.status twice: once for the CASE test, once for the
+                    # value it writes when the incoming status is real.
+                    cg.reservation_type, cg.status, cg.status,
+                    cg.status_reason, cg.closed_until,
                     stamp, 1 if (seeded or existing["seeded"]) else 0,
                     # COALESCE, not a plain assignment: a routine enumeration
                     # carries no provenance and must not erase a recorded one.
@@ -788,6 +801,17 @@ def stamp_status_from_availability(
     return STATUS_FULL
 
 
+def inventory_day_use_types() -> tuple:
+    """Day-use site types, from app/inventory.py. Imported lazily.
+
+    inventory.py imports store, so a module-level import here would be a
+    cycle. The vocabulary lives with the parsing that produces it, not here.
+    """
+    from .inventory import DAY_USE_TYPES
+
+    return tuple(sorted(DAY_USE_TYPES))
+
+
 def map_view(
     conn: sqlite3.Connection,
     states: Optional[Iterable[str]] = None,
@@ -796,12 +820,36 @@ def map_view(
 
     Full / unknown / stale campgrounds are included by design.
     """
+    # Day-use bookings are excluded from the count that decides "open now".
+    # Fort Stevens read "Open now — Shelter A, Shelter C" on 2026-07-31, which
+    # are picnic shelters. ReserveAmerica's availability carries no site type,
+    # so the exclusion has to come from the joined inventory; a LEFT JOIN
+    # keeps openings we hold no inventory for, which stay counted because an
+    # unknown type is not evidence of a picnic shelter (§8g).
+    day_use = ",".join("?" * len(inventory_day_use_types()))
     out = []
     for cg in list_campgrounds(conn, states=states):
         open_sites = conn.execute(
-            "SELECT COUNT(*) AS n FROM availability WHERE provider=? AND facility_id=?",
-            (cg.provider, cg.id),
+            f"""SELECT COUNT(*) AS n
+                  FROM availability a
+                  LEFT JOIN campsites s
+                    ON s.provider = a.provider
+                   AND s.campground_id = a.facility_id
+                   AND s.site_id = a.campsite_id
+                 WHERE a.provider=? AND a.facility_id=?
+                   AND (s.site_type IS NULL
+                        OR UPPER(TRIM(s.site_type)) NOT IN ({day_use}))""",
+            (cg.provider, cg.id, *inventory_day_use_types()),
         ).fetchone()["n"]
+        # A campground whose only "openings" were picnic shelters is FULL, not
+        # open: we checked, and there is nowhere to sleep. Corrected here
+        # rather than left to the stored status, which was written before the
+        # day-use exclusion existed and would otherwise show Fort Stevens as
+        # "Open now" with nothing open (Scott, 2026-07-31).
+        status = cg.status
+        if status == STATUS_AVAILABLE and open_sites == 0:
+            status = STATUS_FULL
+
         out.append(
             {
                 "provider": cg.provider,
@@ -810,7 +858,7 @@ def map_view(
                 "state": cg.state,
                 "latitude": cg.latitude,
                 "longitude": cg.longitude,
-                "status": cg.status,
+                "status": status,
                 "status_reason": cg.status_reason,
                 "open_sites": open_sites,
                 "located": cg.has_location,
