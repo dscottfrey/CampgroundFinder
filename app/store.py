@@ -146,6 +146,120 @@ def list_availability(
     return [row_to_campsite(r) for r in conn.execute(sql, params)]
 
 
+#: Per-site columns worth carrying onto an opening. Everything the equipment
+#: and access filters need, and nothing that would need a second query.
+_SITE_DETAIL_COLUMNS = (
+    "site_type", "access_class", "site_access", "driveway_entry",
+    "max_vehicle_length", "max_people", "accessible", "attributes",
+)
+
+
+def list_openings(
+    conn: sqlite3.Connection,
+    provider: Optional[str] = None,
+    states: Optional[Iterable[str]] = None,
+    facility_id: Optional[str] = None,
+    on_or_after: Optional[str] = None,
+    nights: Optional[int] = None,
+) -> list[dict]:
+    """Openings, each carrying whatever per-site detail we hold for it.
+
+    This is the join the equipment and access filters have been waiting for:
+    `availability` says *when* a site is free, `campsites` says *what it is*,
+    and until now nothing connected them — so 5,413 Oregon sites' worth of
+    driveway lengths and `WALK TO` flags applied to nothing.
+
+    **It is a LEFT JOIN, and that is the whole design.** An opening whose site
+    we hold no detail for is still an opening, and dropping it would be this
+    project's recurring bug in its purest form — a shorter answer that looks
+    complete (§8k). GoingToCamp has no per-site rows at all today, so an inner
+    join would silently hide every Washington opening. The site columns come
+    back None, which is `unknown`, which is shown and never filtered away
+    (§8g).
+
+    The join key is (provider, facility_id, campsite_id) → (provider,
+    campground_id, site_id). It holds for ReserveAmerica, where the ids are
+    the park and site numbers, and for RIDB, where they are the facility and
+    campsite ids.
+    """
+    columns = ", ".join(f"s.{c} AS site_{c}" for c in _SITE_DETAIL_COLUMNS)
+    # An explicit "did the join match" marker. Without it, "no site row" and
+    # "site row whose every column is null" are indistinguishable, and the
+    # equipment filter cannot tell "unmeasured" from "unmatched".
+    # The catalog is also joined, because an availability row does not
+    # reliably name or place itself: measured 2026-07-31, ReserveAmerica and
+    # GoingToCamp leave `facility_name` and the coordinates null on every row
+    # (82 and 326 of them). Inside a campground's popup that goes unnoticed;
+    # in a list of openings it is a page of blanks. Taking the name and the
+    # point from the catalog also means an opening can never disagree with
+    # the pin it belongs to.
+    sql = f"""
+        SELECT a.*, s.site_id AS site_joined, {columns},
+               c.name AS campground_name,
+               c.latitude AS campground_latitude,
+               c.longitude AS campground_longitude,
+               c.water_nearby AS campground_water,
+               c.photo_url AS campground_photo
+          FROM availability a
+          LEFT JOIN campsites s
+            ON s.provider = a.provider
+           AND s.campground_id = a.facility_id
+           AND s.site_id = a.campsite_id
+          LEFT JOIN campgrounds c
+            ON c.provider = a.provider
+           AND c.id = a.facility_id
+         WHERE 1=1
+    """
+    params: list[Any] = []
+    if provider:
+        sql += " AND a.provider = ?"
+        params.append(provider)
+    if facility_id:
+        sql += " AND a.facility_id = ?"
+        params.append(facility_id)
+    if on_or_after:
+        sql += " AND a.available_date >= ?"
+        params.append(on_or_after)
+    if nights is not None:
+        sql += " AND a.nights >= ?"
+        params.append(nights)
+    states = list(states or [])
+    if states:
+        sql += f" AND a.state IN ({','.join('?' * len(states))})"
+        params.extend(states)
+    sql += " ORDER BY a.available_date, a.provider, a.campsite_id"
+
+    out = []
+    for row in conn.execute(sql, params):
+        record = dict(row)
+        raw = record.get("site_attributes")
+        record["site_attributes"] = loads(raw) if raw else None
+        out.append(record)
+    return out
+
+
+def opening_site_coverage(conn: sqlite3.Connection) -> dict:
+    """How many openings we can say anything about, per provider.
+
+    Reported rather than assumed: a filter that quietly works on one provider
+    and not another is the "works on federal sites" generalisation
+    docs/terminology.md warns against. This is what makes the gap visible.
+    """
+    rows = conn.execute(
+        """SELECT a.provider,
+                  COUNT(*) AS openings,
+                  SUM(CASE WHEN s.site_id IS NULL THEN 0 ELSE 1 END) AS with_detail
+             FROM availability a
+             LEFT JOIN campsites s
+               ON s.provider = a.provider
+              AND s.campground_id = a.facility_id
+              AND s.site_id = a.campsite_id
+            GROUP BY a.provider"""
+    ).fetchall()
+    return {r["provider"]: {"openings": r["openings"],
+                            "with_detail": r["with_detail"]} for r in rows}
+
+
 # --------------------------------------------------------------------------
 # catalog (§8k)
 # --------------------------------------------------------------------------
@@ -668,6 +782,12 @@ def map_view(
                 "sites_not_bookable": cg.sites_not_bookable,
                 "booking_label": cg.booking_label,
                 "length_data_quality": cg.length_data_quality,
+                # Derived, and it says why — never a bare flag. 'yes' or
+                # 'unknown', with 'no' only where a person looked (app/water.py).
+                "water_nearby": cg.water_nearby,
+                "water_evidence": cg.water_evidence,
+                "photo_url": cg.photo_url,
+                "activities": cg.activities,
                 # What the pin locates. A park-level coordinate can be a mile
                 # from the sites, and a map that doesn't say so is quietly
                 # precise about something it doesn't know.

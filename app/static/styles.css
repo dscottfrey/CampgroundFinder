@@ -178,6 +178,23 @@ tbody tr:last-child td { border-bottom: none; }
    would be a smear rather than a map. */
 .labels-off .leaflet-tooltip.pin-label { display: none; }
 
+/* What's open, inside a popup. Dates lead because the date is the decision;
+   site names follow because they only matter once the date works. */
+.openings { margin: 0.5rem 0 0.2rem; }
+.opening {
+  display: flex; flex-wrap: wrap; gap: 0.2rem 0.5rem;
+  padding: 0.25rem 0; border-top: 1px solid var(--line);
+  font-size: 0.87rem; line-height: 1.3;
+}
+.opening b { white-space: nowrap; }
+.opening-sites { color: var(--muted); }
+.opening-fit {
+  /* Carried by the word as well as the colour — "fit your rig" says it
+     outright, so this reads the same desaturated (see docs/terminology.md
+     on never leaning on hue alone). */
+  font-weight: 700; white-space: nowrap;
+}
+
 .popup strong { display: block; font-size: 1rem; }
 .popup-where { color: var(--muted); font-size: 0.82rem; margin-bottom: 0.4rem; }
 .popup-note { color: var(--muted); font-size: 0.85rem; margin-top: 0.35rem; }

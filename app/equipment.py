@@ -213,6 +213,65 @@ def filter_by_length(sites: list, length_needed: int, getter=None):
     return buckets[FITS], buckets[UNKNOWN], buckets[DOES_NOT_FIT]
 
 
+def filter_openings_by_length(openings: list, length_needed: int):
+    """`filter_by_length`, over joined openings from `store.list_openings`.
+
+    Same three buckets, same refusal to merge "fits" with "no idea". The
+    difference is where the reading comes from: an opening carries
+    `site_max_vehicle_length` (a number, already parsed) and
+    `site_driveway_entry` (present means a vehicle reaches it), rather than
+    ReserveAmerica's raw "20 Back-In" cell.
+
+    **An opening with no site detail lands in `unknown`, never in
+    `does_not_fit`.** GoingToCamp has no per-site rows yet, so every
+    Washington opening is unknown here — and unknown must read as "we can't
+    say", not as "your rig won't fit". Getting that backwards would hide a
+    state's worth of campsites from every RV owner (§8g).
+
+    Defaults are judged **per campground**, from that campground's own spread,
+    exactly as `grade_lengths` does — never pooled across parks, because one
+    park's honest 20 ft and another's form-default 20 ft are different facts.
+    """
+    by_facility: dict = {}
+    for opening in openings:
+        by_facility.setdefault(
+            (opening.get("provider"), opening.get("facility_id")), []
+        ).append(opening)
+
+    buckets: dict = {FITS: [], UNKNOWN: [], DOES_NOT_FIT: []}
+    for group in by_facility.values():
+        defaults = default_lengths(o.get("site_max_vehicle_length") for o in group)
+        for opening in group:
+            if opening.get("site_joined") is None:
+                # No per-site row joined at all. That is "we don't hold this
+                # site's details", not "this site has no driveway".
+                buckets[UNKNOWN].append(opening)
+                continue
+            feet = opening.get("site_max_vehicle_length")
+            has_driveway = bool(opening.get("site_driveway_entry")) or feet is not None
+            reading = read_length(feet, has_driveway, defaults)
+            buckets[fits(reading, length_needed)].append(opening)
+    return buckets[FITS], buckets[UNKNOWN], buckets[DOES_NOT_FIT]
+
+
+def filter_openings_by_access(openings: list, access_class: str):
+    """Openings whose site is known to be reachable that way, plus the unknowns.
+
+    Returns `(matching, unknown)`. A bikepacker asking for hike-in gets the
+    sites the operator called `WALK TO`, and separately the ones nobody
+    classified — which on GoingToCamp is currently all of them, since its
+    `Walk In` attribute is per-site and we hold no per-site rows there yet.
+    """
+    matching, unknown = [], []
+    for opening in openings:
+        value = opening.get("site_access_class")
+        if value is None:
+            unknown.append(opening)
+        elif value == access_class:
+            matching.append(opening)
+    return matching, unknown
+
+
 # --------------------------------------------------------------------------
 # outliers within a loop
 # --------------------------------------------------------------------------

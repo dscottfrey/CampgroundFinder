@@ -3141,6 +3141,92 @@ class TestReserveAmericaInventory(DBTestCase):
             inventory.backfill_site_inventory(self.conn, provider="GoingToCamp:WA")
 
 
+# ------------- openings joined to what the site actually is (2026-07-31) --------
+
+class TestOpeningsJoin(DBTestCase):
+    """`availability` says when; `campsites` says what. Nothing joined them.
+
+    Until this, 5,413 Oregon sites' worth of driveway lengths and `WALK TO`
+    flags applied to nothing at all.
+    """
+
+    def setUp(self):
+        super().setUp()
+        store.upsert_campgrounds(self.conn, [
+            Campground(provider="ReserveAmerica:OR", id="412704",
+                       name="Reehers", state="OR"),
+            Campground(provider="GoingToCamp:WA", id="-99", name="Alta Lake",
+                       state="WA"),
+        ], now=NOW)
+        store.upsert_campsites(self.conn, "ReserveAmerica:OR", "412704", [
+            {"site_id": "45859", "name": "A-01", "site_type": "HORSE SITE",
+             "driveway_entry": "Back-In", "max_vehicle_length": 40,
+             "access_class": None, "max_people": 8},
+            {"site_id": "17108", "name": "HIKE 01", "site_type": "WALK TO",
+             "driveway_entry": None, "max_vehicle_length": None,
+             "access_class": "hike_in", "max_people": 6},
+        ], source="test", now=NOW)
+        # Openings: two ReserveAmerica (joinable) and one Washington (not).
+        store.upsert_availability(self.conn, [
+            Campsite(provider="ReserveAmerica:OR", campsite_id="45859",
+                     available_date=START, nights=2, site_name="A-01",
+                     facility_id="412704", state="OR"),
+            Campsite(provider="ReserveAmerica:OR", campsite_id="17108",
+                     available_date=START, nights=2, site_name="HIKE 01",
+                     facility_id="412704", state="OR"),
+            Campsite(provider="GoingToCamp:WA", campsite_id="55555",
+                     available_date=START, nights=2, site_name="55555",
+                     facility_id="-99", state="WA"),
+        ], now=NOW)
+
+    def test_site_detail_rides_along_with_the_opening(self):
+        rows = store.list_openings(self.conn, provider="ReserveAmerica:OR")
+        by_id = {r["campsite_id"]: r for r in rows}
+        self.assertEqual(by_id["45859"]["site_max_vehicle_length"], 40)
+        self.assertEqual(by_id["17108"]["site_access_class"], "hike_in")
+
+    def test_an_opening_with_no_site_row_survives_the_join(self):
+        """LEFT, never INNER — this is the whole design.
+
+        GoingToCamp holds no per-site rows, so an inner join would silently
+        hide every Washington opening. A shorter answer that looks complete is
+        this project's recurring bug (§8k).
+        """
+        rows = store.list_openings(self.conn)
+        wa = [r for r in rows if r["provider"] == "GoingToCamp:WA"]
+        self.assertEqual(len(wa), 1)
+        self.assertIsNone(wa[0]["site_joined"])
+        self.assertIsNone(wa[0]["site_max_vehicle_length"])
+
+    def test_an_unjoined_opening_is_unknown_not_does_not_fit(self):
+        """Getting this backwards hides a whole state from every RV owner."""
+        from app import equipment
+        rows = store.list_openings(self.conn)
+        fits, unknown, no = equipment.filter_openings_by_length(rows, 30)
+        wa = [r for r in unknown if r["provider"] == "GoingToCamp:WA"]
+        self.assertEqual(len(wa), 1, "unmatched must be unknown")
+        self.assertFalse([r for r in no if r["provider"] == "GoingToCamp:WA"])
+
+    def test_a_site_with_no_driveway_is_the_one_honest_exclusion(self):
+        from app import equipment
+        rows = store.list_openings(self.conn, provider="ReserveAmerica:OR")
+        _fits, _unknown, no = equipment.filter_openings_by_length(rows, 30)
+        self.assertEqual([r["campsite_id"] for r in no], ["17108"])
+
+    def test_access_filter_separates_matching_from_unclassified(self):
+        from app import equipment
+        rows = store.list_openings(self.conn)
+        matching, unknown = equipment.filter_openings_by_access(rows, "hike_in")
+        self.assertEqual([r["campsite_id"] for r in matching], ["17108"])
+        self.assertIn("55555", [r["campsite_id"] for r in unknown])
+
+    def test_coverage_is_reported_rather_than_assumed(self):
+        """A filter that works on one provider and not another must be visible."""
+        coverage = store.opening_site_coverage(self.conn)
+        self.assertEqual(coverage["ReserveAmerica:OR"]["with_detail"], 2)
+        self.assertEqual(coverage["GoingToCamp:WA"]["with_detail"], 0)
+
+
 # ------------- GoingToCamp publishes the vocabulary (2026-07-31) ----------------
 
 GTC_ATTR_DEFS = {

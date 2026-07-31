@@ -273,6 +273,83 @@ Two distinctions to keep, both the same discipline as everything else here:
   restriction**. IFPL may be the easiest thing to find rather than the right
   thing to show.
 
+## CampSage now ships a native iOS app (Scott, 2026-07-31)
+
+Not a web app — on the App Store. Scott's read: running on a mobile device
+would remove the bot-scraping barriers, and he may want to go the same way.
+**Keep the option open in every design decision from here.**
+
+### What a native client genuinely changes
+
+* **Requests come from each user's own phone**, so load spreads across ~12
+  residential IPs instead of one home connection. That is the open question
+  already logged in the handoff for browsers, and a native app is the
+  stronger version of it: twelve people checking campgrounds *is* what is
+  happening, and it finally looks like it.
+* **No CORS — but only for a genuinely native client.** Scott's point
+  (2026-07-31): *"it's still all really a wrapped webview anyway"*, and he is
+  right that most of these apps are. **A wrapped WebView is bound by the same
+  origin rules as a browser**, so wrapping does not unlock provider endpoints
+  — only native HTTP, or a native bridge behind the WebView, does. The CORS
+  advantage is real but belongs to an architecture nobody has committed to.
+
+  Worth noting the question dissolves anyway if the app talks to **our** API:
+  same origin, no CORS, nothing to solve. CORS was only ever a problem for
+  talking to providers directly.
+* **It can present as an ordinary mobile client**, which several of these
+  platforms serve first-class.
+
+### What it does not change — the word "entirely" is too strong
+
+* **A WAF challenge is still a WAF challenge.** AWS WAF's is JavaScript; a
+  native app either embeds a WebView to run it or fails it. CampLife does not
+  become reachable by changing transport.
+* **Terms of service are unchanged**, and so is
+  [[campgroundfinder-scraping-policy]]. The rule is *don't get banned*, and
+  distributing requests across real users' devices is defensible precisely
+  because it reflects real use. **Building a native client in order to defeat
+  a bot barrier is evasion whichever wire the request goes down** — that is a
+  policy line, and moving the code to a phone does not move the line.
+* **A server is still required.** Watches and notifications have to run when
+  nobody's phone is awake. This is a split, not a replacement.
+
+### Scott's intended shape (2026-07-31)
+
+An **iPhone and iPad app, allowed to run on Apple Silicon** — the "Designed
+for iPad" path, which runs on Apple Silicon Macs unless explicitly opted out.
+A full native Mac app is a later question, not this one.
+
+**The thing to weigh before that, and it is not technical:** every pacing
+decision in this project rests on *~12 users on one home connection*
+([[campgroundfinder-deployment-and-pacing]]). **An App Store release is
+unbounded.** If a thousand people install it, a thousand phones start querying
+ReserveAmerica and GoingToCamp, and "don't get banned" stops being about our
+IP and becomes about whether the *platform* notices a new source of traffic
+shaped like an app.
+
+That does not make it a bad idea — CampSage evidently ships one. It does mean
+the two versions want different rules:
+
+* **Private / TestFlight / a dozen friends** — today's pacing is fine, and
+  distributing requests across devices genuinely helps.
+* **Public App Store** — the client cannot be trusted to pace itself in
+  aggregate. Availability would have to come from *our* cache, served by our
+  API, with the server doing the upstream fetching at a rate we control. Which
+  is the architecture we already have, and inverts the appeal: the phone
+  becomes a nicer front-end, not a way around anything.
+
+Worth deciding which of those it is **before** the client is built, because it
+determines whether the app talks to providers or only to us.
+
+### What to do about it now
+
+Nothing, except **keep the boundary clean**: the web UI should talk to our own
+JSON API rather than reaching into the database or rendering server-side HTML
+with logic baked in. If that holds, a native client is a *second front-end on
+the same API* rather than a rewrite — and the honesty rules (`unknown`,
+`stale`, dim-never-hide) live in the API's responses where both clients
+inherit them, instead of being reimplemented twice and drifting.
+
 ## Phones are a target (Scott, 2026-07-31)
 
 Standing instruction: this will be used on mobile, so **every design decision

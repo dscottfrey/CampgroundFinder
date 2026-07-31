@@ -24,6 +24,11 @@ let STATE = {
 let activeStates = new Set();
 let query = "";
 let view = "map";
+/* "provider|facility_id" -> openings. **null means we don't know**, an empty
+   array means we looked and found none. The two must never be conflated:
+   one is a gap in our knowledge, the other is a fact about the campground. */
+let OPENINGS = null;
+let COVERAGE = {};
 
 let map = null;
 let cluster = null;
@@ -317,10 +322,30 @@ function popupFor(c) {
   status.append(dot, document.createTextNode(LABELS[c.status] || c.status));
   box.appendChild(status);
 
+  // What's actually open, with dates and site names — the thing the map has
+  // been unable to say until now.
+  const openings = openingsFor(c);
+  if (openings && openings.length) box.appendChild(openingsList(openings));
+
   const lines = [];
   if (c.status_reason) lines.push(c.status_reason);
-  if (c.status === "available" && c.open_sites > 0) {
+  if (c.status === "available" && c.open_sites > 0 && !openings) {
     lines.push(`${c.open_sites} opening${c.open_sites === 1 ? "" : "s"} in the window we've scanned`);
+  }
+  // The three "nothing to show" cases are three different sentences. Saying
+  // "no openings" for all of them would report our own ignorance as a fact
+  // about the campground (§8g).
+  if (openings === null) {
+    lines.push("We haven't been able to load what's open — the campground is real, the availability is unknown.");
+  } else if (!openings.length && (c.status === "unknown" || c.status === "stale")) {
+    lines.push("Not checked yet — this campground exists, we just haven't looked.");
+  } else if (!openings.length) {
+    lines.push("Nothing open in the dates we've scanned. Set a watch and we'll tell you if that changes.");
+  }
+  // Why we think there's water, in the words the evidence came in. A derived
+  // flag that can't say why it fired is a guess wearing a badge.
+  if (c.water_nearby === "yes" && c.water_evidence) {
+    lines.push("Water: " + c.water_evidence);
   }
   // Straight from the server, which is where the honest phrasing lives.
   if (c.booking_label) lines.push(c.booking_label);
@@ -340,6 +365,68 @@ function popupFor(c) {
     box.appendChild(p);
   }
   return box;
+}
+
+/* The openings themselves: a date range, then the sites free across it.
+
+   Grouped by (date, nights) rather than listed one row per site, because
+   "Aug 1-3, 2 nights: A01, A04, B12" is one decision and twelve rows are
+   twelve. Long lists are truncated with a count, never silently — "+18 more"
+   is honest where showing four and stopping is not.
+
+   textContent throughout: site names come from provider scrapes. */
+const MAX_SITES_SHOWN = 6;
+const MAX_RUNS_SHOWN = 5;
+
+function openingsList(openings) {
+  const wrap = document.createElement("div");
+  wrap.className = "openings";
+
+  const runs = new Map();
+  for (const o of openings) {
+    const key = o.available_date + "|" + o.nights;
+    if (!runs.has(key)) runs.set(key, []);
+    runs.get(key).push(o);
+  }
+  const ordered = [...runs.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+
+  for (const [key, sites] of ordered.slice(0, MAX_RUNS_SHOWN)) {
+    const [date, nights] = key.split("|");
+    const row = document.createElement("div");
+    row.className = "opening";
+
+    const when = document.createElement("b");
+    when.textContent = `${date} · ${nights} night${nights === "1" ? "" : "s"}`;
+    row.appendChild(when);
+
+    const named = sites.map((s) => s.site_name).filter(Boolean);
+    const shown = named.slice(0, MAX_SITES_SHOWN).join(", ");
+    const extra = named.length - MAX_SITES_SHOWN;
+    const what = document.createElement("span");
+    what.className = "opening-sites";
+    what.textContent = extra > 0 ? `${shown} +${extra} more` : shown;
+    row.appendChild(what);
+
+    // Only claim a fit when a site row backed it. "unknown" is left unsaid
+    // here rather than rendered as a warning on every Washington opening.
+    const fits = sites.filter((s) => s.length_verdict === "fits").length;
+    if (fits) {
+      const tag = document.createElement("span");
+      tag.className = "opening-fit";
+      tag.textContent = `${fits} fit your rig`;
+      row.appendChild(tag);
+    }
+    wrap.appendChild(row);
+  }
+
+  if (ordered.length > MAX_RUNS_SHOWN) {
+    const more = document.createElement("div");
+    more.className = "popup-note";
+    more.textContent = `+${ordered.length - MAX_RUNS_SHOWN} more date${
+      ordered.length - MAX_RUNS_SHOWN === 1 ? "" : "s"}`;
+    wrap.appendChild(more);
+  }
+  return wrap;
 }
 
 /* The name, painted by us, beside the pin.
@@ -378,6 +465,24 @@ function updateLabelVisibility() {
   );
 }
 
+/* Does this campground answer the filters, or is it merely still on the map?
+
+   Returns 'match' | 'dim' | 'unknown'. Scott's rule (2026-07-31): **filters
+   dim, they never hide.** Every campground keeps its dot at every zoom and
+   under every filter — hiding them is the CampSage behaviour he most
+   dislikes, and a map that quietly drops rows is lying about how much exists.
+
+   `unknown` dims too, but for a different reason, and the popup says which:
+   "nothing open this weekend" and "we haven't checked yet" are different
+   sentences and a camper needs to be able to tell them apart. */
+function matchState(c) {
+  const openings = openingsFor(c);
+  if (openings === null) return "unknown";   // availability never loaded
+  if (openings.length) return "match";
+  if (c.status === "unknown" || c.status === "stale") return "unknown";
+  return "dim";
+}
+
 function renderMap() {
   if (!map) return;
   const located = visible().filter((c) => c.located && c.latitude != null);
@@ -385,9 +490,15 @@ function renderMap() {
   cluster.addLayers(
     located.map((c) => {
       const icon = pinIcon(c);
-      return L.marker([c.latitude, c.longitude], { icon, title: c.name })
+      const marker = L.marker([c.latitude, c.longitude], { icon, title: c.name })
         .bindTooltip(labelFor(c, icon.options.iconSize[0]))
         .bindPopup(() => popupFor(c));
+      // 50% is Scott's starting value, to be looked at rather than trusted.
+      // NOT cumulative by design: failing four filters looks like failing
+      // one, because dimness answers "does this match?", not "how badly?".
+      const state = matchState(c);
+      if (state !== "match") marker.setOpacity(0.5);
+      return marker;
     })
   );
   updateLabelVisibility();
@@ -497,12 +608,44 @@ function setView(next) {
   if (next === "map" && map) map.invalidateSize();
 }
 
+/* Openings, indexed by the campground they belong to.
+
+   Fetched as a SECOND request rather than folded into /api/state, because the
+   catalog is the thing that must always draw and availability is the thing
+   that might be slow or absent. If this call fails the map still shows every
+   campground — it just can't say what's open, which is `unknown`, which is a
+   state this interface already knows how to show (§8g). */
+async function loadOpenings() {
+  try {
+    const res = await fetch("/api/openings");
+    if (!res.ok) throw new Error(res.statusText);
+    const payload = await res.json();
+    OPENINGS = new Map();
+    for (const o of payload.openings) {
+      const key = o.provider + "|" + o.facility_id;
+      if (!OPENINGS.has(key)) OPENINGS.set(key, []);
+      OPENINGS.get(key).push(o);
+    }
+    COVERAGE = payload.coverage || {};
+  } catch (err) {
+    // Deliberately not an error state. No openings loaded is "we don't know
+    // what's open", not "nothing is open" — and those must never look alike.
+    OPENINGS = null;
+  }
+}
+
+function openingsFor(c) {
+  if (!OPENINGS) return null;              // null = unknown, [] = none found
+  return OPENINGS.get(c.provider + "|" + c.id) || [];
+}
+
 async function load() {
   setStatus("Loading campgrounds…");
   try {
     const res = await fetch("/api/state");
     if (!res.ok) throw new Error(res.statusText);
     STATE = await res.json();
+    await loadOpenings();
     activeStates = new Set(STATE.states);
     if (!map) initMap();
     renderRegions();
