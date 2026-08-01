@@ -8,104 +8,236 @@
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <header>
-    <h1>CampgroundFinder</h1>
-    <p class="sub">Every campground we know about — open, full, or unchecked.</p>
-  </header>
+  <!-- The map is the page, not a pane inside one. Everything else floats over
+       it (docs/campsage-ui-notes.md). The one thing taken wholesale from
+       CampSage, because the alternative — a 32rem window under four stacked
+       rows of chrome — wastes most of a screen on a product whose entire job
+       is showing you where things are. -->
+  <div id="map"></div>
 
-  <div id="status" class="status">
-    <span class="spinner" aria-hidden="true"></span>
-    <span id="status-text">Loading…</span>
-  </div>
+  <!-- ONE bar, not four. Search, regions and the view switch share a row.
+       CampSage's Filters button that HIDES this bar is deliberately not
+       copied: hiding the bar hides which filters are on, which with
+       remembered filter state is the recipe for "why is this map empty". -->
+  <header class="topbar">
+    <!-- Settings behind a gear, top left. Everything in here is a preference
+         you set once and forget — which is exactly what should not be
+         spending permanent width in a bar whose real job is filters. -->
+    <details class="pop pop-settings">
+      <summary aria-label="Settings" title="Settings">⚙</summary>
+      <div class="pop-body">
+        <p class="pop-head">Background map</p>
+        <div class="views" role="group" aria-label="Background map">
+          <button id="base-auto" class="view on" aria-pressed="true">Auto</button>
+          <button id="base-topo" class="view" aria-pressed="false">Topo</button>
+          <button id="base-street" class="view" aria-pressed="false">Streets</button>
+        </div>
 
-  <section class="controls">
-    <input id="search" type="search" placeholder="Search by name…" autocomplete="off">
-    <div id="regions" class="regions"></div>
-    <!-- A development aid, and knowingly at odds with "filters dim, they
-         never hide" (Scott, 2026-07-31): interrogating the open campgrounds
-         is far easier when the other 700 are not drawn. Off by default, so
-         the map's normal behaviour is unchanged. -->
-    <label class="regions" title="Development aid — hides everything else">
-      <input type="checkbox" id="open-only"> Open only
+        <!-- Present but not wired. Marked so, because a control that looks
+             live and does nothing is worse than one that admits it. These are
+             the per-user preferences in docs/user-preferences.md. -->
+        <p class="pop-head">Appearance <span class="soon">not wired yet</span></p>
+        <div class="views" role="group" aria-label="Theme">
+          <button class="view on" disabled>Auto</button>
+          <button class="view" disabled>Light</button>
+          <button class="view" disabled>Dark</button>
+        </div>
+
+        <p class="pop-head">Units <span class="soon">not wired yet</span></p>
+        <div class="views" role="group" aria-label="Units">
+          <button class="view on" disabled>Miles</button>
+          <button class="view" disabled>Kilometres</button>
+        </div>
+
+        <p class="pop-head">Map opens at <span class="soon">not wired yet</span></p>
+        <div class="views" role="group" aria-label="Start view">
+          <button class="view on" disabled>Where I left off</button>
+          <button class="view" disabled>Default region</button>
+        </div>
+      </div>
+    </details>
+
+    <span class="brand">CampgroundFinder</span>
+
+    <!-- Dates: a dropdown, not a calendar. This is an app for impulse trips,
+         not a holiday planned in January. -->
+    <details class="pop pop-dates">
+      <summary>Dates</summary>
+      <div class="pop-body">
+        <div class="views" role="group" aria-label="When">
+          <button class="view on" disabled>This weekend</button>
+          <button class="view" disabled>Tonight</button>
+          <button class="view" disabled>Tomorrow</button>
+        </div>
+        <p class="pop-head">Or pick a start date <span class="soon">not wired yet</span></p>
+        <label class="field">From <input type="date" disabled></label>
+        <label class="field">To <input type="date" disabled></label>
+      </div>
+    </details>
+
+    <!-- 1 / 2 / 3 nights, condensed. CampSage spends four chips on "Any
+         nights, 2+ night, 3-night"; this is the same question in one control.
+         Weekends stays separate because it is a different question — which
+         nights, not how many. -->
+    <div class="views nights" role="group" aria-label="Nights">
+      <span class="views-label">Nights</span>
+      <button class="view" disabled>1</button>
+      <button class="view on" disabled>2</button>
+      <button class="view" disabled>3</button>
+    </div>
+    <label class="toggle"><input type="checkbox" disabled> Weekends</label>
+
+    <!-- Everything that is a yes/no about the place itself. CampSage's
+         "All / Camp / Beach" makes no sense — they are all camps, and beach
+         is a filter, not a category. And there is no "Sought-after": a
+         popularity ranking is not something a camper can act on. -->
+    <details class="pop pop-filters">
+      <summary>Filters</summary>
+      <div class="pop-body">
+        <p class="pop-head">States and regions</p>
+        <!-- The live ones render here; app.js writes into #regions. -->
+        <div id="regions" class="regions regions-list"></div>
+        <!-- Dummies, to see how a real list sits. Nothing behind them: the
+             catalog holds OR, WA and BC and nothing else yet. -->
+        <label class="check"><input type="checkbox" disabled> California <span class="soon">no data</span></label>
+        <label class="check"><input type="checkbox" disabled> Idaho <span class="soon">no data</span></label>
+        <label class="check"><input type="checkbox" disabled> Montana <span class="soon">no data</span></label>
+        <label class="check"><input type="checkbox" disabled> Nevada <span class="soon">no data</span></label>
+        <label class="check"><input type="checkbox" disabled> Utah <span class="soon">no data</span></label>
+        <label class="check"><input type="checkbox" disabled> Alberta <span class="soon">no data</span></label>
+
+        <p class="pop-head">How you get a site</p>
+        <!-- Wired, unlike the placeholders below: 206 campgrounds in the
+             catalog take no bookings at all, and until now there was no way
+             to find them. -->
+        <label class="check"><input type="checkbox" id="fcfs-only"> First-come, first-served only</label>
+
+        <p class="pop-head">Where <span class="soon">not wired yet</span></p>
+        <label class="check"><input type="checkbox" disabled> Near water</label>
+        <label class="check"><input type="checkbox" disabled> Beach</label>
+        <label class="check"><input type="checkbox" disabled> Boat launch</label>
+        <label class="check"><input type="checkbox" disabled> Moorage</label>
+
+        <p class="pop-head">Site <span class="soon">not wired yet</span></p>
+        <label class="check"><input type="checkbox" disabled> Electric hook-up</label>
+        <label class="check"><input type="checkbox" disabled> Water hook-up</label>
+        <label class="check"><input type="checkbox" disabled> Sewer hook-up</label>
+        <label class="check"><input type="checkbox" disabled> Hike-in / walk-in</label>
+        <label class="check"><input type="checkbox" disabled> Pets allowed</label>
+        <label class="check"><input type="checkbox" disabled> Accessible</label>
+
+        <p class="pop-head">Conditions <span class="soon">not wired yet</span></p>
+        <label class="check"><input type="checkbox" disabled> Air quality no worse than yellow</label>
+        <label class="check"><input type="checkbox" disabled> No rain forecast</label>
+        <label class="check"><input type="checkbox" disabled> Campfires allowed</label>
+      </div>
+    </details>
+
+    <!-- "Available", not "Open": open/closed is whether the campground is
+         operating at all, available/full is whether you can get a site. -->
+    <label class="toggle" title="Development aid — hides everything else">
+      <input type="checkbox" id="open-only"> Available only
     </label>
+
     <div class="views" role="group" aria-label="View">
       <button id="view-map" class="view on" aria-pressed="true">Map</button>
       <button id="view-list" class="view" aria-pressed="false">List</button>
     </div>
-  </section>
 
-  <!-- Basemap choice. Auto is the default and swaps at a configured zoom:
-       street tiles are legible zoomed out where the topo is a brown smear,
-       and the topo earns its place close in, where the trails are. -->
-  <section class="controls controls-map">
-    <div class="views" role="group" aria-label="Background map">
-      <button id="base-auto" class="view on" aria-pressed="true">Auto</button>
-      <button id="base-topo" class="view" aria-pressed="false">Topo</button>
-      <button id="base-street" class="view" aria-pressed="false">Streets</button>
+    <!-- Only shown while loading or when something is wrong. The success
+         message lives in Statistics; a bar that permanently reports good news
+         is a bar reporting nothing. -->
+    <div id="status" class="status">
+      <span class="spinner" aria-hidden="true"></span>
+      <span id="status-text">Loading…</span>
     </div>
-    <span id="basemap-note" class="basemap-note"></span>
-  </section>
+  </header>
 
-  <!-- Each swatch is the same SHAPE as the pin it explains, not just the same
-       colour: the five statuses have to be told apart without relying on hue
-       (see the note at the top of styles.css). -->
-  <section id="legend" class="legend">
-    <span class="chip"><b class="swatch available"></b>Open now — filled circle</span>
-    <span class="chip"><b class="swatch full"></b>Full, set a watch — octagon</span>
-    <span class="chip"><b class="swatch unknown"></b>Not checked yet — hollow circle</span>
-    <span class="chip"><b class="swatch stale"></b>Couldn't reach the website — triangle</span>
-    <span class="chip"><b class="swatch closed"></b>Closed — cross</span>
-  </section>
+  <!-- Floating panels, pinned to the corners. Not a locate-me compass:
+       centring on where you are is worthless for trip planning, because when
+       you are planning you are at home and when you are away you are already
+       there — and it asks for personal data to do it. -->
+  <!-- Search by name is a rare thing to want — you mostly arrive knowing
+       roughly where, not exactly what. So it folds away behind its own icon
+       rather than spending a permanent slot in the bar. -->
+  <details class="panel panel-search">
+    <summary aria-label="Search by name" title="Search by name">⌕</summary>
+    <input id="search" type="search" placeholder="Search by name…" autocomplete="off">
+  </details>
 
-  <!-- The dim state, next to the same shapes undimmed, because that is the
-       only way to judge it. Scott, 2026-07-31: "50% is too subtle, but
-       without a comparison to a non-dimmed one with the same status I can't
-       tell." On the map itself two campgrounds of the same status rarely sit
-       side by side, so the comparison has to be made here. -->
-  <section id="legend-dim" class="legend legend-dim">
-    <span class="chip">Dimmed — ruled out by a filter you set (no filters yet):</span>
-    <span class="chip"><b class="swatch available"></b><b class="swatch available dim"></b>Open</span>
-    <span class="chip"><b class="swatch full"></b><b class="swatch full dim"></b>Full</span>
-    <span class="chip"><b class="swatch unknown"></b><b class="swatch unknown dim"></b>Unchecked</span>
-  </section>
+  <!-- Collapsible, because a permanent box is most of a phone screen. Open by
+       default on a wide screen; the summary is the whole control. -->
+  <!-- Closed by default and NOT remembered between loads: the legend is a
+       reference you consult once, not a panel you live with. -->
+  <details class="panel panel-legend">
+    <summary>Legend</summary>
 
-  <main>
-    <div id="map-wrap">
-      <div id="map"></div>
-      <!-- Shown whenever any background tile is missing from the current view,
-           not only when the first one fails: OpenTopoMap dropped half a view's
-           tiles on 2026-07-29 and the page said nothing. The pins still work
-           without tiles, so this explains the blank squares rather than letting
-           them read as "no campgrounds here". app.js writes the exact wording;
-           this text is what a no-JS reader would get. -->
-      <p id="tile-warning" class="tile-warning" hidden>
-        Couldn't load the map background — check the internet connection.
-        The campground pins below are still accurate.
-      </p>
-      <p id="unlocated" class="unlocated" hidden></p>
-    </div>
+    <!-- Each swatch is the same SHAPE as the pin it explains, not just the
+         same colour: the five statuses have to be told apart without relying
+         on hue (see the note at the top of styles.css). -->
+    <section id="legend" class="legend">
+      <span class="chip"><b class="swatch available"></b>Open now — filled circle</span>
+      <span class="chip"><b class="swatch full"></b>Full, set a watch — octagon</span>
+      <span class="chip"><b class="swatch unknown"></b>Not checked yet — hollow circle</span>
+      <span class="chip"><b class="swatch stale"></b>Couldn't reach the website — triangle</span>
+      <span class="chip"><b class="swatch first_come"></b>First-come, first-served — diamond</span>
+      <span class="chip"><b class="swatch closed"></b>Closed — cross</span>
+    </section>
 
-    <div id="list-wrap" hidden>
-      <table id="table">
-        <thead>
-          <tr>
-            <th>Campground</th><th>Where</th><th>Status</th><th>Open sites</th>
-          </tr>
-        </thead>
-        <tbody id="rows"></tbody>
-      </table>
-      <p id="empty" class="empty" hidden>Nothing matches that search.</p>
-    </div>
-  </main>
+    <!-- The dim state next to the same shapes undimmed, because that is the
+         only way to judge it: on the map two campgrounds of the same status
+         rarely sit side by side. -->
+    <section id="legend-dim" class="legend legend-dim">
+      <span class="chip">Dimmed — ruled out by a filter you set (no filters yet):</span>
+      <span class="chip"><b class="swatch available"></b><b class="swatch available dim"></b>Open</span>
+      <span class="chip"><b class="swatch full"></b><b class="swatch full dim"></b>Full</span>
+      <span class="chip"><b class="swatch unknown"></b><b class="swatch unknown dim"></b>Unchecked</span>
+    </section>
 
-  <footer>
-    <p id="foot"></p>
+  </details>
+
+  <!-- Counts and the zoom/basemap readout together, collapsed. Both are
+       diagnostics: useful when something looks wrong, noise the rest of the
+       time. "The tiles look wrong" is unanswerable without knowing which
+       zoom asked for them. -->
+  <details class="panel panel-stats">
+    <summary>Statistics</summary>
+    <p id="loaded" class="foot"></p>
+    <p id="foot" class="foot"></p>
+    <!-- Unlocated campgrounds cannot be drawn, so they are said out loud
+         rather than quietly vanishing between the catalog count and the map.
+         It lives here with the other counts because that is what it is — a
+         count — not a warning that needs to float over the terrain. -->
+    <p id="unlocated" class="unlocated" hidden></p>
+    <p><span id="basemap-note" class="basemap-note"></span></p>
+  </details>
+
+  <!-- Said out loud rather than left as blank squares: a missing tile reads as
+       "there is nothing in this area", which is the worst failure this map
+       has. app.js writes the exact wording. -->
+  <p id="tile-warning" class="floating-note tile-warning" hidden>
+    Couldn't load the map background — check the internet connection.
+    The campground pins are still accurate.
+  </p>
+
+  <!-- The list view covers the map when chosen, rather than sitting below it
+       where it would push the map off screen. -->
+  <div id="list-wrap" class="sheet" hidden>
+    <table id="table">
+      <thead>
+        <tr>
+          <th>Campground</th><th>Where</th><th>Status</th><th>Open sites</th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+    <p id="empty" class="empty" hidden>Nothing matches that search.</p>
     <p class="note">
       The names beside the pins are ours, spelled the way the provider spells
       them. Names printed on the map background are just part of the picture,
       not campgrounds we track — only the pins carry our data.
     </p>
-  </footer>
+  </div>
 
   <script src="/static/vendor/leaflet.js"></script>
   <script src="/static/app.js"></script>

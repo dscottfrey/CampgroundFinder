@@ -24,29 +24,107 @@
   --unknown:   #d6d1c6;   /* pale grey    — hollow circle */
   --stale:     #7b52ab;   /* violet       — triangle */
   --closed:    #1b1a17;   /* near-black   — cross */
+  /* First-come, first-served. Not a status but a KIND: these campgrounds have
+     no feed to be available or full in, so they get their own mark rather
+     than borrowing "unknown" and reading as unchecked. */
+  --first-come: #0f8b8d;  /* teal         — diamond */
 }
 
 * { box-sizing: border-box; }
 
+/* Full-bleed. The map is the page; the chrome floats over it. */
+html, body { height: 100%; }
 body {
   margin: 0;
-  padding: 2rem 1.25rem 4rem;
-  max-width: 60rem;
-  margin-inline: auto;
+  overflow: hidden;              /* the map scrolls, the document does not */
   background: var(--bg);
   color: var(--ink);
   font: 16px/1.5 ui-sans-serif, -apple-system, "Helvetica Neue", sans-serif;
 }
 
-h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.01em; }
-.sub { margin: 0.25rem 0 1.5rem; color: var(--muted); }
+#map {
+  position: fixed;
+  inset: 0;
+  height: 100%;
+  border: none; border-radius: 0;
+  background: var(--card);
+  z-index: 0;
+}
+
+/* Floating surfaces. Light, not the black slabs CampSage uses — those fight
+   the terrain underneath. The shadow is what lifts them off the map, which
+   is why it is load-bearing rather than decoration. */
+.panel, .topbar, .sheet, .floating-note {
+  background: rgba(253, 252, 249, 0.94);
+  backdrop-filter: saturate(1.4) blur(6px);
+  border: 1px solid var(--line);
+  box-shadow: 0 1px 2px rgba(30, 26, 18, 0.10), 0 6px 18px rgba(30, 26, 18, 0.10);
+}
+
+.topbar {
+  position: fixed; z-index: 500;
+  top: 0; left: 0; right: 0;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem;
+  padding: 0.55rem 0.8rem;
+  border-width: 0 0 1px 0;
+}
+.brand { font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
+
+.panel {
+  position: fixed; z-index: 400;
+  border-radius: 12px;
+  padding: 0.5rem 0.7rem;
+  max-width: min(26rem, calc(100vw - 1.5rem));
+}
+.panel summary {
+  cursor: pointer; font-size: 0.85rem; font-weight: 600; color: var(--muted);
+  list-style: none;
+}
+.panel summary::-webkit-details-marker { display: none; }
+.panel[open] summary { margin-bottom: 0.5rem; }
+
+.panel-legend { left: 0.75rem; bottom: 0.75rem; }
+.panel-stats  { right: 0.75rem; bottom: 0.75rem; font-size: 0.82rem; }
+.panel-stats p { margin: 0.2rem 0; color: var(--muted); }
+
+/* Search folds behind its own glyph, bottom right, above the statistics
+   panel. A rare need should not hold a permanent slot in the bar. */
+.panel-search { right: 0.75rem; bottom: 4rem; padding: 0.35rem 0.5rem; }
+/* Three times the glyph, same padding — it is a target as much as an icon,
+   and a small one in a corner is a poor target on a phone. */
+.panel-search summary { font-size: 3.45rem; line-height: 0.8; margin: 0; }
+.panel-search[open] summary { margin-bottom: 0.4rem; }
+.panel-search input { width: min(18rem, 60vw); }
+
+/* Leaflet puts its zoom buttons at the very top-left, which the fixed top bar
+   sits on top of — the minus button was half-hidden behind it. Push the whole
+   control clear rather than moving the bar. */
+.leaflet-top .leaflet-control { margin-top: 4rem; }
+
+.floating-note {
+  position: fixed; z-index: 400;
+  left: 50%; transform: translateX(-50%);
+  bottom: 0.75rem; margin: 0;
+  padding: 0.5rem 0.8rem; border-radius: 10px;
+  max-width: min(34rem, calc(100vw - 1.5rem));
+  font-size: 0.85rem;
+}
+
+/* The list covers the map rather than sitting under it, where it would push
+   the map off screen entirely. */
+.sheet {
+  position: fixed; z-index: 450;
+  top: 3.6rem; left: 0; right: 0; bottom: 0;
+  overflow: auto; padding: 1rem;
+  border-width: 1px 0 0 0;
+}
 
 /* --- status / progress ------------------------------------------------ */
+/* In the bar now, not a banner above the page. */
 .status {
-  display: flex; align-items: center; gap: 0.6rem;
-  padding: 0.7rem 0.9rem; margin-bottom: 1.25rem;
-  background: var(--card); border: 1px solid var(--line); border-radius: 10px;
-  color: var(--muted); font-size: 0.92rem;
+  display: flex; align-items: center; gap: 0.45rem;
+  color: var(--muted); font-size: 0.82rem; white-space: nowrap;
+  margin-left: auto;
 }
 .status.slow { border-color: #e2c58a; background: #fdf7ea; color: #6b5320; }
 .status.done .spinner { display: none; }
@@ -60,24 +138,57 @@ h1 { margin: 0; font-size: 1.6rem; letter-spacing: -0.01em; }
 @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
 
 /* --- controls --------------------------------------------------------- */
-.controls { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; }
 #search {
-  flex: 1 1 16rem; padding: 0.6rem 0.75rem; font-size: 1rem;
+  flex: 1 1 12rem; min-width: 8rem; padding: 0.45rem 0.7rem; font-size: 0.95rem;
   border: 1px solid var(--line); border-radius: 8px; background: var(--card);
   color: inherit;
 }
-.controls-map { align-items: center; margin-top: -0.25rem; }
+
 /* Carries the zoom level, which is here for diagnosis: "the tiles look wrong"
    is unanswerable without knowing which zoom asked for them. */
 .basemap-note { color: var(--muted); font-size: 0.82rem; }
 
 .regions { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
-.regions label {
-  display: inline-flex; align-items: center; gap: 0.35rem;
-  padding: 0.4rem 0.7rem; background: var(--card);
-  border: 1px solid var(--line); border-radius: 999px; font-size: 0.9rem;
+.regions-list { flex-direction: column; align-items: stretch; gap: 0.25rem; }
+
+/* One selection metaphor for the whole interface.
+
+   Scott, 2026-07-31: the region toggles were blue system checkboxes while
+   every button next to them used a pressed-in shadow. Two metaphors for one
+   idea. The native box is hidden and the label itself is the control, so
+   "chosen" looks the same whether it started life as a button or a
+   checkbox. */
+.regions label, .toggle, .check {
   cursor: pointer;
 }
+.regions label, .toggle {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.4rem 0.7rem; background: var(--card); color: var(--muted);
+  border: 1px solid var(--line); border-radius: 999px; font-size: 0.9rem;
+  white-space: nowrap;
+}
+.regions label input, .toggle input, .check input { position: absolute; opacity: 0; width: 0; }
+.regions label:has(input:checked),
+.toggle:has(input:checked) {
+  background: #efece4; color: var(--ink); font-weight: 600;
+  border-color: rgba(30, 26, 18, 0.28);
+  box-shadow: inset 0 2px 4px rgba(30, 26, 18, 0.28),
+              inset 0 -1px 0 rgba(255, 255, 255, 0.7);
+}
+/* Inside a pop-out the rows are a list, so the pressed state is a filled row
+   rather than a pill — same shadow, different shape to suit the layout. */
+.check {
+  display: flex; align-items: center; gap: 0.45rem;
+  padding: 0.28rem 0.5rem; border-radius: 8px;
+  border: 1px solid transparent;
+}
+.check:has(input:checked) {
+  background: #efece4; font-weight: 600;
+  border-color: rgba(30, 26, 18, 0.22);
+  box-shadow: inset 0 2px 4px rgba(30, 26, 18, 0.22);
+}
+.check:has(input:disabled), .toggle:has(input:disabled) { opacity: 0.55; cursor: not-allowed; }
+.regions-list label { width: 100%; border-radius: 8px; }
 
 /* --- legend ----------------------------------------------------------- */
 .legend { display: flex; flex-wrap: wrap; gap: 0.9rem; margin: 0 0 1rem; }
@@ -114,14 +225,65 @@ tbody tr:last-child td { border-bottom: none; }
 }
 .view:first-child { border-radius: 999px 0 0 999px; }
 .view:last-child  { border-radius: 0 999px 999px 0; border-left: none; }
-.view.on { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+/* Selected state as a pressed-in surface, not a black slab.
+
+   Scott, 2026-07-31: the solid-black selected buttons were "very
+   distracting" — five of them across a bar pulled the eye away from the map,
+   which is the thing worth looking at. An inset shadow reads as "pushed in"
+   and costs almost no contrast against its neighbours. */
+.view.on {
+  background: #efece4;
+  color: var(--ink);
+  border-color: rgba(30, 26, 18, 0.28);
+  box-shadow: inset 0 2px 4px rgba(30, 26, 18, 0.28),
+              inset 0 -1px 0 rgba(255, 255, 255, 0.7);
+  font-weight: 600;
+}
+.view[disabled] { opacity: 0.55; cursor: not-allowed; }
+
+/* Pop-outs in the bar: settings, dates, filters. */
+.pop { position: relative; }
+.pop > summary {
+  cursor: pointer; list-style: none; white-space: nowrap;
+  padding: 0.4rem 0.8rem; font-size: 0.9rem;
+  background: var(--card); color: var(--muted);
+  border: 1px solid var(--line); border-radius: 999px;
+}
+.pop > summary::-webkit-details-marker { display: none; }
+.pop[open] > summary {
+  box-shadow: inset 0 2px 4px rgba(30, 26, 18, 0.28);
+  color: var(--ink);
+}
+.pop-settings > summary { font-size: 2.3rem; line-height: 1.1; padding: 0.25rem 0.6rem; }
+.pop-body {
+  position: absolute; z-index: 600; top: calc(100% + 0.4rem); left: 0;
+  min-width: 15rem; max-width: min(22rem, calc(100vw - 1.5rem));
+  padding: 0.7rem 0.85rem; border-radius: 12px;
+  background: rgba(253, 252, 249, 0.98);
+  border: 1px solid var(--line);
+  box-shadow: 0 2px 4px rgba(30, 26, 18, 0.12), 0 10px 28px rgba(30, 26, 18, 0.16);
+}
+.pop-head {
+  margin: 0.7rem 0 0.35rem; font-size: 0.75rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted);
+}
+.pop-body > .pop-head:first-child { margin-top: 0; }
+/* Says outright that a control does nothing yet. A button that looks live
+   and is not is worse than one that admits it. */
+.soon {
+  font-weight: 400; text-transform: none; letter-spacing: 0;
+  font-style: italic; opacity: 0.75;
+}
+
+.field { display: flex; align-items: center; gap: 0.45rem;
+         font-size: 0.88rem; padding: 0.15rem 0; }
+.field input { flex: 1; }
+.views-label { font-size: 0.85rem; color: var(--muted); margin-right: 0.35rem; }
+.nights { align-items: center; }
+.nights .view { padding: 0.4rem 0.65rem; }
 
 /* --- map --------------------------------------------------------------- */
-#map {
-  height: 32rem; border: 1px solid var(--line); border-radius: 10px;
-  background: var(--card);
-}
-@media (max-width: 40rem) { #map { height: 24rem; } }
+
 
 /* Leaflet ships marker images we deliberately don't vendor, so every pin is
    drawn by us — as an SVG shape per status (app.js), not a coloured dot.
@@ -162,6 +324,10 @@ tbody tr:last-child td { border-bottom: none; }
   border: none;
 }
 .swatch.unknown   { background: var(--unknown); border-radius: 50%; }
+.swatch.first_come {
+  background: var(--first-come); border: none;
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+}
 .swatch.stale {
   /* Triangle: no box to give a border to, so the outline is a drop-shadow. */
   width: 0; height: 0; border: none;
@@ -185,13 +351,35 @@ tbody tr:last-child td { border-bottom: none; }
    right in both themes. The halo is what makes them legible over contour lines
    and forest green alike. */
 .leaflet-tooltip.pin-label {
-  background: none; border: none; box-shadow: none; padding: 0;
-  color: #16150f; font: 700 12px/1.15 ui-sans-serif, -apple-system, sans-serif;
+  /* White type on Forest Service brown.
+
+     Scott reversed an earlier call to get here (2026-07-31), and the reason
+     is better than the one it replaced: campers already read this exact
+     combination as "this is the sign that names the place". Borrowing a
+     convention that predates every booking site is worth more than being
+     visually novel.
+
+     The rule the cream pill was serving still holds — the fill must sit off
+     the basemap's palette so a label can never be mistaken for terrain. This
+     brown is darker and far more saturated than any topo ground tone, and
+     the white type carries a lightness contrast that survives whatever the
+     tiles do underneath.
+
+     Note the brown reads as green to Scott. That is fine and worth stating:
+     the colour carries no meaning here, it is a background for legibility,
+     and his rule constrains hues that have a job to do — not decoration.
+
+     Deliberately NOT theme-aware: these sit on map tiles, which stay light
+     whatever the page does. */
+  background: #4a3b2c;
+  border: 1px solid rgba(255, 252, 245, 0.25);
+  border-radius: 999px;
+  box-shadow: 0 1px 3px rgba(24, 18, 10, 0.45);
+  padding: 1px 8px;
+  color: #fdfaf3;
+  font: 600 12px/1.45 ui-sans-serif, -apple-system, sans-serif;
   white-space: nowrap;
-  text-shadow:
-     1px  1px 0 #fff, -1px  1px 0 #fff,
-     1px -1px 0 #fff, -1px -1px 0 #fff,
-     0 2px 3px rgba(255, 255, 255, 0.9);
+  text-shadow: none;
 }
 /* Leaflet's tooltips come with a little pointer triangle; ours is a bare word. */
 .leaflet-tooltip.pin-label::before { display: none; }

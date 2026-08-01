@@ -25,6 +25,7 @@ before enabling a non-federal source.
 from __future__ import annotations
 
 import logging
+import re
 from typing import Optional
 
 from ..pacing import RateLimiter, shared_limiter
@@ -70,6 +71,48 @@ def _load_camply():
             "camply is not installed — `pip install -r requirements.txt`"
         ) from exc
     return CAMPSITE_SEARCH_PROVIDER, SearchWindow
+
+
+#: Facility types RIDB uses for places you can sleep. `Campground` is the
+#: obvious one; `Facility` is the catch-all that Heart O' the Hills and most
+#: of Olympic's campgrounds sit in, so it cannot simply be excluded.
+_CAMPGROUND_TYPES = frozenset({"campground", "campsite"})
+
+#: Names that mean "somewhere to camp" when the type is the vague `Facility`.
+#: Deliberately narrow: this decides what enters the catalog, and a loose
+#: match would fill the map with trailheads and boat ramps.
+_CAMP_NAME = re.compile(
+    r"\b(campground|camp ground|campsites?|horse camp|group camp|"
+    r"tent camp|rv park|campomat)\b", re.I)
+
+#: Facility types that are never a place to sleep, whatever they are called.
+_NEVER_CAMPING = frozenset({"permit", "ticket facility", "tour"})
+
+
+def looks_like_a_campground(rec: dict) -> bool:
+    """Is this RIDB facility somewhere you can spend the night?
+
+    Replaces the `activity=CAMPING` query filter, which silently lost four
+    national parks because RIDB's activity tagging is optional and agencies
+    frequently skip it (see `_list_recdotgov_by_state`).
+
+    The test is deliberately evidence-based and ordered from strongest to
+    weakest: the facility's own type, then its stated activities, then its
+    name. A campground that fails all three is genuinely indistinguishable
+    from a boat ramp in this data.
+    """
+    kind = (rec.get("FacilityTypeDescription") or "").strip().lower()
+    if kind in _NEVER_CAMPING:
+        return False
+    if kind in _CAMPGROUND_TYPES:
+        return True
+    activities = {
+        (a.get("ActivityName") or "").strip().upper()
+        for a in rec.get("ACTIVITY") or []
+    }
+    if "CAMPING" in activities:
+        return True
+    return bool(_CAMP_NAME.search(rec.get("FacilityName") or ""))
 
 
 class CamplyProvider(Provider):
@@ -193,11 +236,32 @@ class CamplyProvider(Provider):
         client = provider_client()
         resolved_state = state or self.state
 
-        # RecreationDotGov: go straight to the RIDB facilities directory, which
-        # is the only call that filters by state AND returns coordinates.
-        # camply's own find_campgrounds() ignores `state` and yields no lat/lon.
-        if self.provider_name == "RecreationDotGov" and resolved_state:
-            return self._list_recdotgov_by_state(client, resolved_state)
+        # RecreationDotGov: the state directory PLUS any configured rec areas,
+        # unioned.
+        #
+        # The state walk alone is not enough, and this cost four national
+        # parks. Measured 2026-07-31: `facilities?state=WA` returns 485
+        # facilities and **Heart O' the Hills is not among them**, even though
+        # its own address reads WA — RIDB's state filter evidently indexes
+        # something other than the address. Asking its rec area directly
+        # (`recareas/2881/facilities`) returns it immediately.
+        #
+        # So neither call is complete on its own, and the union is the honest
+        # answer: the state sweep for breadth, the rec areas for the places we
+        # know we care about. This is why `rec_area_ids` exists in the config;
+        # the previous version accepted them and then ignored them for this
+        # provider, which is worse than not offering the setting at all.
+        if self.provider_name == "RecreationDotGov":
+            found: dict[str, Campground] = {}
+            if resolved_state:
+                for cg in self._list_recdotgov_by_state(client, resolved_state):
+                    found[cg.id] = cg
+            for rec_area_id in rec_area_ids or []:
+                for cg in self._list_recdotgov_by_rec_area(
+                        client, str(rec_area_id), resolved_state):
+                    found.setdefault(cg.id, cg)
+            if found:
+                return list(found.values())
 
         finder = getattr(client, "find_campgrounds", None)
         if finder is None:
@@ -216,17 +280,37 @@ class CamplyProvider(Provider):
         Enumerates the WHOLE directory for the state — never a shortlist (§8k).
         Paced by the shared limiter; this runs a few times a year, not
         continuously.
+
+        ## Why this does NOT filter on `activity=CAMPING`
+
+        It used to, and it cost us four national parks. Measured 2026-07-31,
+        after Scott noticed Heart O' the Hills was missing:
+
+            facilities?state=WA&activity=CAMPING  ->  191
+            facilities?state=WA                   ->  485
+
+        191 is exactly what we held. **Heart O' the Hills has an empty
+        ACTIVITY array** — the agency never tagged it — and so did every
+        campground in Olympic (12), North Cascades (9) and Crater Lake (2).
+        Mount Rainier kept 4 of its 5 by luck.
+
+        The lesson is the one this project keeps relearning: **never filter on
+        optional metadata the source does not reliably populate.** An untagged
+        campground is not a non-campground. So the walk now takes the whole
+        state directory and decides what a campground is from evidence it can
+        actually see, counting what it rejects so the gap stays visible rather
+        than silent (§8k).
         """
         out: list[Campground] = []
         offset = 0
         total = None
+        skipped = 0
         while True:
             with self.limiter.slot(self._pacing_key, label=f"{self.name} directory {state}"):
                 payload = client.get_ridb_data(
                     "facilities",
                     {
                         "state": state,
-                        "activity": "CAMPING",
                         "limit": DIRECTORY_PAGE_SIZE,
                         "offset": offset,
                     },
@@ -242,6 +326,9 @@ class CamplyProvider(Provider):
                 )
                 log.info("RIDB %s: %s camping facilities", state, total)
             for rec in records:
+                if not looks_like_a_campground(rec):
+                    skipped += 1
+                    continue
                 cg = self._campground_from_ridb(rec, state)
                 if cg:
                     out.append(cg)
@@ -250,6 +337,44 @@ class CamplyProvider(Provider):
                 break
             # No sleep here — the limiter above already spaced this loop, and
             # sleeping twice would silently double the documented interval.
+        log.info("RIDB %s: kept %d campgrounds, skipped %d other facilities "
+                 "(boat launches, trailheads, offices)", state, len(out), skipped)
+        return out
+
+    def _list_recdotgov_by_rec_area(
+        self, client, rec_area_id: str, state: Optional[str]
+    ) -> list[Campground]:
+        """Every campground in one recreation area, paged and count-checked.
+
+        The reliable half of the union — see `list_campgrounds`. A rec area
+        knows its own facilities even where the state index does not.
+        """
+        out: list[Campground] = []
+        offset, total = 0, None
+        while True:
+            with self.limiter.slot(self._pacing_key,
+                                   label=f"{self.name} rec area {rec_area_id}"):
+                payload = client.get_ridb_data(
+                    f"recareas/{rec_area_id}/facilities",
+                    {"limit": DIRECTORY_PAGE_SIZE, "offset": offset},
+                )
+            if not isinstance(payload, dict):
+                break
+            records = payload.get("RECDATA") or []
+            if total is None:
+                total = (payload.get("METADATA", {})
+                         .get("RESULTS", {}).get("TOTAL_COUNT"))
+            for rec in records:
+                if not looks_like_a_campground(rec):
+                    continue
+                cg = self._campground_from_ridb(rec, state or self.state)
+                if cg:
+                    out.append(cg)
+            offset += DIRECTORY_PAGE_SIZE
+            if not records or (total is not None and offset >= total):
+                break
+        log.info("RIDB rec area %s: %d campgrounds of %s facilities",
+                 rec_area_id, len(out), total)
         return out
 
     @staticmethod

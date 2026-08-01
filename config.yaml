@@ -60,6 +60,17 @@ sources:
   # is Gifford Pinchot National Forest, 117 facilities.
   - { label: "Gifford Pinchot NF", provider: RecreationDotGov, state: WA, rec_area_ids: ["1117"] }
 
+  # National PARKS. Absent until 2026-07-31, when Scott noticed Heart O' the
+  # Hills was missing and the trail led here: the sources list held three
+  # national forests and no national parks at all. Olympic was missing all 12
+  # of its campgrounds, North Cascades all 9, Crater Lake both — and Rainier
+  # had 4 of 5 only because the seed happened to catch them. Rec-area ids
+  # verified against RIDB the same day; do not trust them from anywhere else.
+  - { label: "Olympic NP",        provider: RecreationDotGov, state: WA, rec_area_ids: ["2881"] }
+  - { label: "Mount Rainier NP",  provider: RecreationDotGov, state: WA, rec_area_ids: ["2835"] }
+  - { label: "North Cascades NP", provider: RecreationDotGov, state: WA, rec_area_ids: ["2845"] }
+  - { label: "Crater Lake NP",    provider: RecreationDotGov, state: OR, rec_area_ids: ["2647"] }
+
   # State parks. An empty `campground_ids` means "every park in the catalog" —
   # the scanner fills the scope in and scans one park per request, so these
   # need `catalog-refresh` (or the committed seed) to have run first.

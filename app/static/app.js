@@ -25,6 +25,7 @@ let activeStates = new Set();
 let query = "";
 let view = "map";
 let openOnly = false;   // dev aid; see index.html
+let fcfsOnly = false;   // "first-come only" — real, and wired
 /* "provider|facility_id" -> openings. **null means we don't know**, an empty
    array means we looked and found none. The two must never be conflated:
    one is a gap in our knowledge, the other is a fact about the campground. */
@@ -57,8 +58,21 @@ function tileKey(c) {
   return `${c.z}/${c.x}/${c.y}`;
 }
 
+/* The bar carries only trouble; good news goes to Statistics.
+
+   A bar that permanently reads "807 campgrounds loaded" is a bar reporting
+   nothing, and it spends width the filters need (Scott, 2026-07-31). A slow
+   or failed load still shows here, because that is the case somebody needs
+   to see without opening a panel. */
 function setStatus(text, kind) {
   const box = document.getElementById("status");
+  const loaded = document.getElementById("loaded");
+  if (kind === "done") {
+    box.hidden = true;
+    if (loaded) loaded.textContent = text;
+    return;
+  }
+  box.hidden = false;
   document.getElementById("status-text").textContent = text;
   box.className = "status" + (kind ? " " + kind : "");
 }
@@ -87,6 +101,8 @@ function visible() {
     // has to switch on deliberately. Everything else here shows unknown,
     // stale, closed and unlocated campgrounds on purpose (§8k).
     if (openOnly && c.status !== "available") return false;
+    // Wired, unlike the placeholder filters: we hold this today.
+    if (fcfsOnly && c.reservation_type !== "first_come") return false;
     return true;
   });
 }
@@ -285,6 +301,19 @@ const PIN_SHAPE = {
   // already reads as "something is wrong".
   stale: (s, f) =>
     `<polygon points="${s / 2},2 ${s - 2},${s - 3} 2,${s - 3}" fill="${f}"/>`,
+  /* First-come, first-served — a diamond, and its own mark on purpose.
+
+     206 campgrounds in the catalog take no bookings at all, and every one of
+     them was drawing as "not checked yet". That is the wrong sentence: there
+     is nothing to check. A campground with no feed can never go available,
+     never go full, and never go stale, so borrowing the reservable statuses
+     for it makes the map say "we don't know" about the one thing we do know.
+
+     Scott, 2026-07-31, after finding Heart O' the Hills missing entirely:
+     "we do need to have an icon to represent a campground that is FCFS ONLY
+     and a way to find them." */
+  first_come: (s, f) =>
+    `<polygon points="${s / 2},1.5 ${s - 1.5},${s / 2} ${s / 2},${s - 1.5} 1.5,${s / 2}" fill="${f}"/>`,
   // Closed — struck through.
   closed: (s, f) =>
     `<rect x="2" y="2" width="${s - 4}" height="${s - 4}" rx="2" fill="${f}"/>` +
@@ -306,6 +335,7 @@ const PIN_FILL = {
   available: "#ffd400",
   full: "#c62222",
   unknown: "#d6d1c6",
+  first_come: "#0f8b8d",
   stale: "#7b52ab",
   closed: "#1b1a17",
 };
@@ -322,40 +352,31 @@ function dimOpacity() {
   return isFinite(value) && value > 0 ? value : 0.35;
 }
 
-/* Pin diameters in px. Two numbers, deliberately — see below.
+/* Pin diameter in px. One number, for every status.
 
-   Shrunk on 2026-07-31. Scott: "the dots are about twice as big as they need
-   to be — more to the point, the yellow dots are." So it is the OPEN pins
-   that were oversized, not the map generally.
+   Scott, 2026-07-31: "make them all 18." Size now carries nothing at all —
+   which is the honest end of a short road. It used to encode how many sites
+   were open (dropped: the only number that matters is one or more), then
+   whether a campground was open at all (dropped here: status is already
+   carried by shape AND colour, and a third channel saying the same thing
+   just makes every other pin harder to see).
 
-   They had been enlarged back when the palette was dark blue and amber and a
-   12px dot vanished into topo green. Bright yellow with a dark outline reads
-   at half that, so the reason for the bulk left with the old colours. The
-   rest are nudged down only enough to keep open the larger of the two.
-
-   Tune here and reload. */
-const PIN_SIZE = { open: 13, other: 11 };
+   24/18 was judged too big, 13/11 too small. Tune here and reload. */
+const PIN_SIZE = 18;
 
 function pinIcon(c) {
-  /* One size for open, one for everything else.
-
-     Pins used to grow with how many sites were free — 28px above twenty, 24
-     above five. Scott killed that on 2026-07-31: **the only number that
-     matters is one or more.** A campground with forty openings is not more
-     bookable than one with three; you need a site, not a surplus. The
-     exception is wanting two or three *together*, and that is a filter — a
-     question about whether a set of adjacent sites exists — not something a
-     dot diameter can answer.
-
-     So size now carries exactly one claim, "there is something here", which
-     is a claim it can actually support. Open pins stay larger than the rest
-     because 12px dots were hard to pick out of a topo background. */
-  const size = c.status === "available" ? PIN_SIZE.open : PIN_SIZE.other;
+  const size = PIN_SIZE;
   // An unrecognised status must still draw something: a pin that vanishes
   // because we added a status and forgot the map is exactly the silent
   // disappearance this project keeps banning (§8k).
-  const shape = PIN_SHAPE[c.status] || PIN_SHAPE.unknown;
-  const fill = PIN_FILL[c.status] || PIN_FILL.unknown;
+  /* First-come beats status. A campground that takes no bookings has no
+     availability to report, so its reservation type IS its status — and
+     showing it as "unknown" alongside genuinely unchecked reservable
+     campgrounds hides the distinction that matters most to somebody driving
+     out on a Friday without a booking. */
+  const key = c.reservation_type === "first_come" ? "first_come" : c.status;
+  const shape = PIN_SHAPE[key] || PIN_SHAPE.unknown;
+  const fill = PIN_FILL[key] || PIN_FILL.unknown;
   const svg =
     `<svg class="pin" width="${size}" height="${size}" ` +
     `viewBox="0 0 ${size} ${size}" aria-hidden="true">` +
@@ -800,6 +821,10 @@ async function load() {
 
 document.getElementById("search").addEventListener("input", (e) => {
   query = e.target.value;
+  render();
+});
+document.getElementById("fcfs-only").addEventListener("change", (e) => {
+  fcfsOnly = e.target.checked;
   render();
 });
 document.getElementById("open-only").addEventListener("change", (e) => {
